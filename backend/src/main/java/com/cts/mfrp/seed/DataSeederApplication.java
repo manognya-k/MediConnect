@@ -2,8 +2,6 @@ package com.cts.mfrp.seed;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 /**
  * Standalone Seed Application — runs separately from the main MediConnect app.
@@ -12,19 +10,13 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
  *   Right-click this file → Run 'DataSeederApplication.main()'
  *
  * What happens:
- *   1. Spring Boot starts (NO web server, NO security)
+ *   1. Spring Boot starts (NO web server)
  *   2. DataSeederRunner executes: clears all tables, inserts dummy data
  *   3. Application exits automatically
  *
  * Default password seeded for ALL users: MediConnect@123
  */
-@SpringBootApplication(
-    scanBasePackages = "com.cts.mfrp",
-    exclude = {
-        SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class
-    }
-)
+@SpringBootApplication(scanBasePackages = "com.cts.mfrp")
 public class DataSeederApplication {
 
     public static void main(String[] args) {

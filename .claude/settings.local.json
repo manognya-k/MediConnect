@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"C:\\\\Users\\\\2479707\\\\Downloads\\\\MediConnect \\(1\\)\\\\MediConnect\" -type f -name \"*.json\" -o -name \"*.sql\" -o -name \"*.md\")",
+      "Bash(find \"C:\\\\Users\\\\2479707\\\\Downloads\\\\MediConnect \\(1\\)\\\\MediConnect\\\\backend\\\\src\\\\main\\\\resources\" -type f)",
+      "Bash(find \"C:\\\\Users\\\\2479707\\\\Downloads\\\\MediConnect \\(1\\)\\\\MediConnect\" -type f \\\\\\( -name \"*.sql\" -o -name \"migration*\" -o -name \"flyway*\" \\\\\\))",
+      "Bash(ls -la \"C:\\\\Users\\\\2479707\\\\Downloads\\\\MediConnect \\(1\\)\\\\MediConnect\\\\backend\\\\src\\\\main\\\\java\\\\com\\\\cts\\\\mfrp\\\\controller\")",
+      "Bash(java -version)",
+      "Bash(ls \"C:\\\\Users\\\\2479707\\\\Downloads\\\\MediConnect \\(1\\)\\\\MediConnect\\\\backend\")"
+    ]
+  }
+}

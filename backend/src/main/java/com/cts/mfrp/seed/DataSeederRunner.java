@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -40,7 +39,7 @@ public class DataSeederRunner implements CommandLineRunner {
     private final ChatbotLogRepository    chatbotLogRepository;
 
     // All seed users share the same plain-text password: MediConnect@123
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private static final String DEFAULT_PASSWORD = "MediConnect@123";
 
     // ─────────────────────────────────────────────────────────────
     @Override
@@ -112,7 +111,7 @@ public class DataSeederRunner implements CommandLineRunner {
     private void seedAll() {
         log.info("► Phase 2: Inserting dummy data...");
 
-        String pwd = encoder.encode("MediConnect@123");
+        String pwd = DEFAULT_PASSWORD;
 
         // ── 1. Hospitals ──────────────────────────────────────
         Hospital h1 = new Hospital();
