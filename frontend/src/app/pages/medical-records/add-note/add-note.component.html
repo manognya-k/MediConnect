@@ -1,0 +1,35 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">Add Clinical Note</h2>
+      <button class="modal-close" (click)="cancel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="form-body">
+      <div class="field">
+        <label class="field-label">Note <span class="req">*</span></label>
+        <textarea class="field-input field-textarea"
+                  [(ngModel)]="noteText"
+                  placeholder="Enter clinical note…"
+                  rows="5"
+                  [class.invalid]="submitted && !noteText.trim()"></textarea>
+        <div class="char-count" [class.char-warn]="noteLength > maxLen * 0.9">
+          {{ noteLength }} / {{ maxLen }}
+        </div>
+        <span class="field-error" *ngIf="submitted && !noteText.trim()">Note cannot be empty</span>
+        <span class="field-error" *ngIf="noteLength > maxLen">Exceeds {{ maxLen }} character limit</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()">Add Note</button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,92 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">{{ title }}</h2>
+      <button class="modal-close" (click)="cancel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-body">
+
+        <!-- Patient -->
+        <div class="field">
+          <label class="field-label">Patient <span class="req">*</span></label>
+          <div class="autocomplete-wrap">
+            <input class="field-input" [class.invalid]="patientError"
+                   type="text" placeholder="Search patient name…"
+                   [value]="patientQuery"
+                   (input)="onPatientInput($any($event.target).value)"
+                   (blur)="closeDropdown()"
+                   autocomplete="off">
+            <div class="dropdown" *ngIf="showDropdown">
+              <div class="dropdown-item" *ngFor="let pt of filteredPatients"
+                   (mousedown)="selectPatient(pt)">{{ pt.name }}</div>
+            </div>
+          </div>
+          <span class="field-error" *ngIf="patientError">Patient is required</span>
+        </div>
+
+        <!-- Date -->
+        <div class="field">
+          <label class="field-label">Record Date <span class="req">*</span></label>
+          <input class="field-input" [class.invalid]="isInvalid('recordDate')"
+                 type="date" formControlName="recordDate">
+          <span class="field-error" *ngIf="isInvalid('recordDate')">Date is required</span>
+        </div>
+
+        <!-- Diagnosis -->
+        <div class="field">
+          <label class="field-label">Diagnosis <span class="req">*</span></label>
+          <input class="field-input" [class.invalid]="isInvalid('diagnosis')"
+                 type="text" placeholder="Primary diagnosis…"
+                 formControlName="diagnosis">
+          <span class="field-error" *ngIf="isInvalid('diagnosis')">Diagnosis is required</span>
+        </div>
+
+        <!-- Treatment -->
+        <div class="field">
+          <label class="field-label">Treatment <span class="opt">(optional)</span></label>
+          <input class="field-input" type="text"
+                 placeholder="Treatment plan…"
+                 formControlName="treatment">
+        </div>
+
+        <!-- Prescription -->
+        <div class="field">
+          <label class="field-label">Prescription <span class="opt">(optional)</span></label>
+          <textarea class="field-input field-textarea"
+                    formControlName="prescription"
+                    placeholder="One line per medication: DrugName | Dose | Frequency"
+                    rows="3"></textarea>
+          <div class="field-hint">Format: Medication | Dosage | Frequency (one per line)</div>
+        </div>
+
+        <!-- Notes -->
+        <div class="field">
+          <label class="field-label">Clinical Notes <span class="opt">(optional)</span></label>
+          <textarea class="field-input field-textarea"
+                    formControlName="notes"
+                    placeholder="Additional clinical notes…"
+                    rows="3"></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <svg *ngIf="saving" class="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="30 70"/>
+          </svg>
+          {{ saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Create Record') }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

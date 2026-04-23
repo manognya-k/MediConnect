@@ -1,0 +1,241 @@
+<div class="mr-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Medical Records</h1>
+        <p class="page-sub">Patient diagnoses, prescriptions & clinical history</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="openNewRecord()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New Record
+    </button>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="two-col">
+
+    <!-- Left: Patient List -->
+    <div class="patient-panel">
+      <div class="patient-search">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input class="search-input" type="text" placeholder="Search patients…"
+                 [value]="searchQuery"
+                 (input)="onSearchInput($any($event.target).value)">
+        </div>
+      </div>
+
+      <!-- Skeleton -->
+      <ng-container *ngIf="loading">
+        <div class="skel-patient" *ngFor="let i of [1,2,3,4,5]"></div>
+      </ng-container>
+
+      <!-- Error -->
+      <div class="list-error" *ngIf="!loading && error">
+        <span>{{ error }}</span>
+        <button class="retry-btn" (click)="loadAll()">Retry</button>
+      </div>
+
+      <!-- Empty -->
+      <div class="list-empty" *ngIf="!loading && !error && filteredPatients.length === 0">
+        No patients found.
+      </div>
+
+      <!-- Patient rows -->
+      <div class="patient-item"
+           *ngFor="let pt of filteredPatients; trackBy: trackById"
+           [class.active]="selectedPatient?.patientId === pt.patientId"
+           (click)="selectPatient(pt)">
+        <div class="pt-av" [style.background]="pt.avatarBg" [style.color]="pt.avatarColor">
+          {{ pt.initials }}
+        </div>
+        <div class="pt-info">
+          <div class="pt-name">{{ pt.name }}</div>
+          <div class="pt-diag">{{ pt.latestDiagnosis }}</div>
+        </div>
+        <div class="pt-meta">
+          <span class="badge" [ngClass]="statusClass(pt.status)">{{ pt.status }}</span>
+          <span class="pt-count">{{ pt.recordCount }} visit{{ pt.recordCount !== 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Detail Panel -->
+    <div class="detail-panel">
+
+      <!-- No selection -->
+      <div class="detail-empty" *ngIf="!selectedPatient && !loading">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+          <path d="M9 12h6M9 16h6M9 8h6M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p>Select a patient to view their records</p>
+      </div>
+
+      <!-- Detail loading -->
+      <div class="detail-loading" *ngIf="detailLoading">
+        <div class="skel-row" *ngFor="let i of [1,2,3]"></div>
+      </div>
+
+      <!-- Record Detail -->
+      <ng-container *ngIf="selectedPatient && !detailLoading">
+
+        <!-- Detail Header -->
+        <div class="detail-header">
+          <div class="dh-left">
+            <div class="dh-av" [style.background]="selectedPatient.avatarBg" [style.color]="selectedPatient.avatarColor">
+              {{ selectedPatient.initials }}
+            </div>
+            <div>
+              <div class="dh-name">{{ selectedPatient.name }}</div>
+              <div class="dh-meta">
+                <span *ngIf="latestRecord">{{ latestRecord.gender }} &bull; DOB {{ latestRecord.dateOfBirth }}</span>
+                <span *ngIf="latestRecord" class="dh-blood">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
+                  {{ latestRecord.bloodGroup }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="dh-actions">
+            <button class="btn btn-ghost" (click)="openAddNote()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Add Note
+            </button>
+            <button class="btn btn-primary" (click)="openEditRecord()" *ngIf="latestRecord">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Edit Record
+            </button>
+          </div>
+        </div>
+
+        <!-- No records for patient -->
+        <div class="detail-empty" *ngIf="patientRecords.length === 0">
+          <p>No records found for this patient.</p>
+        </div>
+
+        <ng-container *ngIf="latestRecord">
+
+          <!-- Section: Diagnosis & Treatment -->
+          <div class="detail-section">
+            <div class="section-label">Diagnosis &amp; Treatment</div>
+            <div class="section-body">
+              <div class="info-row">
+                <span class="ir-label">Date of Visit</span>
+                <span class="ir-value">{{ latestRecord.recordDate }}</span>
+              </div>
+              <div class="info-row">
+                <span class="ir-label">Status</span>
+                <span class="badge" [ngClass]="statusClass(latestRecord.status)">{{ latestRecord.status }}</span>
+              </div>
+              <div class="info-row">
+                <span class="ir-label">Diagnosis</span>
+                <span class="ir-value">{{ latestRecord.diagnosis }}</span>
+              </div>
+              <div class="info-row">
+                <span class="ir-label">Treatment</span>
+                <span class="ir-value">{{ latestRecord.treatment }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Prescription -->
+          <div class="detail-section">
+            <div class="section-label">Prescription</div>
+            <div class="section-body" *ngIf="parsePrescription(latestRecord.prescription).length > 0; else noPrescription">
+              <table class="rx-table">
+                <thead>
+                  <tr>
+                    <th>Medication</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let rx of parsePrescription(latestRecord.prescription)">
+                    <td>{{ rx.drug }}</td>
+                    <td>{{ rx.dose }}</td>
+                    <td>{{ rx.freq }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <ng-template #noPrescription>
+              <div class="section-body text-muted">No prescription recorded.</div>
+            </ng-template>
+          </div>
+
+          <!-- Section: Clinical Notes -->
+          <div class="detail-section">
+            <div class="section-label">Clinical Notes</div>
+            <div class="section-body">
+              <ng-container *ngIf="latestRecord.notes?.trim(); else noNotes">
+                <p class="notes-text" *ngFor="let line of latestRecord.notes.split('\n')">{{ line }}</p>
+              </ng-container>
+              <ng-template #noNotes>
+                <span class="text-muted">No clinical notes recorded.</span>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Section: Visit History -->
+          <div class="detail-section">
+            <div class="section-label">Visit History</div>
+            <div class="section-body">
+              <div class="timeline" *ngIf="patientRecords.length > 0; else noHistory">
+                <div class="tl-item" *ngFor="let rec of patientRecords; let last = last" [class.tl-last]="last">
+                  <div class="tl-dot"></div>
+                  <div class="tl-content">
+                    <div class="tl-date">{{ rec.recordDate }}</div>
+                    <div class="tl-diag">{{ rec.diagnosis }}</div>
+                    <div class="tl-treat" *ngIf="rec.treatment && rec.treatment !== '—'">{{ rec.treatment }}</div>
+                    <span class="badge" [ngClass]="statusClass(rec.status)">{{ rec.status }}</span>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noHistory>
+                <span class="text-muted">No visit history.</span>
+              </ng-template>
+            </div>
+          </div>
+
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+
+</div>
+
+<!-- New / Edit Record Modal -->
+<app-medical-record-form
+  *ngIf="showRecordForm"
+  [editData]="editingRecord"
+  [doctorId]="doctorId"
+  [hospitalId]="hospitalId"
+  [selectedPatientId]="selectedPatient?.patientId ?? null"
+  (saved)="onRecordSaved()"
+  (cancelled)="onRecordCancelled()">
+</app-medical-record-form>
+
+<!-- Add Note Modal -->
+<app-add-note
+  *ngIf="showAddNote"
+  (saved)="onNoteSaved($event)"
+  (cancelled)="onNoteCancelled()">
+</app-add-note>
