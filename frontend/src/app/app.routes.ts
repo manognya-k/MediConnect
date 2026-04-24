@@ -84,6 +84,13 @@ export const routes: Routes = [
           import('./pages/supply-chain/supply-chain.component').then(
             (m) => m.SupplyChainComponent
           )
+      },
+      {
+        path: 'ai-assistant',
+        loadComponent: () =>
+          import('./pages/ai-assistant/ai-assistant.component').then(
+            (m) => m.AiAssistantComponent
+          )
       }
     ]
   },
