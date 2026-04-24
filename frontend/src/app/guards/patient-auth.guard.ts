@@ -6,5 +6,5 @@ export const patientAuthGuard: CanActivateFn = () => {
   const auth   = inject(PatientAuthService);
   const router = inject(Router);
   if (auth.isLoggedIn()) return true;
-  return router.createUrlTree(['/patient/login']);
+  return router.createUrlTree(['/login']);
 };

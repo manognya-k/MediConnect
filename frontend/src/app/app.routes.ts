@@ -100,13 +100,6 @@ export const routes: Routes = [
 
   // ── Patient portal ──
   {
-    path: 'patient/login',
-    loadComponent: () =>
-      import('./patient/pages/patient-login/patient-login.component').then(
-        (m) => m.PatientLoginComponent
-      )
-  },
-  {
     path: 'patient',
     canActivate: [patientAuthGuard],
     loadComponent: () =>

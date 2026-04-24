@@ -1,50 +1,31 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import { AuthService, AuthResponse } from '../../services/auth.service';
 import { PatientStateService } from './patient-state.service';
 
-const BASE = 'http://localhost:8081/api';
-const STORAGE_KEY = 'mediconnect_patient_user';
-
-export interface PatientLoginResponse {
-  userId: number;
-  name: string;
-  email: string;
-  role: string;
-}
+export type PatientLoginResponse = AuthResponse;
 
 @Injectable({ providedIn: 'root' })
 export class PatientAuthService {
   constructor(
-    private http: HttpClient,
-    private state: PatientStateService
+    private auth: AuthService,
+    private state: PatientStateService,
+    private router: Router
   ) {}
 
-  login(email: string, password: string): Observable<PatientLoginResponse> {
-    return this.http.post<PatientLoginResponse>(`${BASE}/auth/login`, { email, password }).pipe(
-      map(res => {
-        if (res.role !== 'PATIENT') {
-          throw new Error('This account is not a patient account. Please use the doctor portal.');
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(res));
-        return res;
-      }),
-      catchError(err => throwError(() => err))
-    );
-  }
-
   logout(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    this.auth.logout();
     this.state.clear();
+    this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
-    return !!this.getStoredUser();
+    const user = this.auth.getUser();
+    return !!user && user.role === 'PATIENT';
   }
 
   getStoredUser(): PatientLoginResponse | null {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    const user = this.auth.getUser();
+    return user?.role === 'PATIENT' ? user : null;
   }
 }
