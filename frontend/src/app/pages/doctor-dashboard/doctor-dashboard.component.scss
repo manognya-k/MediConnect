@@ -1,0 +1,627 @@
+// ── Variables ──
+$primary: #2563EB;
+$primary-light: #EFF6FF;
+$success: #16A34A;
+$success-light: #F0FDF4;
+$warning: #D97706;
+$warning-light: #FFFBEB;
+$danger: #DC2626;
+$danger-light: #FEF2F2;
+$text-primary: #111827;
+$text-muted: #6B7280;
+$border: #E5E7EB;
+$surface: #FFFFFF;
+$page-bg: #F9FAFB;
+// ── Main Content (layout handled by DoctorLayoutComponent) ──
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: $page-bg;
+}
+
+// ── Header ──
+.top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: $surface;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  color: #374151;
+
+  &:hover { background: $page-bg; }
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: $text-muted;
+  margin: 2px 0 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hospital-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: $text-primary;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover { background: $page-bg; }
+}
+
+.notif-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: $text-muted;
+
+  &:hover { background: $page-bg; }
+}
+
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 18px;
+  height: 18px;
+  background: $danger;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+// ── Page Content ──
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// ── Stat Cards ──
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 12.5px;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 500;
+  width: fit-content;
+
+  &.badge-green { background: $success-light; color: $success; }
+  &.badge-amber { background: $warning-light; color: $warning; }
+  &.badge-red { background: $danger-light; color: $danger; }
+}
+
+.stat-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 500;
+
+  &.tag-blue { background: $primary-light; color: $primary; }
+}
+
+// ── Main Grid ──
+.main-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Card Base ──
+.card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.view-all-link {
+  font-size: 12.5px;
+  color: $primary;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+
+  &:hover { text-decoration: underline; }
+}
+
+// ── Skeleton ──
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-row {
+  height: 40px;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: $danger-light;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $danger;
+}
+
+.retry-btn {
+  background: none;
+  border: 1px solid $danger;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: $danger;
+  cursor: pointer;
+
+  &:hover { background: $danger; color: white; }
+}
+
+.empty-state {
+  text-align: center;
+  color: $text-muted;
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+// ── Appointments ──
+.appt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.appt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 6px;
+  border-radius: 8px;
+
+  &:hover { background: $page-bg; }
+}
+
+.appt-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.appt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.appt-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.appt-meta {
+  font-size: 12px;
+  color: $text-muted;
+}
+
+.appt-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+// ── Badges ──
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.badge-confirmed { background: $success-light; color: $success; }
+  &.badge-pending { background: $warning-light; color: $warning; }
+  &.badge-cancelled { background: $danger-light; color: $danger; }
+  &.badge-video { background: $primary-light; color: $primary; }
+  &.badge-inperson { background: #F3F4F6; color: #374151; }
+  &.badge-abnormal { background: $danger-light; color: $danger; }
+  &.badge-ready { background: $success-light; color: $success; }
+  &.badge-default { background: #F3F4F6; color: $text-muted; }
+}
+
+// ── Consultations ──
+.consult-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.consult-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 6px;
+  border-radius: 8px;
+
+  &:hover { background: $page-bg; }
+}
+
+.consult-icon {
+  width: 32px;
+  height: 32px;
+  background: $primary-light;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.consult-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.consult-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.consult-meta {
+  font-size: 11.5px;
+  color: $text-muted;
+}
+
+.join-btn {
+  padding: 5px 14px;
+  background: $primary;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover { background: #1D4ED8; }
+}
+
+// ── Beds ──
+.bed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 6px;
+  border-radius: 8px;
+
+  &:hover { background: $page-bg; }
+}
+
+.bed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bed-ward {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.bed-range {
+  font-size: 11.5px;
+  color: $text-muted;
+}
+
+.bed-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+
+  &.bed-ok { background: $success-light; color: $success; }
+  &.bed-low { background: $warning-light; color: $warning; }
+  &.bed-none { background: $danger-light; color: $danger; }
+}
+
+// ── Bottom Row ──
+.bottom-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+// ── Lab ──
+.lab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 6px;
+  border-radius: 8px;
+
+  &:hover { background: $page-bg; }
+}
+
+.lab-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lab-test {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.lab-patient {
+  font-size: 11.5px;
+  color: $text-muted;
+}
+
+// ── Inventory ──
+.inv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 6px;
+  border-radius: 8px;
+
+  &:hover { background: $page-bg; }
+}
+
+.inv-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inv-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.inv-cat {
+  font-size: 11.5px;
+  color: $text-muted;
+}
+
+.inv-qty {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+
+  &.inv-low { background: $danger-light; color: $danger; }
+  &.inv-ok { background: #F3F4F6; color: $text-muted; }
+}
+
+// ── Notifications ──
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notif-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 6px;
+  border-radius: 8px;
+
+  &:hover { background: $page-bg; }
+}
+
+.notif-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.notif-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.notif-urgent { color: $danger; }
+  &.notif-info { color: #2563EB; }
+  &.notif-new { color: $success; }
+}
+
+.notif-time {
+  font-size: 11.5px;
+  color: $text-muted;
+}
+
+.notif-type-badge {
+  flex-shrink: 0;
+
+  &.notif-urgent { background: $danger-light; color: $danger; }
+  &.notif-info { background: $primary-light; color: $primary; }
+  &.notif-new { background: $success-light; color: $success; }
+}
+
+// ── Responsive ──
+@media (max-width: 1200px) {
+  .stat-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .bottom-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .stat-cards { grid-template-columns: repeat(2, 1fr); }
+  .page-content { padding: 14px 16px; }
+  .top-header { padding: 12px 16px; }
+  .hospital-btn { display: none; }
+}

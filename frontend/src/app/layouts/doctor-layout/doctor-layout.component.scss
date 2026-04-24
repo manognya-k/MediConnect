@@ -1,0 +1,170 @@
+$primary: #185FA5;
+$primary-light: #EBF3FC;
+$border: #E8E9EC;
+$text: #1a1a1a;
+$muted: #666;
+$sb-width: 200px;
+
+.layout-wrap {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+
+// ── Sidebar ──
+.sb {
+  width: $sb-width;
+  min-width: $sb-width;
+  background: #fff;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.22s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sb-closed .sb {
+  transform: translateX(-$sb-width);
+}
+
+.sb-closed .layout-main {
+  margin-left: 0;
+}
+
+.sb-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+}
+
+.sb-logo-icon {
+  width: 28px;
+  height: 28px;
+  background: $primary;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sb-logo-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+}
+
+.sb-nav {
+  flex: 1;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+}
+
+.ni {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: currentColor;
+  }
+
+  &:hover {
+    background: #F0F4FA;
+    color: $primary;
+  }
+
+  &.active {
+    background: $primary-light;
+    color: $primary;
+    font-weight: 500;
+  }
+}
+
+.nd {
+  height: 1px;
+  background: $border;
+  margin: 5px 8px;
+}
+
+.sb-foot {
+  padding: 12px 14px;
+  border-top: 1px solid $border;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.sb-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: $primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: $primary-light;
+  flex-shrink: 0;
+}
+
+.sb-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: $text;
+}
+
+.sb-role {
+  font-size: 11px;
+  color: #999;
+}
+
+// ── Main Content Area ──
+.layout-main {
+  margin-left: $sb-width;
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: margin-left 0.22s ease;
+  background: #F4F5F7;
+}
+
+@media (max-width: 768px) {
+  .sb {
+    transform: translateX(-$sb-width);
+  }
+  .layout-main {
+    margin-left: 0;
+  }
+  .sb-closed .sb {
+    transform: translateX(0);
+  }
+}

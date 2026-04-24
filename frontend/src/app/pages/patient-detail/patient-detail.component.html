@@ -1,0 +1,128 @@
+<div class="detail-page">
+
+  <!-- Back -->
+  <button class="back-btn" (click)="goBack()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Patients
+  </button>
+
+  <!-- Loading -->
+  <div class="skel-header" *ngIf="loading">
+    <div class="skel skel-av"></div>
+    <div class="skel-lines">
+      <div class="skel skel-line-lg"></div>
+      <div class="skel skel-line-sm"></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" *ngIf="error">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && !error && patient">
+
+    <!-- Patient Header -->
+    <div class="patient-header">
+      <div class="header-left">
+        <div class="big-av">{{ patient.initials }}</div>
+        <div>
+          <h1 class="p-name">{{ patient.fullName }}</h1>
+          <div class="p-meta">
+            <span class="p-code">{{ patient.patientCode }}</span>
+            <span class="badge" [ngClass]="statusClass(patient.status)">{{ patient.status }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="showEditForm = true">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          Edit Patient
+        </button>
+        <button class="btn btn-primary">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="white" stroke-width="1.5"/>
+            <path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Schedule Appointment
+        </button>
+      </div>
+    </div>
+
+    <!-- Detail Grid -->
+    <div class="detail-grid">
+
+      <!-- Personal Details -->
+      <div class="card">
+        <div class="card-title">Personal Details</div>
+        <div class="detail-list">
+          <div class="detail-row">
+            <span class="d-label">Age</span>
+            <span class="d-value">{{ patient.age || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Gender</span>
+            <span class="d-value">{{ patient.gender || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Blood Group</span>
+            <span class="d-value">
+              <span class="badge b-blue">{{ patient.bloodGroup || '—' }}</span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Date of Birth</span>
+            <span class="d-value">{{ patient.dateOfBirth ? (patient.dateOfBirth | date:'MMM d, y') : '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Diagnosis</span>
+            <span class="d-value">{{ patient.diagnosis || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Last Visit</span>
+            <span class="d-value">{{ patient.lastVisit ? (patient.lastVisit | date:'MMM d, y') : '—' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="patient.email">
+            <span class="d-label">Email</span>
+            <span class="d-value">{{ patient.email }}</span>
+          </div>
+          <div class="detail-row" *ngIf="patient.address">
+            <span class="d-label">Address</span>
+            <span class="d-value">{{ patient.address }}</span>
+          </div>
+          <div class="detail-row" *ngIf="patient.emergencyContact">
+            <span class="d-label">Emergency Contact</span>
+            <span class="d-value">{{ patient.emergencyContact }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Appointments -->
+      <div class="card">
+        <div class="card-title">Recent Appointments</div>
+        <div class="appt-list" *ngIf="appointments.length > 0">
+          <div class="appt-row" *ngFor="let a of appointments">
+            <div class="appt-info">
+              <span class="appt-date">{{ a.appointmentDate | date:'MMM d, y' }}</span>
+              <span class="appt-time">{{ formatTime(a.appointmentTime) }} · {{ a.appointmentType }}</span>
+            </div>
+            <span class="badge" [ngClass]="apptStatusClass(a.status)">{{ a.status | titlecase }}</span>
+          </div>
+        </div>
+        <div class="empty-msg" *ngIf="appointments.length === 0">
+          No appointments on record
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+</div>
+
+<app-patient-form
+  *ngIf="showEditForm && patient"
+  [patient]="patient"
+  (saved)="onEditSaved()"
+  (cancelled)="showEditForm = false">
+</app-patient-form>

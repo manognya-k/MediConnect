@@ -1,0 +1,95 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editData ? 'Edit Appointment' : 'New Appointment' }}</h2>
+      <button class="modal-close" (click)="cancel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-grid">
+
+        <!-- Patient -->
+        <div class="field field-full">
+          <label class="field-label">Patient <span class="req">*</span></label>
+          <div class="autocomplete-wrap">
+            <input
+              class="field-input"
+              [class.invalid]="patientError"
+              type="text"
+              placeholder="Search patient name…"
+              [value]="patientQuery"
+              (input)="onPatientInput($any($event.target).value)"
+              (blur)="closeDropdown()"
+              autocomplete="off">
+            <div class="dropdown" *ngIf="showDropdown">
+              <div class="dropdown-item"
+                   *ngFor="let pt of filteredPatients"
+                   (mousedown)="selectPatient(pt)">
+                {{ pt.name }}
+              </div>
+            </div>
+          </div>
+          <span class="field-error" *ngIf="patientError">Patient is required</span>
+        </div>
+
+        <!-- Date -->
+        <div class="field">
+          <label class="field-label">Date <span class="req">*</span></label>
+          <input
+            class="field-input"
+            [class.invalid]="isInvalid('date')"
+            type="date"
+            formControlName="date"
+            [min]="editData ? '' : today">
+          <span class="field-error" *ngIf="isInvalid('date')">Date is required</span>
+        </div>
+
+        <!-- Time -->
+        <div class="field">
+          <label class="field-label">Time <span class="req">*</span></label>
+          <input
+            class="field-input"
+            [class.invalid]="isInvalid('time')"
+            type="time"
+            formControlName="time">
+          <span class="field-error" *ngIf="isInvalid('time')">Time is required</span>
+        </div>
+
+        <!-- Type -->
+        <div class="field">
+          <label class="field-label">Type <span class="req">*</span></label>
+          <select class="field-input" formControlName="type">
+            <option value="In-person">In-person</option>
+            <option value="Video">Video</option>
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div class="field" *ngIf="!editData || editData.status !== 'Cancelled'">
+          <label class="field-label">Status</label>
+          <select class="field-input" formControlName="status">
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <svg *ngIf="saving" class="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="30 70"/>
+          </svg>
+          {{ saving ? 'Saving…' : 'Save Appointment' }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

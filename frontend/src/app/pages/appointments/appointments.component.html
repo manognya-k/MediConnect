@@ -1,0 +1,304 @@
+<div class="appts-page">
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Appointments</h1>
+        <p class="page-sub">{{ today | date:'EEEE, MMMM d, yyyy' }} &middot; {{ stats.todayTotal }} scheduled today</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" (click)="toggleCalendar()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Calendar view
+      </button>
+      <button class="btn btn-primary" (click)="openNewModal()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        New Appointment
+      </button>
+    </div>
+  </header>
+
+  <!-- Calendar Panel -->
+  <div class="calendar-panel" *ngIf="calendarVisible">
+    <div class="cal-header">
+      <button class="cal-nav-btn" (click)="prevMonth()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <span class="cal-month-label">{{ calendarMonth | date:'MMMM yyyy' }}</span>
+      <button class="cal-nav-btn" (click)="nextMonth()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-weekday" *ngFor="let d of WEEKDAYS">{{ d }}</div>
+      <div
+        class="cal-cell"
+        *ngFor="let day of calendarDates"
+        [class.cal-today]="isToday(day)"
+        [class.cal-selected]="isSelected(day)"
+        [class.cal-empty]="!day"
+        (click)="selectCalendarDay(day)">
+        <span *ngIf="day">{{ day }}</span>
+        <span class="cal-dot" *ngIf="calendarDayHasAppt(day) && !isToday(day) && !isSelected(day)"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Today</div>
+      <div class="stat-val">{{ stats.todayTotal }}</div>
+      <div class="stat-sub stat-blue">{{ stats.videoCount }} video &middot; {{ stats.inPersonCount }} in-person</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Confirmed</div>
+      <div class="stat-val">{{ stats.confirmed }}</div>
+      <div class="stat-sub stat-green">{{ stats.confirmRate }}% confirm rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val">{{ stats.pending }}</div>
+      <div class="stat-sub stat-amber">Awaiting response</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cancelled</div>
+      <div class="stat-val">{{ stats.cancelled }}</div>
+      <div class="stat-sub stat-red">Today</div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="main-card">
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab" [class.active]="activeTab==='today'" (click)="switchTab('today')">Today</button>
+      <button class="tab" [class.active]="activeTab==='upcoming'" (click)="switchTab('upcoming')">Upcoming</button>
+      <button class="tab" [class.active]="activeTab==='past'" (click)="switchTab('past')">Past</button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="tb-input" type="text" placeholder="Search patient…"
+               [ngModel]="searchValue" (ngModelChange)="onSearch($event)">
+      </div>
+      <select class="tb-input" [(ngModel)]="typeFilter" (change)="onTypeChange()">
+        <option value="">All types</option>
+        <option value="In-person">In-person</option>
+        <option value="Video">Video</option>
+      </select>
+      <select class="tb-input" [(ngModel)]="statusFilter" (change)="onStatusChange()">
+        <option value="">All status</option>
+        <option value="Confirmed">Confirmed</option>
+        <option value="Pending">Pending</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+      <input class="tb-input" type="date" [(ngModel)]="dateFilter" (change)="onDateChange()">
+    </div>
+
+    <!-- Skeleton -->
+    <div class="skel-wrap" *ngIf="loading">
+      <div class="skel-row" *ngFor="let i of [1,2,3,4,5,6,7]"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-bar" *ngIf="!loading && error">
+      <span>{{ error }}</span>
+      <button class="retry-btn" (click)="retry()">Retry</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" *ngIf="!loading && !error">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let appt of appointments" (click)="openPanel(appt)" class="data-row">
+            <td>
+              <div class="flex-center">
+                <div class="av" [style.background]="appt.avatarBg" [style.color]="appt.avatarColor">
+                  {{ appt.patientInitials }}
+                </div>
+                <div>
+                  <div class="pt-name">{{ appt.patientName }}</div>
+                  <div class="pt-code">{{ appt.patientCode }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="time-cell">
+                <span>{{ appt.time }}</span>
+                <span class="time-date" *ngIf="activeTab !== 'today'">{{ appt.date | date:'MMM d' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="typeBadgeClass(appt.type)">{{ appt.type }}</span>
+            </td>
+            <td class="reason-cell">{{ appt.reason }}</td>
+            <td>
+              <span class="badge" [ngClass]="statusBadgeClass(appt.status)">{{ appt.status }}</span>
+            </td>
+            <td (click)="$event.stopPropagation()">
+              <div class="actions-cell">
+                <!-- Case A: Video + Confirmed → Join -->
+                <button class="join-btn"
+                        *ngIf="showJoin(appt)"
+                        (click)="joinCall(appt, $event)">
+                  Join
+                </button>
+                <!-- Case B/D: Not cancelled and not video-confirmed → View patient -->
+                <button class="action-btn"
+                        *ngIf="showView(appt)"
+                        (click)="viewPatient(appt, $event)"
+                        title="View patient">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M1 8c1.8-4.5 12.2-4.5 14 0-1.8 4.5-12.2 4.5-14 0z" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                </button>
+                <!-- Case C: Cancelled → Edit -->
+                <button class="action-btn"
+                        *ngIf="showEdit(appt)"
+                        (click)="openEditModal(appt, $event)"
+                        title="Edit appointment">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="appointments.length === 0">
+            <td colspan="6" class="empty-cell">No appointments found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && !error && total > 0">
+      <span>Showing {{ startIdx }}–{{ endIdx }} of {{ total }} appointments</span>
+      <div class="pg-btns">
+        <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">&#8249;</button>
+        <ng-container *ngFor="let p of getPageNumbers()">
+          <button class="pg-btn" [class.active]="p === page"
+                  [disabled]="p === '...'"
+                  (click)="goToPage(p)">{{ p }}</button>
+        </ng-container>
+        <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">&#8250;</button>
+      </div>
+    </div>
+
+  </div><!-- /main-card -->
+
+</div><!-- /appts-page -->
+
+<!-- Side Panel Overlay -->
+<div class="panel-overlay" [class.visible]="panelVisible" (click)="closePanel()"></div>
+
+<!-- Side Panel -->
+<aside class="side-panel" [class.open]="panelVisible">
+  <div class="panel-header">
+    <span class="panel-title">Appointment Details</span>
+    <button class="panel-close" (click)="closePanel()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <ng-container *ngIf="selectedAppt">
+    <div class="panel-patient">
+      <div class="panel-av" [style.background]="selectedAppt.avatarBg" [style.color]="selectedAppt.avatarColor">
+        {{ selectedAppt.patientInitials }}
+      </div>
+      <div>
+        <div class="panel-pt-name">{{ selectedAppt.patientName }}</div>
+        <div class="panel-pt-code">{{ selectedAppt.patientCode }}</div>
+      </div>
+    </div>
+
+    <div class="panel-details">
+      <div class="panel-row">
+        <span class="pd-label">Date</span>
+        <span class="pd-value">{{ selectedAppt.date | date:'MMMM d, yyyy' }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Time</span>
+        <span class="pd-value">{{ selectedAppt.time }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Type</span>
+        <span class="badge" [ngClass]="typeBadgeClass(selectedAppt.type)">{{ selectedAppt.type }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Reason</span>
+        <span class="pd-value">{{ selectedAppt.reason }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Status</span>
+        <span class="badge" [ngClass]="statusBadgeClass(selectedAppt.status)">{{ selectedAppt.status }}</span>
+      </div>
+    </div>
+
+    <button class="join-video-btn"
+            *ngIf="selectedAppt.type === 'Video' && selectedAppt.status === 'Confirmed'"
+            (click)="joinFromPanel()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="4" width="10" height="8" rx="1.5" stroke="white" stroke-width="1.5"/>
+        <path d="M11 7l3-2v6l-3-2" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      Join Video Call
+    </button>
+
+    <div class="panel-actions">
+      <button class="panel-edit-btn" (click)="editFromPanel()">Edit</button>
+      <button class="panel-cancel-btn"
+              *ngIf="selectedAppt.status !== 'Cancelled'"
+              [disabled]="cancellingId === selectedAppt.id"
+              (click)="cancelFromPanel()">
+        {{ cancellingId === selectedAppt.id ? 'Cancelling…' : 'Cancel Appointment' }}
+      </button>
+    </div>
+  </ng-container>
+</aside>
+
+<!-- New / Edit Appointment Modal -->
+<app-appointment-form
+  *ngIf="formVisible"
+  [editData]="editAppt"
+  [doctorId]="doctorId"
+  [hospitalId]="hospitalId"
+  (saved)="onFormSaved()"
+  (cancelled)="onFormCancelled()">
+</app-appointment-form>

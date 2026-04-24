@@ -1,0 +1,259 @@
+<div class="lab-page">
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Lab Reports</h1>
+        <p class="page-sub">{{ stats.pending }} pending results &middot; {{ stats.abnormalFlags }} critical flags</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="openForm()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Request Test
+    </button>
+  </header>
+
+  <!-- Critical Flags Banner -->
+  <div class="flags-banner" *ngIf="stats.abnormalFlags > 0">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="warn-icon">
+      <circle cx="8" cy="8" r="7" stroke="#A32D2D" stroke-width="1.5"/>
+      <path d="M8 5v4" stroke="#A32D2D" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="8" cy="11" r=".75" fill="#A32D2D"/>
+    </svg>
+    <span class="flags-text">
+      {{ stats.abnormalFlags }} lab report(s) flagged as Abnormal — immediate review required.
+    </span>
+    <button class="review-link" (click)="reviewAbnormal()">Review now</button>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total reports</div>
+      <div class="stat-val">{{ stats.totalThisMonth }}</div>
+      <div class="stat-sub stat-blue">This month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val">{{ stats.pending }}</div>
+      <div class="stat-sub stat-amber">Awaiting results</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Abnormal flags</div>
+      <div class="stat-val">{{ stats.abnormalFlags }}</div>
+      <div class="stat-sub stat-red">Needs review</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Completed today</div>
+      <div class="stat-val">{{ stats.completedToday }}</div>
+      <div class="stat-sub stat-green">&#8593; from {{ stats.completedYesterday }} yesterday</div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="main-card">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="tb-input" type="text" placeholder="Search patient or test name…"
+               [ngModel]="searchValue" (ngModelChange)="onSearch($event)">
+      </div>
+      <select class="tb-input" [(ngModel)]="testTypeFilter" (change)="onTestTypeChange()">
+        <option value="">All tests</option>
+        <option *ngFor="let t of TEST_TYPES" [value]="t">{{ t }}</option>
+      </select>
+      <select class="tb-input" [(ngModel)]="statusFilter" (change)="onStatusChange()">
+        <option value="">All status</option>
+        <option value="Pending">Pending</option>
+        <option value="Ready">Ready</option>
+        <option value="Abnormal">Abnormal</option>
+      </select>
+      <input class="tb-input" type="date" [(ngModel)]="dateFilter" (change)="onDateChange()">
+    </div>
+
+    <!-- Skeleton -->
+    <div class="skel-wrap" *ngIf="loading">
+      <div class="skel-row" *ngFor="let i of [1,2,3,4,5,6,7]"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-bar" *ngIf="!loading && error">
+      <span>{{ error }}</span>
+      <button class="retry-btn" (click)="retry()">Retry</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" *ngIf="!loading && !error">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Test Name</th>
+            <th>Report Date</th>
+            <th>Result</th>
+            <th>Status</th>
+            <th>Report</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of reports" (click)="openPanel(r)" class="data-row">
+
+            <!-- Patient -->
+            <td>
+              <div class="flex-center">
+                <div class="av" [style.background]="r.avatarBg" [style.color]="r.avatarColor">
+                  {{ r.patientInitials }}
+                </div>
+                <div>
+                  <div class="pt-name">{{ r.patientName }}</div>
+                  <div class="pt-code">{{ r.patientCode }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Test Name -->
+            <td>{{ r.testName }}</td>
+
+            <!-- Report Date -->
+            <td>{{ r.reportDate | date:'MMM d, y' }}</td>
+
+            <!-- Result -->
+            <td class="result-cell">
+              <span [ngClass]="r.status === 'Abnormal' ? 'result-abnormal' : r.status === 'Ready' ? 'result-ready' : 'result-pending'">
+                {{ r.resultSummary }}
+              </span>
+            </td>
+
+            <!-- Status badge -->
+            <td>
+              <span class="badge" [ngClass]="statusBadgeClass(r.status)">{{ r.status }}</span>
+            </td>
+
+            <!-- Download button -->
+            <td (click)="$event.stopPropagation()">
+              <button class="dl-btn"
+                      [class.dl-disabled]="r.status === 'Pending'"
+                      [class.dl-loading]="downloadingId === r.id"
+                      [disabled]="r.status === 'Pending' || downloadingId === r.id"
+                      (click)="download(r, $event)"
+                      title="Download report">
+                <svg *ngIf="downloadingId !== r.id" width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <svg *ngIf="downloadingId === r.id" class="spinner" width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="30 70"/>
+                </svg>
+              </button>
+            </td>
+
+          </tr>
+          <tr *ngIf="reports.length === 0">
+            <td colspan="6" class="empty-cell">No lab reports found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && !error && total > 0">
+      <span>Showing {{ startIdx }}–{{ endIdx }} of {{ total }} reports</span>
+      <div class="pg-btns">
+        <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">&#8249;</button>
+        <ng-container *ngFor="let p of getPageNumbers()">
+          <button class="pg-btn" [class.active]="p === page"
+                  [disabled]="p === '...'" (click)="goToPage(p)">{{ p }}</button>
+        </ng-container>
+        <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">&#8250;</button>
+      </div>
+    </div>
+
+  </div><!-- /main-card -->
+
+</div><!-- /lab-page -->
+
+<!-- Side Panel Overlay -->
+<div class="panel-overlay" [class.visible]="panelVisible" (click)="closePanel()"></div>
+
+<!-- Side Panel -->
+<aside class="side-panel" [class.open]="panelVisible">
+  <div class="panel-header">
+    <span class="panel-title">Report Details</span>
+    <button class="panel-close" (click)="closePanel()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <ng-container *ngIf="selectedReport">
+    <div class="panel-patient">
+      <div class="panel-av" [style.background]="selectedReport.avatarBg" [style.color]="selectedReport.avatarColor">
+        {{ selectedReport.patientInitials }}
+      </div>
+      <div>
+        <div class="panel-pt-name">{{ selectedReport.patientName }}</div>
+        <div class="panel-pt-code">{{ selectedReport.patientCode }}</div>
+      </div>
+    </div>
+
+    <div class="panel-section-label">TEST INFORMATION</div>
+
+    <div class="panel-details">
+      <div class="panel-row">
+        <span class="pd-label">Test Name</span>
+        <span class="pd-value">{{ selectedReport.testName }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Report Date</span>
+        <span class="pd-value">{{ selectedReport.reportDate | date:'MMMM d, y' }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Status</span>
+        <span class="badge" [ngClass]="statusBadgeClass(selectedReport.status)">{{ selectedReport.status }}</span>
+      </div>
+      <div class="panel-row">
+        <span class="pd-label">Result</span>
+        <span [ngClass]="selectedReport.status === 'Abnormal' ? 'result-abnormal' : selectedReport.status === 'Ready' ? 'result-ready' : 'result-pending'">
+          {{ selectedReport.resultSummary }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Abnormal alert -->
+    <div class="panel-alert" *ngIf="selectedReport.status === 'Abnormal'">
+      ⚠ This result requires immediate clinical review.
+    </div>
+
+    <!-- Download button -->
+    <div class="panel-footer" *ngIf="selectedReport.status !== 'Pending'">
+      <button class="dl-full-btn" (click)="downloadFromPanel()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v8M5 7l3 3 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 13h10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Download Report
+      </button>
+    </div>
+  </ng-container>
+</aside>
+
+<!-- Request Test Modal -->
+<app-lab-request-form
+  *ngIf="formVisible"
+  (saved)="onFormSaved()"
+  (cancelled)="onFormCancelled()">
+</app-lab-request-form>

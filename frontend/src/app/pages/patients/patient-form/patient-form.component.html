@@ -1,0 +1,105 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">{{ isEdit ? 'Edit Patient' : 'Add Patient' }}</h2>
+      <button class="close-btn" (click)="cancel()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="server-error" *ngIf="serverError">{{ serverError }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+
+        <div class="field">
+          <label>First Name *</label>
+          <input class="inp" formControlName="firstName" placeholder="John" [class.inp-err]="f('firstName').touched && f('firstName').invalid">
+          <span class="err" *ngIf="hasError('firstName','required')">Required</span>
+          <span class="err" *ngIf="hasError('firstName','minlength')">Min 2 characters</span>
+        </div>
+
+        <div class="field">
+          <label>Last Name *</label>
+          <input class="inp" formControlName="lastName" placeholder="Smith" [class.inp-err]="f('lastName').touched && f('lastName').invalid">
+          <span class="err" *ngIf="hasError('lastName','required')">Required</span>
+          <span class="err" *ngIf="hasError('lastName','minlength')">Min 2 characters</span>
+        </div>
+
+        <div class="field" *ngIf="!isEdit">
+          <label>Email *</label>
+          <input class="inp" formControlName="email" type="email" placeholder="john@example.com" [class.inp-err]="f('email').touched && f('email').invalid">
+          <span class="err" *ngIf="hasError('email','required')">Required</span>
+          <span class="err" *ngIf="hasError('email','email')">Invalid email</span>
+        </div>
+
+        <div class="field" *ngIf="!isEdit">
+          <label>Phone</label>
+          <input class="inp" formControlName="phone" placeholder="+1 555 000 0000">
+        </div>
+
+        <div class="field" *ngIf="!isEdit">
+          <label>Password *</label>
+          <input class="inp" formControlName="password" type="password" placeholder="Min 6 characters" [class.inp-err]="f('password').touched && f('password').invalid">
+          <span class="err" *ngIf="hasError('password','required')">Required</span>
+          <span class="err" *ngIf="hasError('password','minlength')">Min 6 characters</span>
+        </div>
+
+        <div class="field">
+          <label>Age *</label>
+          <input class="inp" formControlName="age" type="number" min="0" max="150" placeholder="45" [class.inp-err]="f('age').touched && f('age').invalid">
+          <span class="err" *ngIf="hasError('age','required')">Required</span>
+          <span class="err" *ngIf="hasError('age','min') || hasError('age','max')">0–150</span>
+        </div>
+
+        <div class="field">
+          <label>Gender *</label>
+          <select class="inp" formControlName="gender" [class.inp-err]="f('gender').touched && f('gender').invalid">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <span class="err" *ngIf="hasError('gender','required')">Required</span>
+        </div>
+
+        <div class="field">
+          <label>Blood Group *</label>
+          <select class="inp" formControlName="bloodGroup" [class.inp-err]="f('bloodGroup').touched && f('bloodGroup').invalid">
+            <option value="">Select blood group</option>
+            <option *ngFor="let bg of ['A+','A-','B+','B-','O+','O-','AB+','AB-']">{{ bg }}</option>
+          </select>
+          <span class="err" *ngIf="hasError('bloodGroup','required')">Required</span>
+        </div>
+
+        <div class="field">
+          <label>Date of Birth</label>
+          <input class="inp" formControlName="dateOfBirth" type="date">
+        </div>
+
+        <div class="field field-full">
+          <label>Address</label>
+          <input class="inp" formControlName="address" placeholder="123 Main St, City">
+        </div>
+
+        <div class="field field-full">
+          <label>Emergency Contact</label>
+          <input class="inp" formControlName="emergencyContact" placeholder="Name – Phone">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <span *ngIf="saving" class="spinner"></span>
+          {{ saving ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Patient') }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

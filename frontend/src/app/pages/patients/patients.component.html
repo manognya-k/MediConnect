@@ -1,0 +1,166 @@
+<div class="page-main">
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Patients</div>
+      <div class="page-sub">{{ stats.total | number }} total patients under your care</div>
+    </div>
+    <div class="header-right">
+      <button class="hamburger-btn" (click)="layout.toggle()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 8h12M2 4h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="btn btn-primary" (click)="openAddForm()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Add Patient
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STAT CARDS ── -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-label">Total patients</div>
+      <div class="stat-val">{{ stats.total | number }}</div>
+      <div class="stat-sub sub-green">↑ {{ stats.increasePercent }}% this month</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Active this week</div>
+      <div class="stat-val">{{ stats.activeThisWeek | number }}</div>
+      <div class="stat-sub sub-blue">{{ stats.totalToday }} today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Critical cases</div>
+      <div class="stat-val">{{ stats.criticalCases }}</div>
+      <div class="stat-sub sub-red">Needs attention</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">New this month</div>
+      <div class="stat-val">{{ stats.newThisMonth }}</div>
+      <div class="stat-sub sub-green">↑ from last month</div>
+    </div>
+  </div>
+
+  <!-- ── TABLE CARD ── -->
+  <div class="card">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="inp" type="text" placeholder="Search by name, ID, diagnosis…"
+               [ngModel]="filter.search"
+               (ngModelChange)="onSearchInput($event)">
+      </div>
+      <select class="inp" [(ngModel)]="filter.gender" (change)="onFilterChange()">
+        <option value="">All genders</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <select class="inp" [(ngModel)]="filter.bloodGroup" (change)="onFilterChange()">
+        <option value="">All blood groups</option>
+        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+        <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+      </select>
+      <select class="inp" [(ngModel)]="filter.status" (change)="onFilterChange()">
+        <option value="">All status</option>
+        <option>Active</option><option>Monitoring</option>
+        <option>Critical</option><option>Inactive</option>
+      </select>
+    </div>
+
+    <!-- Error banner -->
+    <div class="error-banner" *ngIf="error">
+      <span>{{ error }}</span>
+      <button class="retry-btn" (click)="load()">Retry</button>
+    </div>
+
+    <!-- Skeleton -->
+    <div class="skeleton-wrap" *ngIf="loading">
+      <div class="skel-row" *ngFor="let i of [1,2,3,4,5,6,7,8]"></div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" *ngIf="!loading && !error">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Age / Gender</th>
+            <th>Blood Group</th>
+            <th>Diagnosis</th>
+            <th>Last Visit</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of patients; let i = index" (click)="viewPatient(p.id)">
+            <td>
+              <div class="flex-center">
+                <div class="av" [ngStyle]="avatarStyle(i)">{{ p.initials }}</div>
+                <div>
+                  <div class="patient-name">{{ p.fullName }}</div>
+                  <div class="patient-id">{{ p.patientCode }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ p.age || '—' }} / {{ p.gender ? p.gender[0] : '—' }}</td>
+            <td><span class="badge" [ngClass]="bloodBadgeClass(p.bloodGroup)">{{ p.bloodGroup }}</span></td>
+            <td>{{ p.diagnosis }}</td>
+            <td>{{ p.lastVisit ? (p.lastVisit | date:'MMM d, y') : '—' }}</td>
+            <td><span class="badge" [ngClass]="statusClass(p.status)">{{ p.status }}</span></td>
+            <td>
+              <div class="flex-center" (click)="$event.stopPropagation()">
+                <button class="action-btn" title="View" (click)="viewPatient(p.id)">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+                  </svg>
+                </button>
+                <button class="action-btn" title="Edit" (click)="openEditForm(p, $event)">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="patients.length === 0">
+            <td colspan="7" class="empty-row">No patients found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && total > 0">
+      <span>Showing {{ showStart }}–{{ showEnd }} of {{ total | number }} patients</span>
+      <div class="pg-btns">
+        <button class="pg-btn" [disabled]="filter.page === 1" (click)="prevPage()">‹</button>
+        <button class="pg-btn" *ngFor="let p of pageNumbers"
+                [class.active]="p === filter.page"
+                [class.ellipsis]="p === '…'"
+                (click)="goToPage(p)">{{ p }}</button>
+        <button class="pg-btn" [disabled]="filter.page === totalPages" (click)="nextPage()">›</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── ADD / EDIT MODAL ── -->
+<app-patient-form
+  *ngIf="showForm"
+  [patient]="editPatient"
+  (saved)="onFormSaved()"
+  (cancelled)="closeForm()">
+</app-patient-form>
