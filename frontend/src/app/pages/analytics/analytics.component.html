@@ -1,0 +1,194 @@
+<div class="analytics-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Analytics</h1>
+        <p class="page-sub">Patient, appointment &amp; lab insights</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <select class="range-select"
+              [ngModel]="activeRange"
+              (ngModelChange)="onRangeChange($event)">
+        <option value="last30">Last 30 days</option>
+        <option value="last7">Last 7 days</option>
+        <option value="last90">Last 90 days</option>
+        <option value="thisYear">This year</option>
+      </select>
+      <button class="btn btn-ghost" [disabled]="exporting" (click)="exportReport()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ exporting ? 'Exporting…' : 'Export' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div class="error-bar" *ngIf="error">
+    <span>{{ error }}</span>
+    <button class="retry-btn" (click)="loadAnalytics()">Retry</button>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total patients</div>
+      <ng-container *ngIf="!loading; else skelVal">
+        <div class="stat-val">{{ formatNumber(summary.totalPatients) }}</div>
+        <span class="stat-sub stat-green">↑ {{ summary.totalPatientsChange }}%</span>
+      </ng-container>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Appointments</div>
+      <ng-container *ngIf="!loading; else skelVal">
+        <div class="stat-val">{{ formatNumber(summary.totalAppointments) }}</div>
+        <span class="stat-sub stat-green">↑ {{ summary.totalAppointmentsChange }}%</span>
+      </ng-container>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Lab tests ordered</div>
+      <ng-container *ngIf="!loading; else skelVal">
+        <div class="stat-val">{{ formatNumber(summary.labTestsOrdered) }}</div>
+        <span class="stat-sub stat-blue">This month</span>
+      </ng-container>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg. consult time</div>
+      <ng-container *ngIf="!loading; else skelVal">
+        <div class="stat-val">{{ summary.avgConsultMinutes }}m</div>
+        <span class="stat-sub stat-gray">Per patient</span>
+      </ng-container>
+    </div>
+  </div>
+
+  <ng-template #skelVal>
+    <div class="skel skel-val"></div>
+    <div class="skel skel-badge"></div>
+  </ng-template>
+
+  <!-- Upper charts row: 2fr + 1fr -->
+  <div class="charts-grid">
+
+    <!-- Line chart: Appointments over time -->
+    <div class="chart-card" [class.chart-loading]="chartsLoading">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Appointments over time</div>
+          <div class="card-sub">In-person vs video · last 6 months</div>
+        </div>
+      </div>
+      <div class="skel skel-chart" *ngIf="loading"></div>
+      <div class="chart-wrap" *ngIf="!loading">
+        <canvas baseChart #lineChart
+          [data]="lineChartData"
+          [options]="lineChartOptions"
+          type="line">
+        </canvas>
+      </div>
+      <div class="chart-overlay" *ngIf="chartsLoading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Doughnut chart: Appointment types -->
+    <div class="chart-card" [class.chart-loading]="chartsLoading">
+      <div class="card-header">
+        <div class="card-title">Appointment types</div>
+      </div>
+      <div class="skel skel-chart" *ngIf="loading"></div>
+      <ng-container *ngIf="!loading">
+        <div class="donut-wrap">
+          <canvas baseChart #doughnutChart
+            [data]="doughnutChartData"
+            [options]="doughnutChartOptions"
+            type="doughnut">
+          </canvas>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#185FA5"></div>
+            In-person — {{ typeSplit.inPersonPercent }}%
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#1D9E75"></div>
+            Video — {{ typeSplit.videoPercent }}%
+          </div>
+        </div>
+      </ng-container>
+      <div class="chart-overlay" *ngIf="chartsLoading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Lower charts row: 1fr + 1fr -->
+  <div class="charts-row">
+
+    <!-- Bar chart: New patients per month -->
+    <div class="chart-card" [class.chart-loading]="chartsLoading">
+      <div class="card-header">
+        <div class="card-title">New patients per month</div>
+      </div>
+      <div class="skel skel-chart" *ngIf="loading"></div>
+      <div class="chart-wrap" *ngIf="!loading">
+        <canvas baseChart #barChart
+          [data]="barChartData"
+          [options]="barChartOptions"
+          type="bar">
+        </canvas>
+      </div>
+      <div class="chart-overlay" *ngIf="chartsLoading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Top diagnoses: custom HTML bar list -->
+    <div class="chart-card" [class.chart-loading]="chartsLoading">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Top diagnoses</div>
+          <div class="card-sub">By frequency</div>
+        </div>
+      </div>
+
+      <!-- Loading skeleton -->
+      <ng-container *ngIf="loading">
+        <div class="diag-skel" *ngFor="let i of [1,2,3,4,5,6]">
+          <div class="skel skel-diag-label"></div>
+          <div class="skel skel-diag-bar"></div>
+          <div class="skel skel-diag-count"></div>
+        </div>
+      </ng-container>
+
+      <!-- Actual data -->
+      <ng-container *ngIf="!loading">
+        <div class="diag-row" *ngFor="let d of topDiagnoses">
+          <div class="diag-label">{{ d.name }}</div>
+          <div class="diag-bar-wrap">
+            <div class="diag-bar"
+                 [style.width]="diagBarsReady ? d.percentage + '%' : '0%'"
+                 [style.background]="d.barColor">
+            </div>
+          </div>
+          <div class="diag-count">{{ d.count }}</div>
+        </div>
+      </ng-container>
+
+      <div class="chart-overlay" *ngIf="chartsLoading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

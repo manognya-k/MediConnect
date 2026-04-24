@@ -70,6 +70,13 @@ export const routes: Routes = [
           import('./pages/telemedicine/telemedicine.component').then(
             (m) => m.TelemedicineComponent
           )
+      },
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./pages/analytics/analytics.component').then(
+            (m) => m.AnalyticsComponent
+          )
       }
     ]
   },

@@ -1,0 +1,339 @@
+$primary:      #185FA5;
+$primary-light: #EBF3FC;
+$success-bg:   #EAF3DE;  $success-text:  #3B6D11;
+$warning-bg:   #FEF3CD;  $warning-text:  #854F0B;
+$danger-bg:    #FDECEC;  $danger-text:   #A32D2D;
+$gray-bg:      #F1EFE8;  $gray-text:     #5F5E5A;
+$border:       #E8E9EC;
+$surface:      #ffffff;
+$page-bg:      #F4F5F7;
+$text-primary: #1a1a1a;
+$text-muted:   #888888;
+
+.analytics-page {
+  padding: 28px;
+  background: $page-bg;
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+}
+
+// ── Header ────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  color: #374151;
+  &:hover { background: #f3f4f6; }
+}
+
+.page-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 26px;
+  letter-spacing: -.3px;
+  color: $text-primary;
+  margin: 0;
+}
+
+.page-sub {
+  font-size: 13px;
+  color: $text-muted;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-select {
+  padding: 8px 14px;
+  background: $surface;
+  color: #666;
+  border: 1px solid $border;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  outline: none;
+  &:focus { border-color: $primary; }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+
+  &.btn-ghost {
+    background: $surface;
+    color: #666;
+    border: 1px solid $border;
+    &:hover:not(:disabled) { background: $page-bg; }
+    &:disabled { opacity: .6; cursor: default; }
+  }
+}
+
+// ── Error bar ─────────────────────────────────────
+.error-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: $danger-bg;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $danger-text;
+}
+
+.retry-btn {
+  background: none;
+  border: 1px solid $danger-text;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: $danger-text;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  &:hover { background: $danger-text; color: #fff; }
+}
+
+// ── Stat Cards ────────────────────────────────────
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: $text-muted;
+  margin-bottom: 5px;
+}
+
+.stat-val {
+  font-size: 22px;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.stat-sub {
+  display: inline-block;
+  font-size: 11px;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border-radius: 99px;
+
+  &.stat-green { background: $success-bg; color: $success-text; }
+  &.stat-blue  { background: $primary-light; color: $primary; }
+  &.stat-gray  { background: $gray-bg; color: $gray-text; }
+}
+
+// ── Skeleton ──────────────────────────────────────
+.skel {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #F4F5F7 25%, #E8E9EC 50%, #F4F5F7 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.5s ease-in-out infinite;
+
+  &.skel-val    { height: 28px; width: 80px; margin-bottom: 6px; }
+  &.skel-badge  { height: 18px; width: 60px; border-radius: 99px; }
+  &.skel-chart  { height: 220px; border-radius: 8px; }
+  &.skel-diag-label { height: 12px; width: 100px; }
+  &.skel-diag-bar   { height: 7px; flex: 1; border-radius: 99px; }
+  &.skel-diag-count { height: 12px; width: 28px; }
+}
+
+@keyframes pulse {
+  0%   { background-position: 200% 0; opacity: .5; }
+  50%  { opacity: 1; }
+  100% { background-position: -200% 0; opacity: .5; }
+}
+
+// ── Charts grid ───────────────────────────────────
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+// ── Chart Card ────────────────────────────────────
+.chart-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.card-sub {
+  font-size: 12px;
+  color: $text-muted;
+  margin-top: 2px;
+}
+
+// ── Chart wrapper (caps canvas height) ───────────
+.chart-wrap {
+  canvas { max-height: 220px; }
+}
+
+.donut-wrap {
+  canvas { max-height: 200px; }
+}
+
+// ── Loading overlay on each card ──────────────────
+.chart-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  border-radius: 12px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid $border;
+  border-top-color: $primary;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Doughnut legend ───────────────────────────────
+.legend {
+  margin-top: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// ── Top Diagnoses ─────────────────────────────────
+.diag-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.diag-skel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.diag-label {
+  font-size: 12px;
+  color: $text-primary;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.diag-bar-wrap {
+  flex: 1;
+  background: $page-bg;
+  border-radius: 99px;
+  height: 7px;
+  overflow: hidden;
+}
+
+.diag-bar {
+  height: 100%;
+  border-radius: 99px;
+  background: $primary;
+  transition: width 0.6s ease;
+}
+
+.diag-count {
+  font-size: 12px;
+  font-weight: 500;
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+// ── Responsive ────────────────────────────────────
+@media (max-width: 1200px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 1100px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .analytics-page { padding: 16px; }
+  .stats-row  { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+}
