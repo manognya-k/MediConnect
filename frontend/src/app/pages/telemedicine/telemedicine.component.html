@@ -1,0 +1,260 @@
+<div class="tele-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Telemedicine</h1>
+        <p class="page-sub">Video consultations via session URL</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="showScheduleForm = true">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Schedule session
+    </button>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Live now</div>
+      <div class="stat-val">{{ stats.liveNow }}</div>
+      <span class="stat-sub stat-green">Active session</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today's video</div>
+      <div class="stat-val">{{ stats.todayTotal }}</div>
+      <span class="stat-sub stat-blue">{{ stats.todayRemaining }} remaining</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">This week</div>
+      <div class="stat-val">{{ stats.thisWeekTotal }}</div>
+      <span class="stat-sub stat-green">↑ {{ stats.weeklyChangePercent }}% vs last</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg. duration</div>
+      <div class="stat-val">{{ stats.avgDurationMinutes }}m</div>
+      <span class="stat-sub stat-gray">Per session</span>
+    </div>
+  </div>
+
+  <!-- Live & Upcoming -->
+  <div class="section-title">Live &amp; Upcoming</div>
+
+  <!-- Loading skeletons -->
+  <div class="sessions-grid" *ngIf="loading">
+    <div class="skel-card" *ngFor="let i of [1,2,3]">
+      <div class="skel-row skel-h40"></div>
+      <div class="skel-row skel-h60"></div>
+      <div class="skel-row skel-h32"></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-bar" *ngIf="!loading && error">
+    <span>{{ error }}</span>
+    <button class="retry-btn" (click)="loadAll(doctorId)">Retry</button>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty-state" *ngIf="!loading && !error && liveAndUpcoming.length === 0">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+      <rect x="1" y="4" width="14" height="11" rx="2" stroke="#ccc" stroke-width="1.5"/>
+      <path d="M15 9l5-3v8l-5-3" stroke="#ccc" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+    <p>No upcoming sessions today.</p>
+  </div>
+
+  <!-- Session Cards Grid -->
+  <div class="sessions-grid" *ngIf="!loading && liveAndUpcoming.length > 0">
+    <div class="session-card"
+         *ngFor="let s of liveAndUpcoming; trackBy: trackById"
+         [class.live-card]="s.status === 'Live'">
+
+      <!-- Card Top -->
+      <div class="sc-top">
+        <div class="av" [style.background]="s.avatarBg" [style.color]="s.avatarColor">
+          {{ s.patientInitials }}
+        </div>
+        <div class="sc-patient">
+          <div class="sc-name">{{ s.patientName }}</div>
+          <div class="sc-meta">{{ s.patientCode }} · {{ s.reason }}</div>
+        </div>
+
+        <!-- Live badge -->
+        <span class="badge b-live" *ngIf="s.status === 'Live'">
+          <div class="live-dot"></div>Live
+        </span>
+
+        <!-- Countdown badge for Upcoming/Scheduled -->
+        <ng-container *ngIf="s.status !== 'Live'">
+          <ng-container *ngIf="countdown$(s.id) as cd$">
+            <span class="badge"
+                  [ngClass]="countdownClass((cd$ | async) || '')"
+                  *ngIf="cd$ | async as label">
+              {{ label }}
+            </span>
+          </ng-container>
+          <ng-container *ngIf="!countdown$(s.id)">
+            <span class="badge b-gray">Scheduled</span>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <!-- Card Info Grid -->
+      <div class="sc-info">
+        <!-- Live session fields -->
+        <ng-container *ngIf="s.status === 'Live'">
+          <div class="sc-field">
+            <div class="sc-label">Started</div>
+            <div class="sc-value">{{ s.scheduledTimeDisplay }}</div>
+          </div>
+          <div class="sc-field">
+            <div class="sc-label">Duration</div>
+            <div class="sc-value">
+              <ng-container *ngIf="elapsed$(s.id) as el$">{{ el$ | async }}</ng-container>
+              <ng-container *ngIf="!elapsed$(s.id)">—</ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Non-live session fields -->
+        <ng-container *ngIf="s.status !== 'Live'">
+          <div class="sc-field">
+            <div class="sc-label">Scheduled</div>
+            <div class="sc-value">{{ s.scheduledTimeDisplay }}</div>
+          </div>
+          <div class="sc-field">
+            <div class="sc-label">Duration est.</div>
+            <div class="sc-value">{{ s.estimatedDurationMinutes }} min</div>
+          </div>
+        </ng-container>
+
+        <div class="sc-field">
+          <div class="sc-label">Type</div>
+          <div class="sc-value">Video</div>
+        </div>
+        <div class="sc-field">
+          <div class="sc-label">Blood group</div>
+          <div class="sc-value">{{ s.bloodGroup }}</div>
+        </div>
+      </div>
+
+      <!-- Card Button -->
+      <button class="join-btn"
+              *ngIf="s.status === 'Live'"
+              [disabled]="joiningId === s.id"
+              (click)="joinSession(s)">
+        <svg *ngIf="joiningId !== s.id" width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <rect x="1" y="4" width="14" height="11" rx="2" stroke="white" stroke-width="1.5"/>
+          <path d="M15 9l5-3v8l-5-3" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        {{ joiningId === s.id ? 'Connecting…' : 'Rejoin Session' }}
+      </button>
+
+      <button class="join-btn"
+              *ngIf="s.status === 'Upcoming'"
+              [disabled]="joiningId === s.id"
+              (click)="joinSession(s)">
+        {{ joiningId === s.id ? 'Connecting…' : 'Join when ready' }}
+      </button>
+
+      <button class="schedule-btn" *ngIf="s.status === 'Scheduled'" disabled>
+        Scheduled
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Past Sessions -->
+  <div class="section-title">Past sessions</div>
+  <div class="past-card">
+
+    <div class="skel-wrap" *ngIf="loading">
+      <div class="skel-row" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+
+    <div class="error-bar" *ngIf="!loading && pastError" style="margin: 0; border-radius: 0;">
+      <span>{{ pastError }}</span>
+      <button class="retry-btn" (click)="loadPastPage(pastPage)">Retry</button>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loading">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Duration</th>
+            <th>Reason</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of pastSessions; trackBy: trackById">
+            <td>
+              <div class="flex-center">
+                <div class="av av-sm"
+                     [style.background]="s.avatarBg"
+                     [style.color]="s.avatarColor">
+                  {{ s.patientInitials }}
+                </div>
+                {{ s.patientName }}
+              </div>
+            </td>
+            <td>{{ formatDate(s.scheduledTime) }}</td>
+            <td>{{ s.actualDurationMinutes != null ? s.actualDurationMinutes + ' min' : '—' }}</td>
+            <td>{{ s.reason }}</td>
+            <td>
+              <span class="badge" [ngClass]="pastStatusClass(s.status)">{{ s.status }}</span>
+            </td>
+          </tr>
+          <tr *ngIf="pastSessions.length === 0">
+            <td colspan="5" class="empty-cell">No past sessions found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && pastTotal > pastPageSize">
+      <span class="pg-info">Showing {{ pastStart }}–{{ pastEnd }} of {{ pastTotal }} past sessions</span>
+      <div class="pg-btns">
+        <button class="pg-btn" [disabled]="pastPage === 1" (click)="loadPastPage(pastPage - 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <ng-container *ngFor="let p of pastPageNumbers">
+          <span class="pg-ellipsis" *ngIf="p === -1">…</span>
+          <button class="pg-btn" *ngIf="p !== -1"
+                  [class.active]="p === pastPage"
+                  (click)="loadPastPage(p)">{{ p }}</button>
+        </ng-container>
+        <button class="pg-btn" [disabled]="pastPage === pastTotalPages" (click)="loadPastPage(pastPage + 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Schedule Session Modal -->
+<app-schedule-session-form
+  *ngIf="showScheduleForm"
+  [doctorId]="doctorId"
+  [hospitalId]="hospitalId"
+  (saved)="onSessionScheduled()"
+  (cancelled)="showScheduleForm = false">
+</app-schedule-session-form>
