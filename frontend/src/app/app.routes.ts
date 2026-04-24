@@ -77,6 +77,13 @@ export const routes: Routes = [
           import('./pages/analytics/analytics.component').then(
             (m) => m.AnalyticsComponent
           )
+      },
+      {
+        path: 'supply-chain',
+        loadComponent: () =>
+          import('./pages/supply-chain/supply-chain.component').then(
+            (m) => m.SupplyChainComponent
+          )
       }
     ]
   },

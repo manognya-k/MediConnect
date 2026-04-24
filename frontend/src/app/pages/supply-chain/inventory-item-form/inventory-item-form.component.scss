@@ -1,0 +1,139 @@
+$primary: #185FA5;
+$primary-light: #EBF3FC;
+$border: #E5E7EB;
+$surface: #F9FAFB;
+$text: #111827;
+$text-muted: #6B7280;
+$red: #E24B4A;
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  background: white;
+  border-radius: 14px;
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid $border;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: $text;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $text-muted;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  &:hover { background: $surface; }
+}
+
+.modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+}
+
+.req { color: $red; }
+
+.field-input {
+  height: 38px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: $text;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  &:focus { border-color: $primary; }
+  &.invalid { border-color: $red; }
+}
+
+.field-error {
+  font-size: 11px;
+  color: $red;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid $border;
+  margin-top: 4px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, background 0.15s;
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+.btn-ghost {
+  background: white;
+  border: 1px solid $border;
+  color: $text;
+  &:hover:not(:disabled) { background: $surface; }
+}
+
+.btn-primary {
+  background: $primary;
+  color: white;
+  &:hover:not(:disabled) { background: darken($primary, 6%); }
+}

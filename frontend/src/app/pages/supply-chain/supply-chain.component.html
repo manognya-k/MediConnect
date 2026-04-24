@@ -1,0 +1,212 @@
+<div class="sc-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Supply Chain</h1>
+        <p class="page-sub">Inventory · item name, quantity, reorder level</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" [disabled]="exporting" (click)="exportInventory()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ exporting ? 'Exporting…' : 'Export' }}
+      </button>
+      <button class="btn btn-primary" (click)="openAdd()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Add item
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Banner -->
+  <div class="alert-banner" *ngIf="!loading && alert.count > 0">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M8 2L14 13H2L8 2z" stroke="#A32D2D" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M8 7v3M8 11.5v.5" stroke="#A32D2D" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span><strong>{{ alert.count }} items</strong> are below reorder level and require immediate restocking — {{ alert.itemNames.join(', ') }}</span>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total items</div>
+      <ng-container *ngIf="!loading; else skelStat">
+        <div class="stat-val">{{ stats.totalItems }}</div>
+        <span class="stat-sub stat-blue">In inventory</span>
+      </ng-container>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Low stock</div>
+      <ng-container *ngIf="!loading; else skelStat">
+        <div class="stat-val">{{ stats.lowStockCount }}</div>
+        <span class="stat-sub stat-red">Below reorder</span>
+      </ng-container>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Categories</div>
+      <ng-container *ngIf="!loading; else skelStat">
+        <div class="stat-val">{{ stats.categoryCount }}</div>
+        <span class="stat-sub stat-gray">Types tracked</span>
+      </ng-container>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Orders pending</div>
+      <ng-container *ngIf="!loading; else skelStat">
+        <div class="stat-val">{{ stats.ordersPending }}</div>
+        <span class="stat-sub stat-amber">Awaiting delivery</span>
+      </ng-container>
+    </div>
+  </div>
+
+  <ng-template #skelStat>
+    <div class="skel skel-val"></div>
+    <div class="skel skel-badge"></div>
+  </ng-template>
+
+  <!-- Main Card -->
+  <div class="main-card">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="tb-input search-input" type="text" placeholder="Search item name…"
+               [ngModel]="filter.search"
+               (ngModelChange)="onSearch($event)">
+      </div>
+      <select class="tb-input" [ngModel]="filter.category" (ngModelChange)="onCategoryChange($event)">
+        <option value="">All categories</option>
+        <option value="Medication">Medication</option>
+        <option value="Equipment">Equipment</option>
+        <option value="Consumable">Consumable</option>
+        <option value="PPE">PPE</option>
+      </select>
+      <select class="tb-input" [ngModel]="filter.status" (ngModelChange)="onStatusChange($event)">
+        <option value="">All status</option>
+        <option value="OK">OK</option>
+        <option value="Low">Low</option>
+        <option value="Critical">Critical</option>
+      </select>
+    </div>
+
+    <!-- Error -->
+    <div class="error-bar" *ngIf="error">
+      <span>{{ error }}</span>
+      <button class="retry-btn" (click)="loadAll()">Retry</button>
+    </div>
+
+    <!-- Loading skeleton -->
+    <div class="skel-wrap" *ngIf="loading">
+      <div class="skel-row" *ngFor="let i of [1,2,3,4,5,6,7,8]"></div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" *ngIf="!loading">
+      <table>
+        <thead>
+          <tr>
+            <th>Item name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Reorder level</th>
+            <th>Stock level</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of displayedItems; trackBy: trackById">
+            <td class="item-name">{{ item.itemName }}</td>
+            <td>{{ item.category }}</td>
+            <td [ngClass]="quantityClass(item)">{{ item.quantity }}</td>
+            <td>{{ item.reorderLevel }}</td>
+            <td>
+              <div class="flex-center">
+                <div class="stock-bar-wrap">
+                  <div class="stock-bar"
+                       [style.width.%]="item.stockPercent"
+                       [style.background]="item.barColor">
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="statusClass(item.status)">{{ item.status }}</span>
+            </td>
+            <td>
+              <!-- Reorder button for Critical/Low -->
+              <button class="reorder-btn"
+                      *ngIf="item.status !== 'OK'"
+                      [disabled]="reorderingId === item.id"
+                      (click)="reorder(item)">
+                {{ reorderingId === item.id ? 'Ordering…' : 'Reorder' }}
+              </button>
+              <!-- Edit button for OK -->
+              <button class="action-btn"
+                      *ngIf="item.status === 'OK'"
+                      (click)="openEdit(item)"
+                      title="Edit item">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="displayedItems.length === 0">
+            <td colspan="7" class="empty-cell">No items match the current filters.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && total > filter.pageSize">
+      <span class="pg-info">Showing {{ showStart }}–{{ showEnd }} of {{ total }} items</span>
+      <div class="pg-btns">
+        <button class="pg-btn" [disabled]="filter.page === 1" (click)="goToPage(filter.page - 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <ng-container *ngFor="let p of pageNumbers">
+          <span class="pg-ellipsis" *ngIf="p === -1">…</span>
+          <button class="pg-btn" *ngIf="p !== -1"
+                  [class.active]="p === filter.page"
+                  (click)="goToPage(p)">{{ p }}</button>
+        </ng-container>
+        <button class="pg-btn" [disabled]="filter.page === totalPages" (click)="goToPage(filter.page + 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Add / Edit Item Modal -->
+<app-inventory-item-form
+  *ngIf="showForm"
+  [editData]="editingItem"
+  [hospitalId]="hospitalId"
+  (saved)="onFormSaved()"
+  (cancelled)="showForm = false">
+</app-inventory-item-form>

@@ -1,0 +1,59 @@
+<div class="modal-backdrop" (click)="cancelled.emit()"></div>
+
+<div class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">{{ isEdit ? 'Edit item' : 'Add item' }}</h2>
+    <button class="close-btn" (click)="cancelled.emit()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="modal-body">
+
+    <div class="field">
+      <label class="field-label">Item name <span class="req">*</span></label>
+      <input class="field-input" type="text" placeholder="e.g. Paracetamol 500mg"
+             formControlName="itemName"
+             [class.invalid]="hasError('itemName', 'required') || hasError('itemName', 'maxlength')">
+      <span class="field-error" *ngIf="hasError('itemName', 'required')">Item name is required.</span>
+      <span class="field-error" *ngIf="hasError('itemName', 'maxlength')">Max 100 characters.</span>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Category <span class="req">*</span></label>
+      <select class="field-input" formControlName="category">
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Quantity <span class="req">*</span></label>
+        <input class="field-input" type="number" min="0" placeholder="0"
+               formControlName="quantity"
+               [class.invalid]="hasError('quantity', 'required') || hasError('quantity', 'min')">
+        <span class="field-error" *ngIf="hasError('quantity', 'required')">Quantity is required.</span>
+        <span class="field-error" *ngIf="hasError('quantity', 'min')">Cannot be negative.</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Reorder level <span class="req">*</span></label>
+        <input class="field-input" type="number" min="1" placeholder="10"
+               formControlName="reorderLevel"
+               [class.invalid]="hasError('reorderLevel', 'required') || hasError('reorderLevel', 'min')">
+        <span class="field-error" *ngIf="hasError('reorderLevel', 'required')">Reorder level is required.</span>
+        <span class="field-error" *ngIf="hasError('reorderLevel', 'min')">Must be at least 1.</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" (click)="cancelled.emit()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="submitting">
+        {{ submitting ? 'Saving…' : (isEdit ? 'Save changes' : 'Add item') }}
+      </button>
+    </div>
+
+  </form>
+</div>
