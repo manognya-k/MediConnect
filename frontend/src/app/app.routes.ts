@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { patientAuthGuard } from './guards/patient-auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
+
+  // ── Doctor portal ──
   {
     path: 'login',
     loadComponent: () =>
@@ -94,5 +97,82 @@ export const routes: Routes = [
       }
     ]
   },
+
+  // ── Patient portal ──
+  {
+    path: 'patient/login',
+    loadComponent: () =>
+      import('./patient/pages/patient-login/patient-login.component').then(
+        (m) => m.PatientLoginComponent
+      )
+  },
+  {
+    path: 'patient',
+    canActivate: [patientAuthGuard],
+    loadComponent: () =>
+      import('./layouts/patient-layout/patient-layout.component').then(
+        (m) => m.PatientLayoutComponent
+      ),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./patient/pages/patient-dashboard/patient-dashboard.component').then(
+            (m) => m.PatientDashboardComponent
+          )
+      },
+      {
+        path: 'appointments',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      },
+      {
+        path: 'records',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      },
+      {
+        path: 'lab-reports',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      },
+      {
+        path: 'telemedicine',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      },
+      {
+        path: 'reminders',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      },
+      {
+        path: 'ai',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
+            (m) => m.PatientPlaceholderComponent
+          )
+      }
+    ]
+  },
+
   { path: '**', redirectTo: '/login' }
 ];

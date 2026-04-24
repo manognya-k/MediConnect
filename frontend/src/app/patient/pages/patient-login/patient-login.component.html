@@ -1,0 +1,67 @@
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">MediConnect</div>
+        <div class="brand-sub">PATIENT PORTAL</div>
+      </div>
+    </div>
+
+    <h1 class="card-title">Welcome back</h1>
+    <p class="card-sub">Sign in to your patient account</p>
+
+    <div class="error-bar" *ngIf="error">{{ error }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+
+      <div class="field">
+        <label class="field-label">Email address</label>
+        <input class="field-input" type="email" placeholder="you@example.com"
+               formControlName="email"
+               [class.invalid]="hasError('email')">
+        <span class="field-error" *ngIf="hasError('email')">Enter a valid email.</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Password</label>
+        <div class="input-wrap">
+          <input class="field-input" [type]="showPassword ? 'text' : 'password'"
+                 placeholder="••••••••"
+                 formControlName="password"
+                 [class.invalid]="hasError('password')">
+          <button type="button" class="toggle-pw" (click)="showPassword = !showPassword">
+            <svg *ngIf="!showPassword" width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="#8A94A6" stroke-width="1.5"/>
+              <circle cx="8" cy="8" r="2" stroke="#8A94A6" stroke-width="1.5"/>
+            </svg>
+            <svg *ngIf="showPassword" width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M2 2l12 12M6.5 6.6A2 2 0 009.4 9.5M4 4.3C2.5 5.4 1 8 1 8s2.5 5 7 5c1.4 0 2.7-.4 3.8-1M7 3.1C7.3 3 7.7 3 8 3c4.5 0 7 5 7 5s-.7 1.4-2 2.7" stroke="#8A94A6" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <span class="field-error" *ngIf="hasError('password')">Password is required.</span>
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="loading">
+        <span *ngIf="!loading">Patient Login</span>
+        <span *ngIf="loading" class="spinner-row">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="spin">
+            <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+            <path d="M8 2a6 6 0 016 6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Signing in…
+        </span>
+      </button>
+
+    </form>
+
+    <p class="footer-note">Are you a doctor? <a href="/login">Doctor login →</a></p>
+
+  </div>
+</div>

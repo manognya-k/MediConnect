@@ -1,0 +1,252 @@
+<div class="content">
+
+  <!-- ═══ LOADING STATE ═══ -->
+  <ng-container *ngIf="loading">
+    <div class="skel skel-hero"></div>
+    <div class="stat-row">
+      <div class="skel skel-stat-card" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+    <div class="grid-2">
+      <div class="skel skel-card-lg"></div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="skel skel-card-md"></div>
+        <div class="skel skel-card-sm"></div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="skel skel-card-md" *ngFor="let i of [1,2,3]"></div>
+    </div>
+  </ng-container>
+
+  <!-- ═══ ERROR STATE ═══ -->
+  <div class="error-bar" *ngIf="error">{{ error }}</div>
+
+  <!-- ═══ LOADED STATE ═══ -->
+  <ng-container *ngIf="!loading && !error">
+
+    <!-- ── HEALTH HERO ── -->
+    <div class="health-hero">
+      <div class="hh-left">
+        <div class="hh-greeting">{{ greeting }}</div>
+        <div class="hh-name">{{ patient.name }}</div>
+        <div class="hh-meta">
+          <div class="hh-chip">
+            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke="currentColor" stroke-width="1.5"/></svg>
+            Age {{ patient.age }} · {{ patient.gender }}
+          </div>
+          <div class="hh-chip">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            {{ patient.bloodGroup }} Blood Group
+          </div>
+          <div class="hh-chip">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3 4 7-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Next appt: {{ stats.nextAppointmentDate }}
+          </div>
+        </div>
+      </div>
+      <div class="hh-right">
+        <div class="health-score-ring">
+          <svg class="hsr-svg" viewBox="0 0 100 100">
+            <circle class="hsr-bg" cx="50" cy="50" r="45"/>
+            <circle class="hsr-val" cx="50" cy="50" r="45"
+                    [style.stroke-dashoffset]="animatedOffset"/>
+          </svg>
+          <div class="hsr-label">
+            <div class="hsr-num">{{ healthScore.score }}</div>
+            <div class="hsr-sub">/ 100</div>
+          </div>
+        </div>
+        <div class="hs-label">Health Score</div>
+        <div class="hs-status">{{ healthScore.status }}</div>
+      </div>
+    </div>
+
+    <!-- ── STAT CARDS ── -->
+    <div class="stat-row">
+      <!-- Upcoming Appointments -->
+      <div class="stat-card">
+        <div class="sc-icon" style="background:var(--blue-lt)">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#1A5FA8" stroke-width="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="#1A5FA8" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="sc-label">Upcoming Appointments</div>
+        <div class="sc-val">{{ stats.upcomingAppointments }}</div>
+        <div class="sc-sub b-blue">Next: {{ stats.nextAppointmentDate }}</div>
+      </div>
+      <!-- Pending Lab Reports -->
+      <div class="stat-card">
+        <div class="sc-icon" style="background:var(--amber-lt)">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M6 2v5L3 13h10L10 7V2" stroke="#B45309" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 2h5" stroke="#B45309" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="sc-label">Pending Lab Reports</div>
+        <div class="sc-val">{{ stats.pendingLabReports }}</div>
+        <div class="sc-sub b-amber">{{ stats.labReportDueToday ? 'Result due today' : 'Pending review' }}</div>
+      </div>
+      <!-- Active Prescriptions -->
+      <div class="stat-card">
+        <div class="sc-icon" style="background:var(--green-lt)">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="13" rx="1.5" stroke="#0F7B50" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="#0F7B50" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="sc-label">Active Prescriptions</div>
+        <div class="sc-val">{{ stats.activePrescriptions }}</div>
+        <div class="sc-sub b-green">All on schedule</div>
+      </div>
+      <!-- Unread Notifications -->
+      <div class="stat-card">
+        <div class="sc-icon" style="background:var(--red-lt)">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#B91C1C" stroke-width="1.5"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="#B91C1C" stroke-width="1.5"/></svg>
+        </div>
+        <div class="sc-label">Unread Notifications</div>
+        <div class="sc-val">{{ stats.unreadNotifications }}</div>
+        <div class="sc-sub b-red">{{ stats.urgentNotifications }} urgent</div>
+      </div>
+    </div>
+
+    <!-- ── ROW 2 ── -->
+    <div class="grid-2">
+
+      <!-- Upcoming Appointments Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Upcoming Appointments</div>
+          <a class="card-link" routerLink="/patient/appointments">View all →</a>
+        </div>
+        <div class="appt-item" *ngFor="let appt of appointments; trackBy: trackByAppt">
+          <div class="ai-date">
+            <div class="ai-day">{{ appt.day }}</div>
+            <div class="ai-mon">{{ appt.month }}</div>
+          </div>
+          <div class="ai-info">
+            <div class="ai-doc">{{ appt.doctorName }}</div>
+            <div class="ai-spec">{{ appt.speciality }}<span *ngIf="appt.hospital"> · {{ appt.hospital }}</span></div>
+            <div class="ai-time">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#8A94A6" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="#8A94A6" stroke-width="1.5" stroke-linecap="round"/></svg>
+              {{ appt.time }} · {{ appt.type }}
+            </div>
+          </div>
+          <span class="badge" [ngClass]="apptStatusClass(appt.status === 'Pending' && appt.type === 'Video' ? 'Video' : appt.status)">
+            {{ appt.status === 'Pending' && appt.type === 'Video' ? 'Video' : appt.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- RIGHT STACK -->
+      <div class="right-stack">
+
+        <!-- Health Vitals -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Health Vitals</div>
+            <span class="card-date">Last updated {{ vitals.lastUpdated }}</span>
+          </div>
+          <div class="vital-item">
+            <div class="vi-top"><span class="vi-label">Blood Pressure</span><span class="vi-val" [style.color]="vitals.bloodPressureColor">{{ vitals.bloodPressure }}</span></div>
+            <div class="vi-bar"><div class="vi-fill" [style.width.%]="vitals.bloodPressurePercent" [style.background]="vitals.bloodPressureBar"></div></div>
+          </div>
+          <div class="vital-item">
+            <div class="vi-top"><span class="vi-label">Heart Rate</span><span class="vi-val" [style.color]="vitals.heartRateColor">{{ vitals.heartRate }}</span></div>
+            <div class="vi-bar"><div class="vi-fill" [style.width.%]="vitals.heartRatePercent" [style.background]="vitals.heartRateBar"></div></div>
+          </div>
+          <div class="vital-item">
+            <div class="vi-top"><span class="vi-label">Blood Glucose</span><span class="vi-val" [style.color]="vitals.bloodGlucoseColor">{{ vitals.bloodGlucose }}</span></div>
+            <div class="vi-bar"><div class="vi-fill" [style.width.%]="vitals.bloodGlucosePercent" [style.background]="vitals.bloodGlucoseBar"></div></div>
+          </div>
+          <div class="vital-item">
+            <div class="vi-top"><span class="vi-label">BMI</span><span class="vi-val" [style.color]="vitals.bmiColor">{{ vitals.bmi }}</span></div>
+            <div class="vi-bar"><div class="vi-fill" [style.width.%]="vitals.bmiPercent" [style.background]="vitals.bmiBar"></div></div>
+          </div>
+        </div>
+
+        <!-- Today's Medicines -->
+        <div class="card card-sm">
+          <div class="card-header">
+            <div class="card-title card-title-sm">Today's Medicines</div>
+            <a class="card-link" routerLink="/patient/reminders">All →</a>
+          </div>
+          <div class="rem-item" *ngFor="let med of medicines; trackBy: trackByMed">
+            <div class="ri-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <ellipse cx="8" cy="8" rx="6" ry="3" stroke="#1A5FA8" stroke-width="1.5" transform="rotate(-45 8 8)"/>
+              </svg>
+            </div>
+            <div class="ri-info">
+              <div class="ri-name">{{ med.name }}</div>
+              <div class="ri-dose">{{ med.dosage }}</div>
+            </div>
+            <div class="ri-time" [ngClass]="medicineTimeClass(med.status)">{{ medicineTimeLabel(med) }}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── ROW 3 ── -->
+    <div class="grid-3">
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Recent Activity</div></div>
+        <div class="act-item" *ngFor="let item of activity; trackBy: trackByActivity">
+          <div class="act-dot" [style.background]="item.dotColor"></div>
+          <div>
+            <div class="act-text" [innerHTML]="safe(item.text)"></div>
+            <div class="act-time">{{ item.timeAgo }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Notifications</div>
+          <span class="badge b-red">{{ stats.unreadNotifications }} new</span>
+        </div>
+        <div class="notif-item" *ngFor="let notif of notifications; trackBy: trackByNotif">
+          <div class="ni-icon" [style.background]="notif.iconBg">
+            <!-- Warning -->
+            <svg *ngIf="notif.iconType === 'warning'" width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2L14 13H2L8 2z" [attr.stroke]="notif.iconStroke" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M8 7v3" [attr.stroke]="notif.iconStroke" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <!-- Calendar -->
+            <svg *ngIf="notif.iconType === 'calendar'" width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="3" width="12" height="11" rx="1.5" [attr.stroke]="notif.iconStroke" stroke-width="1.5"/>
+              <path d="M2 7h12" [attr.stroke]="notif.iconStroke" stroke-width="1.5"/>
+            </svg>
+            <!-- Bell -->
+            <svg *ngIf="notif.iconType === 'bell'" width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" [attr.stroke]="notif.iconStroke" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="ni-msg" [innerHTML]="safe(notif.message)"></div>
+            <div class="ni-time">{{ notif.timeAgo }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Health Assistant Panel -->
+      <div class="card ai-panel">
+        <div class="card-header" style="margin-bottom:14px">
+          <div class="card-title ai-title">AI Health Assistant</div>
+          <span class="ai-online-badge">● Online</span>
+        </div>
+        <div class="ai-preview">
+          <div class="ai-preview-label">Ask me anything</div>
+          <div class="ai-preview-text">
+            Your LDL cholesterol reading of
+            <strong class="ai-highlight">185 mg/dL</strong>
+            is elevated. I recommend discussing statin therapy with your doctor at your next visit.
+          </div>
+        </div>
+        <div class="ai-chips">
+          <button class="ai-chip" (click)="goToAi('Explain my lab report')">Explain my lab report</button>
+          <button class="ai-chip" (click)="goToAi('Symptom checker')">Symptom checker</button>
+          <button class="ai-chip" (click)="goToAi('Book appointment')">Book appointment</button>
+        </div>
+        <button class="ai-cta" (click)="goToAi()">Open AI Assistant →</button>
+      </div>
+
+    </div>
+  </ng-container>
+
+</div>

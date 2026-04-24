@@ -1,0 +1,311 @@
+$navy:     #0D2B4E;
+$blue:     #1A5FA8;
+$blue-mid: #2272C3;
+$border:   #E2E8F0;
+$bg:       #F2F4F8;
+$sb-width: 240px;
+
+.layout-wrap {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+
+// ── SIDEBAR ──
+.sb {
+  width: $sb-width;
+  min-width: $sb-width;
+  background: $navy;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+  transition: transform 0.22s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.04);
+    pointer-events: none;
+  }
+}
+
+.sb-closed .sb { transform: translateX(-$sb-width); }
+.sb-closed .layout-main { margin-left: 0; }
+
+.sb-header {
+  padding: 24px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+
+.sb-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-logo-mark {
+  width: 32px; height: 32px;
+  background: $blue-mid;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.sb-logo-text {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.3px;
+  font-family: 'Fraunces', 'Instrument Serif', serif;
+}
+
+.sb-logo-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+.sb-patient {
+  margin: 16px 20px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.06);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.sb-av {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3A9BD5, #1A5FA8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #fff;
+  flex-shrink: 0;
+}
+
+.sb-pname { font-size: 13px; font-weight: 500; color: #fff; }
+.sb-pid   { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 1px; }
+
+// skeleton for patient card
+.sb-patient-skel { gap: 10px; }
+.sb-av-skel { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+.skel-lines { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.skel-name  { height: 12px; width: 80%; }
+.skel-id    { height: 10px; width: 60%; }
+
+.skel {
+  background: rgba(255,255,255,.12);
+  border-radius: 6px;
+  animation: skPulse 1.4s ease-in-out infinite;
+}
+@keyframes skPulse { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+
+.sb-nav {
+  flex: 1;
+  padding: 8px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-section {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,.3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 10px 8px 6px;
+  margin-top: 4px;
+}
+
+.ni {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255,255,255,.6);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 1px;
+  position: relative;
+
+  svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8; }
+
+  &:hover { background: rgba(255,255,255,.07); color: #fff; }
+
+  &.active {
+    background: $blue-mid;
+    color: #fff;
+    font-weight: 500;
+    svg { opacity: 1; }
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 20px;
+      background: #fff;
+      border-radius: 0 3px 3px 0;
+    }
+  }
+}
+
+.ni-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  background: #B91C1C;
+  color: #fff;
+  border-radius: 99px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  &.ni-badge-amber { background: #B45309; }
+}
+
+.sb-foot {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+
+.sb-foot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  &:hover { background: rgba(255,255,255,.06); }
+}
+
+.sf-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.sf-label { font-size: 12px; color: rgba(255,255,255,.5); }
+
+// ── MAIN ──
+.layout-main {
+  margin-left: $sb-width;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  transition: margin-left 0.22s ease;
+  background: $bg;
+}
+
+// ── TOP BAR ──
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid $border;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.tb-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  &:hover { background: $bg; }
+}
+
+.tb-title {
+  font-family: 'Fraunces', 'Instrument Serif', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: $navy;
+  letter-spacing: -0.3px;
+}
+
+.tb-sub {
+  font-size: 12px;
+  color: #8A94A6;
+  margin-top: 1px;
+}
+
+.tb-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-blood {
+  font-size: 12px;
+  color: #8A94A6;
+  background: $bg;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid $border;
+  strong { color: #0D1B2A; font-weight: 600; }
+}
+
+.tb-notif {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: 1px solid $border;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.tb-notif-dot {
+  position: absolute;
+  top: 7px; right: 7px;
+  width: 7px; height: 7px;
+  background: #B91C1C;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+}
+
+// ── CONTENT ──
+.layout-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .sb { transform: translateX(-$sb-width); }
+  .layout-main { margin-left: 0; }
+  .sb-closed .sb { transform: translateX(0); }
+}
