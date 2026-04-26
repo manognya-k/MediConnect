@@ -1,0 +1,585 @@
+// ── Token aliases (already defined in patient layout) ──
+$navy:      #0D2B4E;
+$blue:      #1A5FA8;
+$blue-mid:  #2272C3;
+$blue-lt:   #E8F2FD;
+$blue-xlt:  #F2F8FF;
+$green:     #0F7B50;
+$green-lt:  #E6F5EF;
+$amber:     #B45309;
+$amber-lt:  #FEF3CD;
+$red:       #B91C1C;
+$red-lt:    #FEE2E2;
+$text:      #0D1B2A;
+$mid:       #4A5568;
+$sub:       #8A94A6;
+$border:    #E2E8F0;
+$bg:        #F2F4F8;
+$white:     #FFFFFF;
+$shadow:    0 1px 4px rgba(13,43,78,.07), 0 4px 16px rgba(13,43,78,.05);
+$radius:    16px;
+
+.appts-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: $bg;
+  font-family: 'DM Sans', sans-serif;
+}
+
+// ── Top Bar ──────────────────────────────────────────────
+.topbar {
+  background: $white;
+  border-bottom: 1px solid $border;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.tb-left { display: flex; flex-direction: column; }
+
+.tb-title {
+  font-family: 'Instrument Serif', 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: $navy;
+  letter-spacing: -0.3px;
+}
+
+.tb-sub { font-size: 12px; color: $sub; margin-top: 1px; }
+
+// ── Buttons ──────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  padding: 9px 16px;
+  transition: all 0.15s;
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+.btn-primary {
+  background: $blue-mid;
+  color: $white;
+  &:hover:not(:disabled) { background: $blue; }
+}
+
+.btn-ghost {
+  background: $white;
+  color: $mid;
+  border: 1px solid $border;
+  &:hover:not(:disabled) { background: $bg; }
+}
+
+.btn-sm { font-size: 11px; padding: 5px 10px; }
+
+.btn-danger {
+  color: $red !important;
+  border-color: $red-lt !important;
+  &:hover:not(:disabled) { background: $red-lt !important; }
+}
+
+.btn-danger-solid {
+  background: $red;
+  color: $white;
+  border: none;
+  &:hover:not(:disabled) { background: darken($red, 8%); }
+}
+
+// ── Content ──────────────────────────────────────────────
+.content { padding: 28px 32px; }
+
+// ── Promo Banner ─────────────────────────────────────────
+.book-panel {
+  background: linear-gradient(135deg, $navy, #1A4A8A);
+  border-radius: $radius;
+  padding: 24px 28px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.bp-title {
+  font-family: 'Instrument Serif', 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: $white;
+  margin-bottom: 4px;
+}
+
+.bp-sub { font-size: 13px; color: rgba(255,255,255,.6); }
+
+.book-btn {
+  background: $white;
+  color: $navy;
+  border: none;
+  border-radius: 9px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  &:hover { opacity: 0.9; }
+}
+
+// ── Tab Bar ──────────────────────────────────────────────
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 22px;
+  background: $white;
+  border-radius: 12px;
+  padding: 5px;
+  border: 1px solid $border;
+  width: fit-content;
+}
+
+.tab {
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: $sub;
+  transition: all 0.15s;
+  &:hover:not(.active) { background: $bg; }
+  &.active { background: $blue-mid; color: $white; }
+}
+
+// ── Error / Retry ─────────────────────────────────────────
+.error-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: $red-lt;
+  border: 1px solid lighten($red, 30%);
+  border-radius: 10px;
+  font-size: 13px;
+  color: darken($red, 5%);
+  margin-bottom: 16px;
+}
+
+.retry-btn {
+  background: none;
+  border: 1px solid $red;
+  color: $red;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  &:hover { background: $red; color: $white; }
+}
+
+// ── Skeleton ─────────────────────────────────────────────
+@keyframes skeletonPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+.skel-card {
+  height: 96px;
+  background: $border;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.skel {
+  background: $border;
+  border-radius: 8px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+// ── Empty State ───────────────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: $sub;
+  svg { display: block; margin: 0 auto 12px; opacity: 0.3; }
+  p   { font-size: 14px; }
+}
+
+// ── Appointment Card ──────────────────────────────────────
+.appt-card {
+  background: $white;
+  border-radius: 14px;
+  padding: 20px 22px;
+  border: 1px solid $border;
+  box-shadow: $shadow;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  transition: box-shadow 0.15s;
+
+  &:hover, &.hovered { box-shadow: 0 4px 20px rgba(13,43,78,.12); }
+
+  &.upcoming   { border-left: 3px solid $blue-mid; }
+  &.past       { border-left: 3px solid $border; opacity: 0.8; }
+  &.cancelled  { border-left: 3px solid $red-lt; }
+}
+
+// ── Date Box ─────────────────────────────────────────────
+.ac-date {
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid $blue-lt;
+  background: $blue-xlt;
+
+  &.past {
+    background: $bg;
+    border-color: $border;
+    .ac-day { color: $sub; }
+  }
+
+  &.cancelled {
+    background: $red-lt;
+    border-color: lighten($red, 25%);
+    .ac-day { color: $red; }
+  }
+}
+
+.ac-day {
+  font-family: 'Instrument Serif', 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: $blue;
+  line-height: 1;
+}
+
+.ac-mon {
+  font-size: 10px;
+  font-weight: 600;
+  color: $sub;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// ── Info Column ───────────────────────────────────────────
+.ac-doc  { font-size: 15px; font-weight: 600; color: $navy; }
+.ac-spec { font-size: 12px; color: $sub; margin-top: 2px; }
+
+.ac-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.ac-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: $mid;
+  background: $bg;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+// ── Actions Column ────────────────────────────────────────
+.ac-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.action-row { display: flex; gap: 8px; }
+
+// ── Badges ───────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.b-green { background: $green-lt; color: $green; }
+.b-blue  { background: $blue-lt;  color: $blue; }
+.b-amber { background: $amber-lt; color: $amber; }
+.b-gray  { background: $bg;       color: $sub; }
+.b-red   { background: $red-lt;   color: $red; }
+
+// ── Overlay + Dialog ─────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13,43,78,.35);
+  z-index: 200;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  background: $white;
+  border-radius: 14px;
+  padding: 24px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+
+.dialog-title { font-size: 15px; font-weight: 600; color: $navy; margin-bottom: 10px; }
+.dialog-body  { font-size: 13px; color: $mid; line-height: 1.5; margin-bottom: 20px; }
+.dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
+
+// ── Modals ────────────────────────────────────────────────
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  background: $white;
+  border-radius: 16px;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+
+  &.modal-lg { width: 500px; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid $border;
+}
+
+.modal-title {
+  font-family: 'Instrument Serif', 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: $navy;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid $border;
+  margin-top: 4px;
+}
+
+.close-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid $border;
+  background: $white;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $sub;
+  &:hover { background: $bg; }
+}
+
+// ── Form fields ───────────────────────────────────────────
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+}
+
+.req { color: $red; }
+
+.field-input {
+  height: 38px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: $text;
+  background: $white;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  &:focus   { border-color: $blue; }
+  &.invalid { border-color: $red; }
+  &[readonly] { background: $bg; color: $sub; cursor: default; }
+}
+
+.field-error { font-size: 11px; color: $red; }
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+.radio-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: $text;
+  cursor: pointer;
+  input { cursor: pointer; accent-color: $blue-mid; }
+}
+
+// ── Notes Panel ───────────────────────────────────────────
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13,43,78,.25);
+  z-index: 200;
+}
+
+.notes-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 400px;
+  max-width: 100vw;
+  background: $white;
+  border-left: 1px solid $border;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 220ms ease;
+  box-shadow: -4px 0 24px rgba(13,43,78,.1);
+
+  &.open { transform: translateX(0); }
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+}
+
+.panel-title { font-size: 15px; font-weight: 600; color: $navy; }
+
+.panel-info {
+  padding: 14px 22px;
+  border-bottom: 1px solid $bg;
+  flex-shrink: 0;
+}
+
+.panel-doc  { font-size: 14px; font-weight: 500; color: $text; }
+.panel-meta { font-size: 12px; color: $sub; margin-top: 2px; }
+
+.panel-body { flex: 1; overflow-y: auto; padding: 16px 22px; }
+
+.notes-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: $sub;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.notes-box {
+  background: $bg;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: $mid;
+  line-height: 1.6;
+}
+
+.notes-content {
+  font-size: 13px;
+  color: $mid;
+  line-height: 1.6;
+}
+
+.panel-error { font-size: 13px; color: $red; }
+
+.retry-link {
+  background: none;
+  border: none;
+  color: $blue-mid;
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 4px;
+}
+
+// ── Responsive ────────────────────────────────────────────
+@media (max-width: 900px) {
+  .appt-card {
+    grid-template-columns: auto 1fr;
+    .ac-actions {
+      grid-column: 1 / -1;
+      align-items: flex-start;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .content { padding: 16px; }
+  .topbar  { padding: 0 16px; }
+  .book-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    .book-btn { width: 100%; text-align: center; }
+  }
+}

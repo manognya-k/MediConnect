@@ -118,8 +118,8 @@ export const routes: Routes = [
       {
         path: 'appointments',
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-appointments/patient-appointments.component').then(
+            (m) => m.PatientAppointmentsComponent
           )
       },
       {

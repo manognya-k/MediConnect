@@ -1,0 +1,297 @@
+<div class="appts-page">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-title">Appointments</div>
+      <div class="tb-sub">Manage &amp; book consultations</div>
+    </div>
+    <button class="btn btn-primary" (click)="openBook()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Book Appointment
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- Book Promo Banner -->
+    <div class="book-panel">
+      <div>
+        <div class="bp-title">Need a consultation?</div>
+        <div class="bp-sub">Book an in-person or video appointment with your doctor in minutes.</div>
+      </div>
+      <button class="book-btn" (click)="openBook()">Book Now</button>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <div class="tab" [class.active]="activeTab === 'upcoming'" (click)="switchTab('upcoming')">
+        Upcoming ({{ tabCounts.upcoming }})
+      </div>
+      <div class="tab" [class.active]="activeTab === 'past'" (click)="switchTab('past')">Past</div>
+      <div class="tab" [class.active]="activeTab === 'cancelled'" (click)="switchTab('cancelled')">Cancelled</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-bar" *ngIf="error">
+      <span>{{ error }}</span>
+      <button class="retry-btn" (click)="loadData()">Retry</button>
+    </div>
+
+    <!-- Loading Skeletons -->
+    <ng-container *ngIf="loading">
+      <div class="skel-card" *ngFor="let i of [1,2,3]"></div>
+    </ng-container>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="!loading && !error && cards.length === 0">
+      <svg width="48" height="48" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#8A94A6" stroke-width="1.5"/>
+        <path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="#8A94A6" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <p>No {{ activeTab }} appointments</p>
+    </div>
+
+    <!-- Appointment Cards -->
+    <ng-container *ngIf="!loading && !error && cards.length > 0">
+      <div *ngFor="let appt of cards; trackBy: trackById"
+           class="appt-card" [ngClass]="appt.tab"
+           (mouseenter)="$any($event.currentTarget).classList.add('hovered')"
+           (mouseleave)="$any($event.currentTarget).classList.remove('hovered')">
+
+        <!-- Date Box -->
+        <div class="ac-date" [ngClass]="appt.tab">
+          <div class="ac-day">{{ appt.day }}</div>
+          <div class="ac-mon">{{ appt.month }}</div>
+        </div>
+
+        <!-- Info -->
+        <div class="ac-info">
+          <div class="ac-doc">{{ appt.doctorName }}</div>
+          <div class="ac-spec">{{ appt.speciality }}<ng-container *ngIf="appt.hospital"> · {{ appt.hospital }}</ng-container></div>
+          <div class="ac-meta">
+            <div class="ac-chip">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="#8A94A6" stroke-width="1.5"/>
+                <path d="M8 5v3l2 2" stroke="#8A94A6" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              {{ appt.time }}
+            </div>
+            <div class="ac-chip">{{ appt.type === 'Video' ? '📹 ' : '' }}{{ appt.type }}</div>
+            <div class="ac-chip">{{ appt.reason }}</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="ac-actions">
+
+          <!-- Case A: Upcoming In-person Confirmed -->
+          <ng-container *ngIf="actionCase(appt) === 'A'">
+            <span class="badge b-green">Confirmed</span>
+            <div class="action-row">
+              <button class="btn btn-ghost btn-sm" (click)="openReschedule(appt)">Reschedule</button>
+              <button class="btn btn-ghost btn-sm btn-danger" (click)="openCancelConfirm(appt)">Cancel</button>
+            </div>
+          </ng-container>
+
+          <!-- Case B: Upcoming Video -->
+          <ng-container *ngIf="actionCase(appt) === 'B'">
+            <span class="badge b-blue">Video</span>
+            <div class="action-row">
+              <button class="btn btn-primary btn-sm" [disabled]="joiningId === appt.id" (click)="joinCall(appt)">
+                {{ joiningId === appt.id ? 'Connecting…' : 'Join Call' }}
+              </button>
+              <button class="btn btn-ghost btn-sm" (click)="openReschedule(appt)">Reschedule</button>
+            </div>
+          </ng-container>
+
+          <!-- Case C: Upcoming Pending -->
+          <ng-container *ngIf="actionCase(appt) === 'C'">
+            <span class="badge b-amber">Pending confirmation</span>
+            <div class="action-row">
+              <button class="btn btn-ghost btn-sm" (click)="openReschedule(appt)">Reschedule</button>
+              <button class="btn btn-ghost btn-sm btn-danger" (click)="openCancelConfirm(appt)">Cancel</button>
+            </div>
+          </ng-container>
+
+          <!-- Case D: Past Completed -->
+          <ng-container *ngIf="actionCase(appt) === 'D'">
+            <span class="badge b-gray">Completed</span>
+            <div class="action-row">
+              <button class="btn btn-ghost btn-sm" (click)="openNotes(appt)">View Notes</button>
+            </div>
+          </ng-container>
+
+          <!-- Case E: Cancelled -->
+          <ng-container *ngIf="actionCase(appt) === 'E'">
+            <span class="badge b-red">Cancelled</span>
+            <div class="action-row">
+              <button class="btn btn-ghost btn-sm" (click)="openBook(appt)">Rebook</button>
+            </div>
+          </ng-container>
+
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+
+<!-- ══ CANCEL CONFIRM DIALOG ══ -->
+<div class="overlay" *ngIf="showCancelConfirm" (click)="closeCancelConfirm()"></div>
+<div class="dialog" *ngIf="showCancelConfirm">
+  <div class="dialog-title">Cancel appointment?</div>
+  <div class="dialog-body">
+    Are you sure you want to cancel your appointment with
+    <strong>{{ cancelingAppt?.doctorName }}</strong>
+    on {{ cancelingAppt?.day }} {{ cancelingAppt?.month }}?
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-ghost" (click)="closeCancelConfirm()">Keep</button>
+    <button class="btn btn-danger-solid" [disabled]="cancelSubmitting" (click)="confirmCancel()">
+      {{ cancelSubmitting ? 'Cancelling…' : 'Yes, Cancel' }}
+    </button>
+  </div>
+</div>
+
+<!-- ══ RESCHEDULE MODAL ══ -->
+<div class="overlay" *ngIf="showReschedule" (click)="closeReschedule()"></div>
+<div class="modal" *ngIf="showReschedule">
+  <div class="modal-header">
+    <div class="modal-title">Reschedule Appointment</div>
+    <button class="close-btn" (click)="closeReschedule()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="modal-body" [formGroup]="rescheduleForm">
+    <div class="field">
+      <label class="field-label">Doctor (read-only)</label>
+      <input class="field-input" type="text" [value]="reschedulingAppt?.doctorName" readonly>
+    </div>
+    <div class="field">
+      <label class="field-label">New Date <span class="req">*</span></label>
+      <input class="field-input" type="date" [min]="minDate" formControlName="date"
+             [class.invalid]="hasError(rescheduleForm, 'date', 'required')">
+      <span class="field-error" *ngIf="hasError(rescheduleForm, 'date', 'required')">Date is required.</span>
+    </div>
+    <div class="field">
+      <label class="field-label">New Time <span class="req">*</span></label>
+      <select class="field-input" formControlName="time"
+              [class.invalid]="hasError(rescheduleForm, 'time', 'required')">
+        <option value="">Select time slot</option>
+        <option *ngFor="let t of rescheduleSlots" [value]="t">{{ t }}</option>
+      </select>
+      <span class="field-error" *ngIf="hasError(rescheduleForm, 'time', 'required')">Time is required.</span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" (click)="closeReschedule()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="rescheduleSubmitting" (click)="submitReschedule()">
+        {{ rescheduleSubmitting ? 'Saving…' : 'Confirm Reschedule' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOOK APPOINTMENT MODAL ══ -->
+<div class="overlay" *ngIf="showBook" (click)="closeBook()"></div>
+<div class="modal modal-lg" *ngIf="showBook">
+  <div class="modal-header">
+    <div class="modal-title">Book Appointment</div>
+    <button class="close-btn" (click)="closeBook()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="modal-body" [formGroup]="bookForm">
+    <div class="field">
+      <label class="field-label">Doctor <span class="req">*</span></label>
+      <select class="field-input" formControlName="doctorId"
+              [class.invalid]="hasError(bookForm, 'doctorId', 'required')">
+        <option [value]="null">Select a doctor</option>
+        <option *ngFor="let d of allDoctors" [value]="d.doctorId">
+          {{ d.user?.name ?? 'Doctor' }} — {{ d.specialization }}
+        </option>
+      </select>
+      <span class="field-error" *ngIf="hasError(bookForm, 'doctorId', 'required')">Please select a doctor.</span>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Date <span class="req">*</span></label>
+        <input class="field-input" type="date" [min]="minDate" formControlName="date"
+               [class.invalid]="hasError(bookForm, 'date', 'required')">
+        <span class="field-error" *ngIf="hasError(bookForm, 'date', 'required')">Date is required.</span>
+      </div>
+      <div class="field">
+        <label class="field-label">Time <span class="req">*</span></label>
+        <select class="field-input" formControlName="time"
+                [class.invalid]="hasError(bookForm, 'time', 'required')">
+          <option value="">Select time slot</option>
+          <option *ngFor="let t of bookSlots" [value]="t">{{ t }}</option>
+        </select>
+        <span class="field-error" *ngIf="hasError(bookForm, 'time', 'required')">Time is required.</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Type <span class="req">*</span></label>
+      <div class="radio-group">
+        <label class="radio-opt">
+          <input type="radio" formControlName="type" value="In-person"> In-person
+        </label>
+        <label class="radio-opt">
+          <input type="radio" formControlName="type" value="Video"> 📹 Video
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Reason <span class="req">*</span></label>
+      <input class="field-input" type="text" placeholder="e.g. Cardiology follow-up"
+             formControlName="reason"
+             [class.invalid]="hasError(bookForm, 'reason', 'required') || hasError(bookForm, 'reason', 'minlength')">
+      <span class="field-error" *ngIf="hasError(bookForm, 'reason', 'required')">Reason is required.</span>
+      <span class="field-error" *ngIf="hasError(bookForm, 'reason', 'minlength')">Minimum 3 characters.</span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" (click)="closeBook()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="bookSubmitting" (click)="submitBook()">
+        {{ bookSubmitting ? 'Booking…' : 'Confirm Booking' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NOTES SIDE PANEL ══ -->
+<div class="panel-overlay" *ngIf="showNotes" (click)="closeNotes()"></div>
+<div class="notes-panel" [class.open]="showNotes">
+  <div class="panel-header">
+    <div class="panel-title">Appointment Notes</div>
+    <button class="close-btn" (click)="closeNotes()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="panel-info" *ngIf="notesAppt">
+    <div class="panel-doc">{{ notesAppt.doctorName }}</div>
+    <div class="panel-meta">{{ notesAppt.day }} {{ notesAppt.month }} · {{ notesAppt.type }}</div>
+  </div>
+  <div class="panel-body">
+    <ng-container *ngIf="notesLoading">
+      <div class="skel" style="height:80px;margin-bottom:12px"></div>
+      <div class="skel" style="height:60px"></div>
+    </ng-container>
+    <ng-container *ngIf="!notesLoading && notesData">
+      <div class="notes-section-label">CLINICAL NOTES</div>
+      <div class="notes-box">{{ notesData.notes }}</div>
+      <div class="notes-section-label" style="margin-top:16px">SUMMARY</div>
+      <div class="notes-content">{{ notesData.summary }}</div>
+    </ng-container>
+    <div class="panel-error" *ngIf="!notesLoading && notesError">
+      Could not load notes. <button class="retry-link" (click)="openNotes(notesAppt!)">Retry</button>
+    </div>
+  </div>
+</div>
