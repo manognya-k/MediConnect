@@ -159,7 +159,10 @@ export class AppointmentService {
   private computeStats(todayAppts: BackendAppointment[]): AppointmentStats {
     const total = todayAppts.length;
     const video = todayAppts.filter(a => (a.appointmentType || '').toUpperCase() === 'VIDEO').length;
-    const confirmed = todayAppts.filter(a => (a.status || '').toUpperCase() === 'CONFIRMED').length;
+    const confirmed = todayAppts.filter(a => {
+      const s = (a.status || '').toUpperCase();
+      return s === 'CONFIRMED' || s === 'SCHEDULED';
+    }).length;
     const pending = todayAppts.filter(a => (a.status || '').toUpperCase() === 'PENDING').length;
     const cancelled = todayAppts.filter(a =>
       (a.status || '').toUpperCase() === 'CANCELLED' || (a.status || '').toUpperCase() === 'CANCELED'
@@ -181,7 +184,9 @@ export class AppointmentService {
 
   normalizeStatus(s: string): AppointmentStatus {
     const u = (s || '').toUpperCase();
+    if (u === 'SCHEDULED') return 'Scheduled';
     if (u === 'CONFIRMED') return 'Confirmed';
+    if (u === 'COMPLETED') return 'Completed';
     if (u === 'CANCELLED' || u === 'CANCELED') return 'Cancelled';
     return 'Pending';
   }

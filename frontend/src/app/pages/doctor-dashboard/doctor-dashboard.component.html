@@ -72,7 +72,7 @@
       <div class="card appt-card">
         <div class="card-header">
           <span class="card-title">Today's appointments</span>
-          <a class="view-all-link">View all</a>
+          <a class="view-all-link" routerLink="/doctor/appointments">View all</a>
         </div>
 
         <div class="skeleton-list" *ngIf="apptLoading">
@@ -123,7 +123,7 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title">Upcoming consultations</span>
-            <a class="view-all-link">View all</a>
+            <a class="view-all-link" routerLink="/doctor/appointments">View all</a>
           </div>
 
           <div class="skeleton-list" *ngIf="apptLoading">
@@ -154,7 +154,7 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title">Bed availability</span>
-            <a class="view-all-link">View all</a>
+            <a class="view-all-link" routerLink="/doctor/patients">View all</a>
           </div>
 
           <div class="skeleton-list" *ngIf="bedLoading">
@@ -192,7 +192,7 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">Lab reports</span>
-          <a class="view-all-link">View all</a>
+          <a class="view-all-link" routerLink="/doctor/lab-reports">View all</a>
         </div>
 
         <div class="skeleton-list" *ngIf="labLoading">
@@ -222,7 +222,7 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">Supply chain alerts</span>
-          <a class="view-all-link">View all</a>
+          <a class="view-all-link" routerLink="/doctor/supply-chain">View all</a>
         </div>
 
         <div class="skeleton-list" *ngIf="invLoading">

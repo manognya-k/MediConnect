@@ -1,5 +1,5 @@
 export type AppointmentType = 'In-person' | 'Video';
-export type AppointmentStatus = 'Confirmed' | 'Pending' | 'Cancelled';
+export type AppointmentStatus = 'Confirmed' | 'Scheduled' | 'Pending' | 'Completed' | 'Cancelled';
 export type AppointmentTab = 'today' | 'upcoming' | 'past';
 
 export interface BackendAppointment {

@@ -53,24 +53,15 @@ export class MedicalRecordsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.resolveDoctorId();
-    this.loadAll();
-
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(q => this.applySearch(q));
-  }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private resolveDoctorId() {
     const user = this.auth.getUser();
-    if (!user) return;
+    if (!user) { this.loadAll(); return; }
+
     this.dashSvc.getAllDoctors().subscribe({
       next: (docs) => {
         const doc = docs.find(d => d.user?.userId === user.userId);
@@ -78,9 +69,15 @@ export class MedicalRecordsComponent implements OnInit, OnDestroy {
           this.doctorId = doc.doctorId;
           this.hospitalId = doc.hospital?.hospitalId ?? null;
         }
+        this.loadAll();
       },
-      error: () => {}
+      error: () => this.loadAll()
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadAll() {
@@ -88,8 +85,12 @@ export class MedicalRecordsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.svc.getAll().subscribe({
       next: (records) => {
-        this.allBackendRecords = records;
-        this.allPatients = this.svc.buildPatientList(records);
+        // Scope to this doctor's records when doctorId is available
+        const scoped = this.doctorId
+          ? records.filter(r => r.doctor?.doctorId === this.doctorId)
+          : records;
+        this.allBackendRecords = scoped.length > 0 ? scoped : records;
+        this.allPatients = this.svc.buildPatientList(this.allBackendRecords);
         this.filteredPatients = [...this.allPatients];
         this.loading = false;
         if (this.allPatients.length > 0) {

@@ -337,17 +337,18 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   statusBadgeClass(status: string): string {
-    if (status === 'Confirmed') return 'b-green';
+    if (status === 'Confirmed' || status === 'Scheduled') return 'b-green';
     if (status === 'Cancelled') return 'b-red';
+    if (status === 'Completed') return 'b-gray';
     return 'b-amber';
   }
 
   showJoin(appt: Appointment): boolean {
-    return appt.type === 'Video' && appt.status === 'Confirmed';
+    return appt.type === 'Video' && (appt.status === 'Confirmed' || appt.status === 'Scheduled');
   }
 
   showEdit(appt: Appointment): boolean {
-    return appt.status === 'Cancelled';
+    return appt.status === 'Cancelled' || appt.status === 'Completed';
   }
 
   showView(appt: Appointment): boolean {

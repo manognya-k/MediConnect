@@ -355,6 +355,7 @@ $page-bg: #F9FAFB;
   white-space: nowrap;
 
   &.badge-confirmed { background: $success-light; color: $success; }
+  &.badge-completed { background: #F3F4F6; color: #374151; }
   &.badge-pending { background: $warning-light; color: $warning; }
   &.badge-cancelled { background: $danger-light; color: $danger; }
   &.badge-video { background: $primary-light; color: $primary; }

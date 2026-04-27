@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService, AuthResponse } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
 import {
@@ -23,7 +23,7 @@ interface BedGroup {
 @Component({
   selector: 'app-doctor-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './doctor-dashboard.component.html',
   styleUrl: './doctor-dashboard.component.scss'
 })
@@ -154,11 +154,12 @@ export class DoctorDashboardComponent implements OnInit {
       this.apptLoading = false;
     }
 
-    // Lab reports
+    // Lab reports — scoped to this doctor when possible
     this.dashboardService.getAllLabReports().subscribe({
       next: (reports) => {
-        this.labReports = reports.slice(0, 4);
-        this.pendingLabCount = reports.filter(
+        const mine = doctorId ? reports.filter(r => r.doctor?.doctorId === doctorId) : reports;
+        this.labReports = mine.slice(0, 4);
+        this.pendingLabCount = mine.filter(
           r => !r.result || r.result.toUpperCase() === 'PENDING'
         ).length;
         this.labLoading = false;
@@ -291,8 +292,8 @@ export class DoctorDashboardComponent implements OnInit {
 
   getStatusClass(status: string): string {
     const s = (status || '').toUpperCase();
-    if (s === 'CONFIRMED') return 'badge-confirmed';
-    if (s === 'PENDING') return 'badge-pending';
+    if (s === 'CONFIRMED' || s === 'SCHEDULED') return 'badge-confirmed';
+    if (s === 'COMPLETED') return 'badge-completed';
     if (s === 'CANCELLED' || s === 'CANCELED') return 'badge-cancelled';
     return 'badge-default';
   }

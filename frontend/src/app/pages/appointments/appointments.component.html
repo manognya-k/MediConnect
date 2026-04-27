@@ -111,9 +111,9 @@
       </select>
       <select class="tb-input" [(ngModel)]="statusFilter" (change)="onStatusChange()">
         <option value="">All status</option>
-        <option value="Confirmed">Confirmed</option>
-        <option value="Pending">Pending</option>
-        <option value="Cancelled">Cancelled</option>
+        <option value="SCHEDULED">Scheduled</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
       </select>
       <input class="tb-input" type="date" [(ngModel)]="dateFilter" (change)="onDateChange()">
     </div>

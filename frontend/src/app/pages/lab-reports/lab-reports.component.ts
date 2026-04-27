@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
 import { LabReportService } from '../../services/lab-report.service';
+import { DashboardService } from '../../services/dashboard.service';
 import { ToastService } from '../../services/toast.service';
 import { BackendLabReport, LabReport, LabReportFilter, LabReportStats } from '../../models/lab-report.model';
 import { LabRequestFormComponent } from './lab-request-form/lab-request-form.component';
@@ -49,6 +50,8 @@ export class LabReportsComponent implements OnInit, OnDestroy {
   // Request form modal
   formVisible = false;
 
+  doctorId: number | null = null;
+
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
@@ -61,6 +64,7 @@ export class LabReportsComponent implements OnInit, OnDestroy {
     public layout: LayoutService,
     private auth: AuthService,
     private svc: LabReportService,
+    private dashSvc: DashboardService,
     private toast: ToastService,
     private router: Router
   ) {}
@@ -79,7 +83,14 @@ export class LabReportsComponent implements OnInit, OnDestroy {
       this.applyFilter();
     });
 
-    this.load();
+    this.dashSvc.getAllDoctors().subscribe({
+      next: (docs) => {
+        const doc = docs.find(d => d.user?.userId === user.userId);
+        if (doc) this.doctorId = doc.doctorId;
+        this.load();
+      },
+      error: () => this.load()
+    });
   }
 
   ngOnDestroy() {
@@ -92,7 +103,10 @@ export class LabReportsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.svc.getAll().subscribe({
       next: (all) => {
-        this.allReports = all;
+        const scoped = this.doctorId
+          ? all.filter(r => r.doctor?.doctorId === this.doctorId)
+          : all;
+        this.allReports = scoped.length > 0 ? scoped : all;
         this.applyFilter();
         this.loading = false;
       },
