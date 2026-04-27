@@ -1,0 +1,173 @@
+<div class="page-wrapper">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Appointments</h1>
+        <p class="page-sub">System-wide appointment registry</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-bar" *ngIf="error">{{ error }}</div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Today's Total</div>
+      <div class="stat-val">{{ totalToday }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Scheduled</div>
+      <div class="stat-val stat-val-green">{{ scheduled }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Completed</div>
+      <div class="stat-val stat-val-muted">{{ completed }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cancelled</div>
+      <div class="stat-val stat-val-red">{{ cancelled }}</div>
+    </div>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="filters-toolbar">
+    <div class="filters-left">
+      <div class="filter-group">
+        <label>Hospital</label>
+        <select [(ngModel)]="hospitalFilter" (change)="page=1; applyFilter()">
+          <option value="">All Hospitals</option>
+          <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter" (change)="page=1; applyFilter()">
+          <option value="">All Statuses</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Type</label>
+        <select [(ngModel)]="typeFilter" (change)="page=1; applyFilter()">
+          <option value="">All Types</option>
+          <option value="VIDEO">Video</option>
+          <option value="IN_PERSON">In-Person</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Date</label>
+        <input type="date" [(ngModel)]="dateFilter" (change)="page=1; applyFilter()" />
+      </div>
+    </div>
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()"
+        placeholder="Search patient or doctor…"
+      />
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <!-- Skeleton -->
+    <ng-container *ngIf="loading">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6]"></div>
+    </ng-container>
+
+    <!-- Table -->
+    <ng-container *ngIf="!loading">
+      <table class="data-table" *ngIf="filtered.length > 0; else emptyState">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Hospital</th>
+            <th>Type</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of paged">
+            <td class="date-cell">{{ admin.formatDate(a.appointmentDate) }}</td>
+            <td class="time-cell">{{ admin.formatTime(a.appointmentTime) }}</td>
+            <td>
+              <div class="person-cell">
+                <div class="avatar-circle patient-av">
+                  {{ (getPatientName(a) !== '—' ? getPatientName(a)[0] : 'P') | uppercase }}
+                </div>
+                <span>{{ getPatientName(a) }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="person-cell">
+                <div class="avatar-circle doctor-av">
+                  {{ (getDoctorName(a) !== '—' ? getDoctorName(a)[3] : 'D') | uppercase }}
+                </div>
+                <div class="doctor-info">
+                  <span>{{ getDoctorName(a) }}</span>
+                  <small *ngIf="a.doctor?.specialization">{{ a.doctor!.specialization }}</small>
+                </div>
+              </div>
+            </td>
+            <td class="hospital-cell">{{ getHospitalName(a) }}</td>
+            <td>
+              <span class="badge" [ngClass]="getTypeClass(a.appointmentType)">
+                {{ getTypeLabel(a.appointmentType) }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(a.status)">
+                {{ admin.normalizeStatus(a.status) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <p>No appointments found</p>
+          <span>Try adjusting your filters or search query</span>
+        </div>
+      </ng-template>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="filtered.length > pageSize">
+        <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">&#8592;</button>
+        <button
+          class="pg-btn"
+          *ngFor="let p of pages"
+          [class.active]="p === page"
+          (click)="goToPage(p)"
+        >{{ p }}</button>
+        <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">&#8594;</button>
+        <span class="pg-info">
+          {{ (page-1)*pageSize + 1 }}–{{ page*pageSize > filtered.length ? filtered.length : page*pageSize }} of {{ filtered.length }}
+        </span>
+      </div>
+    </ng-container>
+  </div>
+</div>

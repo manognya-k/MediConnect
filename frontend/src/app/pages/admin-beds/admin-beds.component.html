@@ -1,0 +1,196 @@
+<div class="page-wrapper">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Bed Management</h1>
+        <p class="page-sub">{{ allBeds.length }} beds across all hospitals</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="openAdd()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add Bed
+    </button>
+  </div>
+
+  <!-- Error -->
+  <div class="error-bar" *ngIf="error">{{ error }}</div>
+
+  <!-- Hospital Selector -->
+  <div class="hospital-selector">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <label class="hs-label">Hospital</label>
+    <select class="hs-select" [(ngModel)]="selectedHospitalId" (change)="onHospitalChange()">
+      <option value="">All Hospitals</option>
+      <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+    </select>
+    <span class="hs-hint" *ngIf="!selectedHospitalId">Select a hospital to filter beds</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Beds</div>
+      <div class="stat-val">{{ totalBeds }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Available</div>
+      <div class="stat-val stat-val-green">{{ availableBeds }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Occupied</div>
+      <div class="stat-val stat-val-red">{{ occupiedBeds }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Maintenance</div>
+      <div class="stat-val stat-val-amber">{{ maintenanceBeds }}</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row">
+    <div class="filter-group">
+      <label>Status</label>
+      <select [(ngModel)]="statusFilter" (change)="page=1; applyFilter()">
+        <option value="">All Statuses</option>
+        <option value="AVAILABLE">Available</option>
+        <option value="OCCUPIED">Occupied</option>
+        <option value="MAINTENANCE">Maintenance</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Ward</label>
+      <select [(ngModel)]="wardFilter" (change)="page=1; applyFilter()">
+        <option value="">All Wards</option>
+        <option *ngFor="let w of wards" [value]="w">{{ w }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <!-- Skeleton -->
+    <ng-container *ngIf="loading">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </ng-container>
+
+    <!-- Table -->
+    <ng-container *ngIf="!loading">
+      <table class="data-table" *ngIf="filtered.length > 0; else emptyState">
+        <thead>
+          <tr>
+            <th>Bed #</th>
+            <th>Ward</th>
+            <th>Hospital</th>
+            <th>Status</th>
+            <th>Patient</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of paged">
+            <td class="bed-num">{{ b.bedNumber }}</td>
+            <td>{{ b.ward }}</td>
+            <td>{{ b.hospital?.hospitalName || '—' }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(b.status)">{{ b.status }}</span>
+            </td>
+            <td class="muted">{{ b.patient?.patientId || '—' }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-edit" (click)="openEdit(b)">Edit</button>
+                <ng-container *ngIf="deleteConfirmId !== b.bedId">
+                  <button class="btn-delete" (click)="confirmDelete(b.bedId)">Delete</button>
+                </ng-container>
+                <ng-container *ngIf="deleteConfirmId === b.bedId">
+                  <span class="confirm-text">Confirm?</span>
+                  <button class="btn-confirm-yes" (click)="doDelete(b.bedId)">Yes</button>
+                  <button class="btn-confirm-no" (click)="cancelDelete()">No</button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" stroke-width="1.5">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+          </svg>
+          <p>No beds found</p>
+          <span>Try adjusting your filters or add a new bed</span>
+        </div>
+      </ng-template>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="filtered.length > pageSize">
+        <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">&#8592;</button>
+        <button class="pg-btn" *ngFor="let p of pages" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+        <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">&#8594;</button>
+        <span class="pg-info">{{ (page-1)*pageSize + 1 }}–{{ page*pageSize > filtered.length ? filtered.length : page*pageSize }} of {{ filtered.length }}</span>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingId !== null ? 'Edit Bed' : 'Add Bed' }}</h2>
+      <button class="modal-close" (click)="closeModal()">&#10005;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="save-error" *ngIf="saveError">{{ saveError }}</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ward <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.ward" placeholder="e.g. General, ICU" />
+        </div>
+        <div class="form-group">
+          <label>Bed Number <span class="req">*</span></label>
+          <input type="number" [(ngModel)]="form.bedNumber" placeholder="e.g. 101" min="1" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="form.status">
+            <option value="AVAILABLE">Available</option>
+            <option value="OCCUPIED">Occupied</option>
+            <option value="MAINTENANCE">Maintenance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hospital</label>
+          <select [(ngModel)]="form.hospitalId">
+            <option value="">— None —</option>
+            <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()" [disabled]="saving">Cancel</button>
+      <button class="btn-save" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving">Saving…</span>
+        <span *ngIf="!saving">{{ editingId !== null ? 'Update Bed' : 'Add Bed' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

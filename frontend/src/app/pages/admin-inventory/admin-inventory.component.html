@@ -1,0 +1,203 @@
+<div class="page-wrapper">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Inventory</h1>
+        <p class="page-sub">Supply chain management</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="openAdd()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add Item
+    </button>
+  </div>
+
+  <!-- Error -->
+  <div class="error-bar" *ngIf="error">{{ error }}</div>
+
+  <!-- Low Stock Alert Banner -->
+  <div class="low-stock-alert" *ngIf="!loading && lowStockForSelectedHospital > 0">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span>
+      <strong>{{ lowStockForSelectedHospital }} item{{ lowStockForSelectedHospital !== 1 ? 's' : '' }}</strong>
+      {{ selectedHospitalId ? 'at this hospital' : 'across all hospitals' }} are below reorder level and need restocking
+    </span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Items</div>
+      <div class="stat-val">{{ totalItems }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Low Stock</div>
+      <div class="stat-val stat-val-amber">{{ lowStockItems }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Units</div>
+      <div class="stat-val">{{ totalQuantity }}</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row">
+    <div class="filter-group">
+      <label>Hospital</label>
+      <select [(ngModel)]="selectedHospitalId" (change)="applyFilter()">
+        <option value="">All Hospitals</option>
+        <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select [(ngModel)]="categoryFilter" (change)="applyFilter()">
+        <option value="">All Categories</option>
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Stock Level</label>
+      <select [(ngModel)]="stockFilter" (change)="applyFilter()">
+        <option value="">All</option>
+        <option value="low">Low Stock</option>
+        <option value="ok">OK</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <ng-container *ngIf="loading">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading">
+      <table class="data-table" *ngIf="filtered.length > 0; else emptyState">
+        <thead>
+          <tr>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Hospital</th>
+            <th>Quantity</th>
+            <th>Reorder Level</th>
+            <th>Stock Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of paged">
+            <td class="item-name">{{ item.itemName }}</td>
+            <td>
+              <span class="category-pill">{{ item.category }}</span>
+            </td>
+            <td>{{ item.hospital?.hospitalName || '—' }}</td>
+            <td [ngClass]="getStockClass(item)">{{ item.quantity }}</td>
+            <td class="muted">{{ item.reorderLevel }}</td>
+            <td>
+              <span class="badge" [ngClass]="isLowStock(item) ? 'badge-low' : 'badge-ok'">
+                {{ isLowStock(item) ? 'Low Stock' : 'OK' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-edit" (click)="openEdit(item)">Edit</button>
+                <ng-container *ngIf="deleteConfirmId !== item.itemId">
+                  <button class="btn-delete" (click)="confirmDelete(item.itemId)">Delete</button>
+                </ng-container>
+                <ng-container *ngIf="deleteConfirmId === item.itemId">
+                  <span class="confirm-text">Confirm?</span>
+                  <button class="btn-confirm-yes" (click)="doDelete(item.itemId)">Yes</button>
+                  <button class="btn-confirm-no" (click)="cancelDelete()">No</button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" stroke-width="1.5">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          </svg>
+          <p>No items found</p>
+          <span>Try adjusting your filters or add a new inventory item</span>
+        </div>
+      </ng-template>
+
+      <div class="pagination" *ngIf="filtered.length > pageSize">
+        <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">&#8592;</button>
+        <button class="pg-btn" *ngFor="let p of pages" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+        <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">&#8594;</button>
+        <span class="pg-info">{{ (page-1)*pageSize + 1 }}–{{ page*pageSize > filtered.length ? filtered.length : page*pageSize }} of {{ filtered.length }}</span>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingId !== null ? 'Edit Item' : 'Add Item' }}</h2>
+      <button class="modal-close" (click)="closeModal()">&#10005;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="save-error" *ngIf="saveError">{{ saveError }}</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Item Name <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.itemName" placeholder="e.g. Paracetamol 500mg" />
+        </div>
+        <div class="form-group">
+          <label>Category <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.category" placeholder="e.g. Medication, Equipment" list="cat-list" />
+          <datalist id="cat-list">
+            <option *ngFor="let c of categories" [value]="c"></option>
+          </datalist>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantity</label>
+          <input type="number" [(ngModel)]="form.quantity" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Reorder Level</label>
+          <input type="number" [(ngModel)]="form.reorderLevel" placeholder="0" min="0" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Hospital</label>
+        <select [(ngModel)]="form.hospitalId">
+          <option value="">— None —</option>
+          <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()" [disabled]="saving">Cancel</button>
+      <button class="btn-save" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving">Saving…</span>
+        <span *ngIf="!saving">{{ editingId !== null ? 'Update Item' : 'Add Item' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<div class="layout-wrap" [class.sb-closed]="!layout.sidebarOpen">
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="sb-logo-text">MediConnect</span>
+    </div>
+    <nav class="sb-nav">
+
+      <a class="ni" routerLink="/admin/dashboard" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="1" width="6" height="6" rx="1"/>
+          <rect x="9" y="1" width="6" height="6" rx="1"/>
+          <rect x="1" y="9" width="6" height="6" rx="1"/>
+          <rect x="9" y="9" width="6" height="6" rx="1"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a class="ni" routerLink="/admin/hospitals" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="12" height="11" rx="1"/>
+          <path d="M5 14V9h6v5"/>
+          <path d="M8 5v4M6 7h4"/>
+        </svg>
+        Hospitals
+      </a>
+
+      <a class="ni" routerLink="/admin/doctors" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="5" r="3"/>
+          <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+          <circle cx="12" cy="11" r="2"/>
+          <path d="M12 10v2M11 11h2"/>
+        </svg>
+        Doctors
+      </a>
+
+      <a class="ni" routerLink="/admin/patients" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="5" r="3"/>
+          <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+        </svg>
+        Patients
+      </a>
+
+      <a class="ni" routerLink="/admin/appointments" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="12" height="11" rx="1"/>
+          <path d="M5 1v4M11 1v4M2 7h12"/>
+          <path d="M5 10h2M9 10h2M5 13h2"/>
+        </svg>
+        Appointments
+      </a>
+
+      <a class="ni" routerLink="/admin/beds" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/>
+          <path d="M1 10h14M1 10v3M15 10v3"/>
+          <rect x="3" y="5" width="3" height="3" rx="1"/>
+        </svg>
+        Beds
+      </a>
+
+      <a class="ni" routerLink="/admin/inventory" routerLinkActive="active">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 5L8 2 3 5v6l5 3 5-3V5z"/>
+          <path d="M8 2v13M3 5l5 3 5-3"/>
+        </svg>
+        Inventory
+      </a>
+
+      <div class="nd"></div>
+
+      <button class="ni ni-danger" (click)="logout()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>
+          <path d="M10 11l4-3-4-3"/>
+          <path d="M14 8H6"/>
+        </svg>
+        Logout
+      </button>
+
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-av">{{ initials }}</div>
+      <div>
+        <div class="sb-name">{{ adminName }}</div>
+        <div class="sb-role">System Admin</div>
+      </div>
+    </div>
+  </aside>
+  <div class="layout-main">
+    <router-outlet></router-outlet>
+  </div>
+</div>
+<app-toast></app-toast>

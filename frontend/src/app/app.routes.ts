@@ -140,5 +140,21 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'admin',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./layouts/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', loadComponent: () => import('./pages/admin-dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent) },
+      { path: 'hospitals', loadComponent: () => import('./pages/admin-hospitals/admin-hospitals.component').then((m) => m.AdminHospitalsComponent) },
+      { path: 'doctors', loadComponent: () => import('./pages/admin-doctors/admin-doctors.component').then((m) => m.AdminDoctorsComponent) },
+      { path: 'patients', loadComponent: () => import('./pages/admin-patients/admin-patients.component').then((m) => m.AdminPatientsComponent) },
+      { path: 'appointments', loadComponent: () => import('./pages/admin-appointments/admin-appointments.component').then((m) => m.AdminAppointmentsComponent) },
+      { path: 'beds', loadComponent: () => import('./pages/admin-beds/admin-beds.component').then((m) => m.AdminBedsComponent) },
+      { path: 'inventory', loadComponent: () => import('./pages/admin-inventory/admin-inventory.component').then((m) => m.AdminInventoryComponent) },
+    ]
+  },
   { path: '**', redirectTo: '/login' }
 ];

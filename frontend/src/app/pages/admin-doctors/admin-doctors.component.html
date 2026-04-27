@@ -1,0 +1,197 @@
+<div class="page-main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Doctors</h1>
+        <p class="page-sub">{{ allDoctors.length }} doctors across {{ hospitals.length }} hospitals</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="openAdd()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Doctor
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="inp search-inp" type="text" placeholder="Search name, email, specialization…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" />
+    </div>
+    <select class="inp sel" [(ngModel)]="hospitalFilter" (ngModelChange)="onSearch()">
+      <option value="">All Hospitals</option>
+      <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+    </select>
+    <select class="inp sel" [(ngModel)]="statusFilter" (ngModelChange)="onSearch()">
+      <option value="">All Statuses</option>
+      <option value="AVAILABLE">Available</option>
+      <option value="UNAVAILABLE">Unavailable</option>
+      <option value="ON_LEAVE">On Leave</option>
+    </select>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error-bar">{{ error }}</div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Doctor</th>
+          <th>Specialization</th>
+          <th>Hospital</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Loading skeleton -->
+        <ng-container *ngIf="loading">
+          <tr *ngFor="let s of [1,2,3,4,5]" class="skeleton-row">
+            <td><div class="skel skel-doc"></div></td>
+            <td><div class="skel skel-sm"></div></td>
+            <td><div class="skel skel-sm"></div></td>
+            <td><div class="skel skel-xs"></div></td>
+            <td><div class="skel skel-xs"></div></td>
+          </tr>
+        </ng-container>
+
+        <!-- Data rows -->
+        <ng-container *ngIf="!loading">
+          <ng-container *ngFor="let d of paged; let i = index">
+            <tr [class.delete-row]="deleteConfirmId === d.doctorId">
+              <td>
+                <div class="doc-info">
+                  <div class="avatar"
+                    [style.background]="getAvatarBg((page-1)*pageSize + i)"
+                    [style.color]="getAvatarColor((page-1)*pageSize + i)">
+                    {{ getInitials(d.user.name) }}
+                  </div>
+                  <div>
+                    <div class="doc-name">{{ d.user.name }}</div>
+                    <div class="doc-email">{{ d.user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ d.specialization }}</td>
+              <td>{{ getHospitalName(d) }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(d.availabilityStatus)">
+                  {{ d.availabilityStatus }}
+                </span>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon" title="Edit" (click)="openEdit(d)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button class="btn-icon btn-icon-danger" title="Delete" (click)="confirmDelete(d.doctorId)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <!-- Delete confirm row -->
+            <tr *ngIf="deleteConfirmId === d.doctorId" class="confirm-row">
+              <td colspan="5">
+                <div class="confirm-bar">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Delete <strong>Dr. {{ d.user.name }}</strong>? This action cannot be undone.</span>
+                  <div class="confirm-actions">
+                    <button class="btn-sm btn-outline" (click)="cancelDelete()">Cancel</button>
+                    <button class="btn-sm btn-danger" (click)="doDelete()">Delete</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+
+          <!-- Empty state -->
+          <tr *ngIf="filtered.length === 0">
+            <td colspan="5">
+              <div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <p>No doctors found</p>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && filtered.length > pageSize">
+      <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button *ngFor="let p of pageNumbers" class="pg-btn" [class.pg-active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+      <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <span class="pg-info">{{ (page-1)*pageSize + 1 }}–{{ page*pageSize > filtered.length ? filtered.length : page*pageSize }} of {{ filtered.length }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingId ? 'Edit Doctor' : 'Add Doctor' }}</h2>
+      <button class="close-btn" (click)="closeModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="saveError" class="save-error">{{ saveError }}</div>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field-label">Full Name *</label>
+          <input class="inp inp-full" type="text" placeholder="Dr. John Smith" [(ngModel)]="form.name" />
+        </div>
+        <div class="field">
+          <label class="field-label">Email *</label>
+          <input class="inp inp-full" type="email" placeholder="doctor@hospital.com" [(ngModel)]="form.email" />
+        </div>
+        <div class="field">
+          <label class="field-label">Phone</label>
+          <input class="inp inp-full" type="text" placeholder="+91 XXXXX XXXXX" [(ngModel)]="form.phone" />
+        </div>
+        <div class="field">
+          <label class="field-label">Specialization *</label>
+          <input class="inp inp-full" type="text" placeholder="e.g. Cardiology" [(ngModel)]="form.specialization" />
+        </div>
+        <div class="field">
+          <label class="field-label">Availability Status</label>
+          <select class="inp inp-full" [(ngModel)]="form.availabilityStatus">
+            <option value="AVAILABLE">Available</option>
+            <option value="UNAVAILABLE">Unavailable</option>
+            <option value="ON_LEAVE">On Leave</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Hospital</label>
+          <select class="inp inp-full" [(ngModel)]="form.hospitalId">
+            <option value="">— Select Hospital —</option>
+            <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-md" (click)="closeModal()" [disabled]="saving">Cancel</button>
+      <button class="btn-primary" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving">Saving…</span>
+        <span *ngIf="!saving">{{ editingId ? 'Update Doctor' : 'Add Doctor' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

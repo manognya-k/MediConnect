@@ -1,0 +1,179 @@
+<div class="page-main">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+          <path d="M2 2h14M2 7h14M2 12h14" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="header-text">
+        <h1 class="page-title">Hospitals</h1>
+        <p class="page-subtitle">{{ hospitals.length }} center{{ hospitals.length !== 1 ? 's' : '' }} registered</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="openAdd()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Add Hospital
+    </button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <div class="search-inner">
+      <svg class="search-icon" width="16" height="16" fill="none" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" stroke="#9CA3AF" stroke-width="2"/>
+        <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search by name or city..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearch()"
+      />
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+  <!-- Loading Skeletons -->
+  <div class="hospital-grid" *ngIf="loading">
+    <div class="hospital-card skeleton-card" *ngFor="let i of [1,2,3]">
+      <div class="skeleton-line sk-icon"></div>
+      <div class="skeleton-line sk-title"></div>
+      <div class="skeleton-line sk-meta"></div>
+      <div class="skeleton-line sk-meta" style="width:60%"></div>
+    </div>
+  </div>
+
+  <!-- Hospital Grid -->
+  <div class="hospital-grid" *ngIf="!loading">
+    <div *ngFor="let h of filtered" class="hospital-card">
+      <!-- Card Icon -->
+      <div class="card-icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+          <path d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="card-name">{{ h.hospitalName }}</div>
+      <div class="card-meta" *ngIf="h.city">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#9CA3AF" stroke-width="1.5"/>
+        </svg>
+        {{ h.city }}
+      </div>
+      <div class="card-meta" *ngIf="h.address">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="#9CA3AF" stroke-width="1.5"/>
+        </svg>
+        {{ h.address }}
+      </div>
+      <div class="card-meta" *ngIf="h.phone">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 012 4.18 2 2 0 014.18 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="#9CA3AF" stroke-width="1.5"/>
+        </svg>
+        {{ h.phone }}
+      </div>
+      <div class="card-meta" *ngIf="h.email">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px">
+          <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="#9CA3AF" stroke-width="1.5"/>
+          <path d="M22 6l-10 7L2 6" stroke="#9CA3AF" stroke-width="1.5"/>
+        </svg>
+        {{ h.email }}
+      </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions">
+        <button class="btn-edit" (click)="openEdit(h)" title="Edit">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Edit
+        </button>
+        <button class="btn-delete" (click)="confirmDelete(h.hospitalId)" title="Delete">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Delete
+        </button>
+      </div>
+
+      <!-- Inline Delete Confirm -->
+      <div class="delete-confirm" *ngIf="deleteConfirmId === h.hospitalId">
+        <p class="delete-msg">
+          Are you sure you want to delete <strong>{{ h.hospitalName }}</strong>? This may affect linked doctors and patients.
+        </p>
+        <div class="delete-actions">
+          <button class="btn-cancel-del" (click)="cancelDelete()">Cancel</button>
+          <button class="btn-confirm-del" (click)="doDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filtered.length === 0">
+      <div class="empty-icon">
+        <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+          <path d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11" stroke="#C4B5FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <p class="empty-text">No hospitals found</p>
+      <p class="empty-sub" *ngIf="searchQuery">Try a different search term</p>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">{{ editingId !== null ? 'Edit Hospital' : 'Add Hospital' }}</h2>
+        <button class="modal-close" (click)="closeModal()">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Hospital Name <span class="required">*</span></label>
+          <input type="text" class="inp" [(ngModel)]="form.hospitalName" placeholder="Enter hospital name" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">City</label>
+          <input type="text" class="inp" [(ngModel)]="form.city" placeholder="Enter city" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Address</label>
+          <input type="text" class="inp" [(ngModel)]="form.address" placeholder="Enter address" />
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Phone</label>
+            <input type="text" class="inp" [(ngModel)]="form.phone" placeholder="Phone number" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Email</label>
+            <input type="email" class="inp" [(ngModel)]="form.email" placeholder="Email address" />
+          </div>
+        </div>
+
+        <div class="save-error" *ngIf="saveError">{{ saveError }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeModal()" [disabled]="saving">Cancel</button>
+        <button class="btn-save" (click)="save()" [disabled]="saving">
+          <span *ngIf="saving">Saving...</span>
+          <span *ngIf="!saving">{{ editingId !== null ? 'Update' : 'Save' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

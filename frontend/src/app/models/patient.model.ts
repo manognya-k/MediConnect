@@ -1,10 +1,10 @@
 export interface BackendPatient {
   patientId: number;
-  user: {
+  user?: {
     userId: number;
     name: string;
     email: string;
-    role: string;
+    role?: string;
     bloodGroup?: string;
     gender?: string;
     dateOfBirth?: string;

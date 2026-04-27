@@ -1,0 +1,188 @@
+<div class="page-main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Patients</h1>
+        <p class="page-sub">{{ allPatients.length }} patients registered</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="inp search-inp" type="text" placeholder="Search name, email, phone…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" />
+    </div>
+    <select class="inp sel" [(ngModel)]="bloodGroupFilter" (ngModelChange)="onSearch()">
+      <option value="">All Blood Groups</option>
+      <option *ngFor="let bg of bloodGroups" [value]="bg">{{ bg }}</option>
+    </select>
+    <select class="inp sel" [(ngModel)]="genderFilter" (ngModelChange)="onSearch()">
+      <option value="">All Genders</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error-bar">{{ error }}</div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Phone</th>
+          <th>Blood Group</th>
+          <th>Gender</th>
+          <th>DOB / Age</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Loading skeleton -->
+        <ng-container *ngIf="loading">
+          <tr *ngFor="let s of [1,2,3,4,5]" class="skeleton-row">
+            <td><div class="skel skel-doc"></div></td>
+            <td><div class="skel skel-sm"></div></td>
+            <td><div class="skel skel-xs"></div></td>
+            <td><div class="skel skel-xs"></div></td>
+            <td><div class="skel skel-sm"></div></td>
+            <td><div class="skel skel-xs"></div></td>
+          </tr>
+        </ng-container>
+
+        <!-- Data rows -->
+        <ng-container *ngIf="!loading">
+          <tr *ngFor="let p of paged; let i = index">
+            <td>
+              <div class="pat-info">
+                <div class="avatar"
+                  [style.background]="getAvatarBg((page-1)*pageSize + i)"
+                  [style.color]="getAvatarColor((page-1)*pageSize + i)">
+                  {{ getInitials(p.user.name) }}
+                </div>
+                <div>
+                  <div class="pat-name">{{ p.user.name }}</div>
+                  <div class="pat-email">{{ p.user.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="cell-muted">{{ p.user.phone || '—' }}</td>
+            <td>
+              <span *ngIf="p.bloodGroup" class="blood-badge">{{ p.bloodGroup }}</span>
+              <span *ngIf="!p.bloodGroup" class="cell-muted">—</span>
+            </td>
+            <td class="cell-muted">{{ p.gender || '—' }}</td>
+            <td>
+              <div class="dob-cell">
+                <span class="dob-date">{{ formatDate(p.dateOfBirth) }}</span>
+                <span class="dob-age" *ngIf="p.dateOfBirth">{{ getAge(p.dateOfBirth) }}</span>
+              </div>
+            </td>
+            <td>
+              <button class="btn-view" (click)="openDetail(p)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                View
+              </button>
+            </td>
+          </tr>
+
+          <!-- Empty state -->
+          <tr *ngIf="filtered.length === 0">
+            <td colspan="6">
+              <div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <p>No patients found</p>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && filtered.length > pageSize">
+      <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button *ngFor="let p of pageNumbers" class="pg-btn" [class.pg-active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+      <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <span class="pg-info">{{ (page-1)*pageSize + 1 }}–{{ page*pageSize > filtered.length ? filtered.length : page*pageSize }} of {{ filtered.length }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div class="detail-overlay" *ngIf="showDetail" (click)="closeDetail()"></div>
+
+<!-- Detail side panel -->
+<div class="detail-panel" [class.open]="showDetail">
+  <div class="detail-header" *ngIf="selectedPatient">
+    <div class="detail-title-row">
+      <div class="detail-avatar">{{ getInitials(selectedPatient.user.name) }}</div>
+      <div>
+        <h2 class="detail-name">{{ selectedPatient.user.name }}</h2>
+        <p class="detail-id">Patient #{{ selectedPatient.patientId }}</p>
+      </div>
+    </div>
+    <button class="close-btn" (click)="closeDetail()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="detail-section" *ngIf="selectedPatient">
+    <p class="section-label">Contact Information</p>
+    <div class="detail-row">
+      <span class="d-label">Email</span>
+      <span class="d-value">{{ selectedPatient.user.email }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="d-label">Phone</span>
+      <span class="d-value">{{ selectedPatient.user.phone || '—' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="d-label">Emergency Contact</span>
+      <span class="d-value">{{ selectedPatient.emergencyContact || '—' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="d-label">Address</span>
+      <span class="d-value addr">{{ selectedPatient.address || '—' }}</span>
+    </div>
+  </div>
+
+  <div class="detail-section" *ngIf="selectedPatient">
+    <p class="section-label">Medical Information</p>
+    <div class="detail-row">
+      <span class="d-label">Blood Group</span>
+      <span class="d-value">
+        <span *ngIf="selectedPatient.bloodGroup" class="blood-badge">{{ selectedPatient.bloodGroup }}</span>
+        <span *ngIf="!selectedPatient.bloodGroup">—</span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="d-label">Gender</span>
+      <span class="d-value">{{ selectedPatient.gender || '—' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="d-label">Date of Birth</span>
+      <span class="d-value">{{ formatDate(selectedPatient.dateOfBirth) }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="d-label">Age</span>
+      <span class="d-value">{{ getAge(selectedPatient.dateOfBirth) }}</span>
+    </div>
+  </div>
+</div>
