@@ -1,0 +1,451 @@
+$primary: #185FA5;
+$primary-light: #EBF3FC;
+$border: #E5E7EB;
+$text: #111827;
+$muted: #6B7280;
+$page-bg: #F4F5F7;
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+}
+
+// ── Header ──
+.top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: #fff;
+  border-bottom: 1px solid $border;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 12px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  &:hover { background: #F3F4F6; }
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: $text;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 12px;
+  color: $muted;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: $primary-light;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.chip-label {
+  font-size: 11px;
+  color: $muted;
+}
+
+.chip-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: $primary;
+}
+
+// ── Page Content ──
+.page-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+// ── Stat Cards ──
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: $muted;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: $text;
+  line-height: 1;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  width: fit-content;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+
+  &.badge-blue { background: $primary-light; color: $primary; }
+  &.badge-green { background: #F0FDF4; color: #16A34A; }
+  &.badge-amber { background: #FFFBEB; color: #D97706; }
+  &.badge-gray { background: #F3F4F6; color: #6B7280; }
+}
+
+// ── Main Grid ──
+.main-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 14px;
+}
+
+.right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+// ── Bottom Row ──
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+// ── Card ──
+.card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.health-card {
+  flex: 1;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid $border;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text;
+}
+
+.view-all {
+  font-size: 12px;
+  color: $primary;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.section-body {
+  padding: 6px 0;
+}
+
+// ── Appointment Row ──
+.appt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  gap: 12px;
+  border-bottom: 1px solid #F9FAFB;
+  transition: background 0.1s;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #FAFBFC; }
+}
+
+.appt-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.appt-date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: $primary-light;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.appt-day {
+  font-size: 16px;
+  font-weight: 700;
+  color: $primary;
+  line-height: 1;
+}
+
+.appt-month {
+  font-size: 10px;
+  color: $primary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.appt-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.appt-doctor {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text;
+}
+
+.appt-meta {
+  font-size: 11.5px;
+  color: $muted;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appt-time {
+  font-size: 11px;
+  color: $primary;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.appt-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+// ── Health Rows ──
+.health-rows {
+  padding: 4px 0;
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 18px;
+  border-bottom: 1px solid #F9FAFB;
+  &:last-child { border-bottom: none; }
+}
+
+.h-label {
+  font-size: 12px;
+  color: $muted;
+}
+
+.h-value {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: $text;
+}
+
+.blood-badge {
+  background: #FEF3CD;
+  color: #92400E;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+// ── Record Row ──
+.record-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-bottom: 1px solid #F9FAFB;
+  gap: 10px;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #FAFBFC; }
+}
+
+.record-info { flex: 1; min-width: 0; }
+
+.record-diag {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.record-meta {
+  font-size: 11.5px;
+  color: $muted;
+  margin-top: 2px;
+}
+
+// ── Lab Row ──
+.lab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-bottom: 1px solid #F9FAFB;
+  gap: 10px;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #FAFBFC; }
+}
+
+.lab-info { flex: 1; min-width: 0; }
+
+.lab-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+}
+
+.lab-meta {
+  font-size: 11.5px;
+  color: $muted;
+  margin-top: 2px;
+}
+
+// ── Badges ──
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.badge-scheduled  { background: #F0FDF4; color: #16A34A; }
+  &.badge-completed  { background: $primary-light; color: $primary; }
+  &.badge-cancelled  { background: #FEF2F2; color: #DC2626; }
+  &.badge-online     { background: #EFF6FF; color: #1D4ED8; }
+  &.badge-inperson   { background: #F3F4F6; color: #6B7280; }
+  &.badge-normal     { background: #F0FDF4; color: #16A34A; }
+  &.badge-abnormal   { background: #FEF2F2; color: #DC2626; }
+  &.badge-pending    { background: #FFFBEB; color: #D97706; }
+  &.badge-default    { background: #F3F4F6; color: #6B7280; }
+  &.badge-blue-soft  { background: $primary-light; color: $primary; }
+}
+
+// ── Loading / Error / Empty ──
+.skeleton-row {
+  height: 38px;
+  margin: 8px 18px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 18px;
+  padding: 10px 14px;
+  background: #FDECEC;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: #A32D2D;
+}
+
+.retry-btn {
+  background: none;
+  border: 1px solid #A32D2D;
+  border-radius: 6px;
+  color: #A32D2D;
+  font-size: 11.5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  &:hover { background: #A32D2D; color: #fff; }
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: $muted;
+}
+
+// ── Responsive ──
+@media (max-width: 1200px) {
+  .stat-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .bottom-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .page-content { padding: 14px; }
+  .top-header { padding: 12px 16px; }
+}

@@ -1,0 +1,111 @@
+<div class="page-main">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="#374151" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Lab Reports</h1>
+        <p class="page-subtitle">{{ totalCount }} report{{ totalCount !== 1 ? 's' : '' }} total</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="card stat-card">
+      <span class="stat-label">Total Reports</span>
+      <span class="stat-value">{{ totalCount }}</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Normal</span>
+      <span class="stat-value normal-val">{{ normalCount }}</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Abnormal</span>
+      <span class="stat-value abnormal-val">{{ abnormalCount }}</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Pending</span>
+      <span class="stat-value pending-val">{{ pendingCount }}</span>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card table-card">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="search-icon">
+          <circle cx="7" cy="7" r="4.5" stroke="#9CA3AF" stroke-width="1.5"/>
+          <path d="M10.5 10.5L13 13" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="inp" type="text" placeholder="Search by test name or doctor…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()">
+      </div>
+      <div class="filters">
+        <select class="inp sel" [(ngModel)]="resultFilter" (ngModelChange)="onFilterChange()">
+          <option value="">All Results</option>
+          <option value="Normal">Normal</option>
+          <option value="Abnormal">Abnormal</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+
+    <div *ngIf="!loading && error" class="error-banner">{{ error }}</div>
+
+    <div *ngIf="!loading && !error" class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Test Name</th>
+            <th>Doctor</th>
+            <th>Hospital</th>
+            <th>Result</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rep of paged">
+            <td class="date-cell">{{ formatDate(rep.reportDate) }}</td>
+            <td class="test-cell">{{ rep.testName || '—' }}</td>
+            <td>{{ getDoctorName(rep) }}</td>
+            <td>{{ getHospital(rep) }}</td>
+            <td>
+              <span class="badge" [ngClass]="getResultClass(rep.result)">
+                {{ getResultLabel(rep.result) }}
+              </span>
+            </td>
+            <td>
+              <button class="dl-btn" (click)="downloadReport(rep)" title="Download report">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2v8M5 7l3 3 3-3M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Download
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="paged.length === 0">
+            <td colspan="6" class="empty-cell">No lab reports found</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <span class="page-info">{{ (page - 1) * pageSize + 1 }}–{{ page * pageSize > filtered.length ? filtered.length : page * pageSize }} of {{ filtered.length }}</span>
+        <div class="page-btns">
+          <button class="page-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">‹</button>
+          <button class="page-btn" *ngFor="let p of pageNumbers" [class.page-btn-active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

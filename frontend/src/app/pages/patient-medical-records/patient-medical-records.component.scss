@@ -1,0 +1,283 @@
+$primary: #185FA5;
+$primary-light: #EBF3FC;
+$border: #E5E7EB;
+$text: #111827;
+$muted: #6B7280;
+
+.page-main {
+  padding: 24px;
+  background: #F4F5F7;
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  &:hover { background: #E5E7EB; }
+}
+
+.page-title { font-size: 18px; font-weight: 700; color: $text; }
+.page-subtitle { font-size: 12px; color: $muted; margin-top: 2px; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stat-card {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label { font-size: 12px; color: $muted; font-weight: 500; }
+.stat-value { font-size: 26px; font-weight: 700; color: $text; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid $border;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.inp {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $text;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.12s;
+  &:focus { border-color: $primary; }
+}
+
+.table-wrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 10px 14px;
+    background: #FAFAFA;
+    border-bottom: 1px solid $border;
+  }
+
+  td {
+    padding: 11px 14px;
+    font-size: 13px;
+    color: $text;
+    border-bottom: 1px solid #F3F4F6;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFBFC; }
+}
+
+.date-cell { font-weight: 500; white-space: nowrap; }
+.doctor-name { font-weight: 500; }
+.spec-text { font-size: 11px; color: $muted; }
+.diag-cell { max-width: 220px; }
+.treat-cell { max-width: 200px; color: $muted; font-size: 12.5px; }
+.empty-cell { text-align: center; color: $muted; padding: 32px !important; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.badge-active   { background: #F0FDF4; color: #16A34A; }
+  &.badge-treated  { background: $primary-light; color: $primary; }
+  &.badge-ongoing  { background: #FFFBEB; color: #D97706; }
+  &.badge-critical { background: #FEF2F2; color: #DC2626; }
+}
+
+.view-btn {
+  background: none;
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: $primary;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.1s;
+  &:hover { background: $primary-light; border-color: $primary; }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid $border;
+}
+
+.page-info { font-size: 12.5px; color: $muted; }
+.page-btns { display: flex; gap: 4px; }
+
+.page-btn {
+  min-width: 28px;
+  height: 28px;
+  border: 1px solid $border;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  color: $text;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 0.1s;
+  &:hover:not(:disabled) { background: $primary-light; border-color: $primary; color: $primary; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &.page-btn-active { background: $primary; border-color: $primary; color: #fff; }
+}
+
+.skeleton-row {
+  height: 44px;
+  margin: 6px 18px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.error-banner {
+  margin: 16px 18px;
+  padding: 10px 14px;
+  background: #FDECEC;
+  border-radius: 8px;
+  color: #A32D2D;
+  font-size: 13px;
+}
+
+.loading-state { padding: 8px 0; }
+
+// ── Modal ──
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid $border;
+}
+
+.modal-title { font-size: 15px; font-weight: 600; color: $text; }
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  &:hover { background: #F3F4F6; }
+}
+
+.modal-body { padding: 20px; }
+
+.detail-grid { display: flex; flex-direction: column; gap: 0; }
+
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F3F4F6;
+  &:last-child { border-bottom: none; }
+  &.full { flex-direction: column; gap: 4px; }
+}
+
+.d-label { font-size: 12px; color: $muted; flex-shrink: 0; min-width: 100px; }
+.d-value { font-size: 13px; font-weight: 500; color: $text; text-align: right; }
+.full .d-value { text-align: left; line-height: 1.5; }
+
+@media (max-width: 900px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}

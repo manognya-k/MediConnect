@@ -1,0 +1,186 @@
+<div class="page-main">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="#374151" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">My Profile</h1>
+        <p class="page-subtitle">View and update your information</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="openEdit()" *ngIf="patientInfo">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M2 12l8-8 2 2-8 8H2v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M10 4l1.5-1.5 2 2L12 6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      Edit Profile
+    </button>
+  </div>
+
+  <!-- Success Banner -->
+  <div class="success-banner" *ngIf="saveSuccess">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#16A34A" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Profile updated successfully.
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-wrap">
+    <div class="skeleton-block"></div>
+    <div class="detail-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="error-banner">{{ error }}</div>
+
+  <!-- Profile Content -->
+  <div *ngIf="!loading && !error && patientInfo">
+    <!-- Profile Header Card -->
+    <div class="card profile-header-card">
+      <div class="avatar-wrap">
+        <div class="big-av">{{ getInitials() }}</div>
+      </div>
+      <div class="profile-name-wrap">
+        <h2 class="profile-name">{{ patientInfo.user?.name || currentUser?.name }}</h2>
+        <div class="profile-meta">
+          <span class="meta-chip">{{ patientCode }}</span>
+          <span class="meta-chip chip-blood">{{ patientInfo.bloodGroup || '—' }}</span>
+          <span class="meta-chip">{{ patientInfo.gender || '—' }}</span>
+        </div>
+        <p class="profile-hospital" *ngIf="$any(patientInfo.user)?.hospital?.hospitalName">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14M4 4h2M10 4h2M4 12h2M10 12h2" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/></svg>
+          {{ $any(patientInfo.user)?.hospital?.hospitalName }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Detail Grid -->
+    <div class="detail-grid">
+      <!-- Personal Information -->
+      <div class="card">
+        <div class="card-header">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#185FA5" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Personal Information
+        </div>
+        <div class="detail-rows">
+          <div class="detail-row">
+            <span class="d-label">Full Name</span>
+            <span class="d-value">{{ patientInfo.user?.name || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Email</span>
+            <span class="d-value">{{ patientInfo.user?.email || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Phone</span>
+            <span class="d-value">{{ patientInfo.user?.phone || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Date of Birth</span>
+            <span class="d-value">{{ formatDate(patientInfo.dateOfBirth || patientInfo.user?.dateOfBirth) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Age</span>
+            <span class="d-value">{{ getAge() }} years</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Gender</span>
+            <span class="d-value">{{ patientInfo.gender || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical Information -->
+      <div class="card">
+        <div class="card-header">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#185FA5" stroke-width="2" stroke-linecap="round"/></svg>
+          Medical Information
+        </div>
+        <div class="detail-rows">
+          <div class="detail-row">
+            <span class="d-label">Blood Group</span>
+            <span class="d-value">
+              <span class="blood-tag">{{ patientInfo.bloodGroup || '—' }}</span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Patient ID</span>
+            <span class="d-value code-text">{{ patientCode }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Hospital</span>
+            <span class="d-value">{{ $any(patientInfo.user)?.hospital?.hospitalName || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Emergency Contact</span>
+            <span class="d-value">{{ patientInfo.emergencyContact || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Address</span>
+            <span class="d-value">{{ patientInfo.address || '—' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEdit()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Edit Profile</h2>
+      <button class="modal-close" (click)="closeEdit()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 2l12 12M14 2L2 14" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="saveError" class="save-error">{{ saveError }}</div>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field-label">Blood Group</label>
+          <select class="inp" [(ngModel)]="editForm.bloodGroup">
+            <option value="">Select…</option>
+            <option *ngFor="let bg of bloodGroups" [value]="bg">{{ bg }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Gender</label>
+          <select class="inp" [(ngModel)]="editForm.gender">
+            <option value="">Select…</option>
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Date of Birth</label>
+          <input type="date" class="inp" [(ngModel)]="editForm.dateOfBirth">
+        </div>
+        <div class="field">
+          <label class="field-label">Emergency Contact</label>
+          <input type="text" class="inp" placeholder="Phone number" [(ngModel)]="editForm.emergencyContact">
+        </div>
+        <div class="field field-full">
+          <label class="field-label">Address</label>
+          <input type="text" class="inp" placeholder="Your address" [(ngModel)]="editForm.address">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeEdit()">Cancel</button>
+      <button class="btn-primary" (click)="saveProfile()" [disabled]="saving">
+        <span *ngIf="saving" class="spinner"></span>
+        {{ saving ? 'Saving…' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>

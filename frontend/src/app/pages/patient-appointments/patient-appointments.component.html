@@ -1,0 +1,129 @@
+<div class="page-main">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="#374151" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">My Appointments</h1>
+        <p class="page-subtitle">{{ filtered.length }} appointment{{ filtered.length !== 1 ? 's' : '' }} found</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="card stat-card">
+      <span class="stat-label">Upcoming</span>
+      <span class="stat-value">{{ upcomingCount }}</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Completed</span>
+      <span class="stat-value">{{ completedCount }}</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Cancelled</span>
+      <span class="stat-value">{{ cancelledCount }}</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Online</span>
+      <span class="stat-value">{{ onlineCount }}</span>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card table-card">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab" [class.tab-active]="tabFilter === 'all'" (click)="setTab('all')">All</button>
+      <button class="tab" [class.tab-active]="tabFilter === 'upcoming'" (click)="setTab('upcoming')">Upcoming</button>
+      <button class="tab" [class.tab-active]="tabFilter === 'past'" (click)="setTab('past')">Past</button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="search-icon">
+          <circle cx="7" cy="7" r="4.5" stroke="#9CA3AF" stroke-width="1.5"/>
+          <path d="M10.5 10.5L13 13" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="inp" type="text" placeholder="Search doctor or hospital…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()">
+      </div>
+      <div class="filters">
+        <select class="inp sel" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <select class="inp sel" [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
+          <option value="">All Types</option>
+          <option value="IN_PERSON">In-Person</option>
+          <option value="ONLINE">Online</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="!loading && error" class="error-banner">{{ error }}</div>
+
+    <!-- Table -->
+    <div *ngIf="!loading && !error" class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Doctor</th>
+            <th>Specialization</th>
+            <th>Hospital</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let appt of paged">
+            <td class="date-cell">{{ formatDate(appt.appointmentDate) }}</td>
+            <td class="time-cell">{{ formatTime(appt.appointmentTime) }}</td>
+            <td>
+              <span class="badge" [ngClass]="getTypeClass(appt.appointmentType)">
+                {{ getTypeLabel(appt.appointmentType) }}
+              </span>
+            </td>
+            <td class="doctor-cell">
+              <span class="doctor-name">{{ getDoctorName(appt) }}</span>
+            </td>
+            <td class="spec-cell">{{ getDoctorSpec(appt) || '—' }}</td>
+            <td>{{ getHospital(appt) }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(appt.status)">
+                {{ getStatusLabel(appt.status) }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="paged.length === 0">
+            <td colspan="7" class="empty-cell">No appointments found</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <span class="page-info">{{ (page - 1) * pageSize + 1 }}–{{ page * pageSize > filtered.length ? filtered.length : page * pageSize }} of {{ filtered.length }}</span>
+        <div class="page-btns">
+          <button class="page-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">‹</button>
+          <button class="page-btn" *ngFor="let p of pageNumbers" [class.page-btn-active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

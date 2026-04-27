@@ -1,0 +1,216 @@
+<div class="main-content">
+  <!-- Header -->
+  <header class="top-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="#374151" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">My Dashboard</h1>
+        <p class="page-subtitle">{{ today | date:'EEEE, MMMM d, yyyy' }}
+          <ng-container *ngIf="$any(patientInfo?.user)?.hospital?.hospitalName">
+            · {{ $any(patientInfo?.user)?.hospital?.hospitalName }}
+          </ng-container>
+        </p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-chip" *ngIf="!patientLoading && patientInfo">
+        <span class="chip-label">Blood Group</span>
+        <span class="chip-value">{{ patientInfo.bloodGroup || '—' }}</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <!-- Stat Cards -->
+    <div class="stat-cards">
+      <div class="stat-card">
+        <span class="stat-label">Upcoming Appointments</span>
+        <span class="stat-value">{{ apptLoading ? '—' : upcomingCount }}</span>
+        <span class="stat-badge badge-blue">
+          {{ nextApptLabel }}
+        </span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Medical Records</span>
+        <span class="stat-value">{{ recordsLoading ? '—' : recordsCount }}</span>
+        <span class="stat-badge badge-green">On file</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Lab Reports</span>
+        <span class="stat-value">{{ labLoading ? '—' : labCount }}</span>
+        <span class="stat-badge badge-amber">Results available</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">My Age</span>
+        <span class="stat-value">{{ patientLoading ? '—' : getAge() }}</span>
+        <span class="stat-badge badge-gray">{{ patientInfo?.gender || '—' }}</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Upcoming Appointments -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Upcoming Appointments</span>
+          <a class="view-all" routerLink="/patient/appointments">View all →</a>
+        </div>
+
+        <div *ngIf="apptLoading" class="section-body">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+
+        <div *ngIf="!apptLoading && apptError" class="error-state">
+          <span>{{ apptError }}</span>
+          <button class="retry-btn" (click)="retrySection('appt')">Retry</button>
+        </div>
+
+        <div *ngIf="!apptLoading && !apptError && upcomingAppointments.length === 0" class="empty-state">
+          No upcoming appointments
+        </div>
+
+        <div *ngIf="!apptLoading && !apptError && upcomingAppointments.length > 0" class="section-body">
+          <div class="appt-row" *ngFor="let appt of upcomingAppointments">
+            <div class="appt-left">
+              <div class="appt-date-block">
+                <span class="appt-day">{{ appt.appointmentDate | date:'d' }}</span>
+                <span class="appt-month">{{ appt.appointmentDate | date:'MMM' }}</span>
+              </div>
+              <div class="appt-info">
+                <div class="appt-doctor">{{ getDoctorName(appt) }}</div>
+                <div class="appt-meta">
+                  <span *ngIf="getDoctorSpec(appt)">{{ getDoctorSpec(appt) }}</span>
+                  <span *ngIf="getHospital(appt)">· {{ getHospital(appt) }}</span>
+                </div>
+                <div class="appt-time">{{ formatTime(appt.appointmentTime) }}</div>
+              </div>
+            </div>
+            <div class="appt-badges">
+              <span class="badge" [ngClass]="getTypeClass(appt.appointmentType)">{{ getTypeLabel(appt.appointmentType) }}</span>
+              <span class="badge" [ngClass]="getStatusClass(appt.status)">{{ portalService.normalizeStatus(appt.status) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="right-col">
+        <!-- Health Summary -->
+        <div class="card health-card">
+          <div class="section-header">
+            <span class="section-title">My Health Info</span>
+            <a class="view-all" routerLink="/patient/profile">Edit →</a>
+          </div>
+          <div *ngIf="patientLoading" class="section-body">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div *ngIf="!patientLoading" class="health-rows">
+            <div class="health-row">
+              <span class="h-label">Blood Group</span>
+              <span class="h-value blood-badge">{{ patientInfo?.bloodGroup || '—' }}</span>
+            </div>
+            <div class="health-row">
+              <span class="h-label">Gender</span>
+              <span class="h-value">{{ patientInfo?.gender || '—' }}</span>
+            </div>
+            <div class="health-row">
+              <span class="h-label">Date of Birth</span>
+              <span class="h-value">{{ formatDate(patientInfo?.dateOfBirth || patientInfo?.user?.dateOfBirth) }}</span>
+            </div>
+            <div class="health-row">
+              <span class="h-label">Hospital</span>
+              <span class="h-value">{{ $any(patientInfo?.user)?.hospital?.hospitalName || '—' }}</span>
+            </div>
+            <div class="health-row">
+              <span class="h-label">Emergency</span>
+              <span class="h-value">{{ patientInfo?.emergencyContact || '—' }}</span>
+            </div>
+            <div class="health-row">
+              <span class="h-label">Phone</span>
+              <span class="h-value">{{ patientInfo?.user?.phone || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bottom-row">
+      <!-- Recent Medical Records -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Recent Medical Records</span>
+          <a class="view-all" routerLink="/patient/medical-records">View all →</a>
+        </div>
+
+        <div *ngIf="recordsLoading" class="section-body">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+
+        <div *ngIf="!recordsLoading && recordsError" class="error-state">
+          <span>{{ recordsError }}</span>
+          <button class="retry-btn" (click)="retrySection('records')">Retry</button>
+        </div>
+
+        <div *ngIf="!recordsLoading && !recordsError && recentRecords.length === 0" class="empty-state">
+          No medical records found
+        </div>
+
+        <div *ngIf="!recordsLoading && !recordsError && recentRecords.length > 0" class="section-body">
+          <div class="record-row" *ngFor="let rec of recentRecords">
+            <div class="record-info">
+              <div class="record-diag">{{ rec.diagnosis || '—' }}</div>
+              <div class="record-meta">{{ formatDate(rec.recordDate) }}
+                <ng-container *ngIf="rec.doctor?.user?.name"> · Dr. {{ rec.doctor?.user?.name }}</ng-container>
+              </div>
+            </div>
+            <span class="badge badge-blue-soft">{{ rec.treatment ? 'Treated' : 'Active' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Lab Reports -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Recent Lab Reports</span>
+          <a class="view-all" routerLink="/patient/lab-reports">View all →</a>
+        </div>
+
+        <div *ngIf="labLoading" class="section-body">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+
+        <div *ngIf="!labLoading && labError" class="error-state">
+          <span>{{ labError }}</span>
+          <button class="retry-btn" (click)="retrySection('lab')">Retry</button>
+        </div>
+
+        <div *ngIf="!labLoading && !labError && recentLabReports.length === 0" class="empty-state">
+          No lab reports found
+        </div>
+
+        <div *ngIf="!labLoading && !labError && recentLabReports.length > 0" class="section-body">
+          <div class="lab-row" *ngFor="let lab of recentLabReports">
+            <div class="lab-info">
+              <div class="lab-name">{{ lab.testName || '—' }}</div>
+              <div class="lab-meta">{{ formatDate(lab.reportDate) }}</div>
+            </div>
+            <span class="badge" [ngClass]="getResultClass(lab.result)">{{ getResultLabel(lab.result) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

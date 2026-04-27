@@ -94,5 +94,51 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'patient',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./layouts/patient-layout/patient-layout.component').then(
+        (m) => m.PatientLayoutComponent
+      ),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/patient-dashboard/patient-dashboard.component').then(
+            (m) => m.PatientDashboardComponent
+          )
+      },
+      {
+        path: 'appointments',
+        loadComponent: () =>
+          import('./pages/patient-appointments/patient-appointments.component').then(
+            (m) => m.PatientAppointmentsComponent
+          )
+      },
+      {
+        path: 'medical-records',
+        loadComponent: () =>
+          import('./pages/patient-medical-records/patient-medical-records.component').then(
+            (m) => m.PatientMedicalRecordsComponent
+          )
+      },
+      {
+        path: 'lab-reports',
+        loadComponent: () =>
+          import('./pages/patient-lab-reports/patient-lab-reports.component').then(
+            (m) => m.PatientLabReportsComponent
+          )
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./pages/patient-profile/patient-profile.component').then(
+            (m) => m.PatientProfileComponent
+          )
+      }
+    ]
+  },
   { path: '**', redirectTo: '/login' }
 ];
