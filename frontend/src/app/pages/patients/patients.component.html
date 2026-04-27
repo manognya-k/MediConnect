@@ -131,6 +131,12 @@
                     <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                   </svg>
                 </button>
+                <button class="action-btn" title="Schedule Appointment" (click)="openScheduleForm(p, $event)">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </div>
             </td>
           </tr>
@@ -164,3 +170,14 @@
   (saved)="onFormSaved()"
   (cancelled)="closeForm()">
 </app-patient-form>
+
+<!-- ── SCHEDULE APPOINTMENT MODAL ── -->
+<app-appointment-form
+  *ngIf="showScheduleForm && schedulingPatient"
+  [doctorId]="doctorId"
+  [hospitalId]="hospitalId"
+  [preselectedPatientId]="schedulingPatient.rawId"
+  [preselectedPatientName]="schedulingPatient.fullName"
+  (saved)="onAppointmentScheduled()"
+  (cancelled)="showScheduleForm = false; schedulingPatient = null">
+</app-appointment-form>

@@ -18,6 +18,9 @@ export interface RegisterRequest {
   bloodGroup?: string;
   gender?: string;
   specialization?: string;
+  hospitalId?: number;
+  departmentId?: number;
+  availabilityStatus?: string;
 }
 
 export interface AuthResponse {

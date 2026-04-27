@@ -161,4 +161,17 @@ export class PatientAppointmentsComponent implements OnInit {
     if (u === 'CANCELLED' || u === 'CANCELED') return 'badge-cancelled';
     return 'badge-default';
   }
+
+  canJoin(a: PortalAppointment): boolean {
+    const type = (a.appointmentType || '').toUpperCase();
+    const status = (a.status || '').toUpperCase();
+    const isVideo = type === 'VIDEO' || type === 'ONLINE';
+    const isActive = status === 'SCHEDULED' || status === 'CONFIRMED';
+    return isVideo && isActive;
+  }
+
+  joinSession(a: PortalAppointment) {
+    const url = a.sessionUrl || `https://meet.jit.si/mediconnect-${a.appointmentId}`;
+    window.open(url, '_blank');
+  }
 }

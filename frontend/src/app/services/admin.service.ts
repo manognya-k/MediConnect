@@ -12,6 +12,23 @@ export interface Hospital {
   email?: string;
 }
 
+export interface Department {
+  departmentId: number;
+  departmentName: string;
+  hospital?: { hospitalId: number; hospitalName?: string };
+}
+
+export interface DoctorCreateRequest {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  specialization: string;
+  availabilityStatus: string;
+  hospitalId: number | null;
+  departmentId: number | null;
+}
+
 export interface AdminDoctor {
   doctorId: number;
   user: { userId: number; name: string; email: string; phone?: string; role?: string };
@@ -86,17 +103,26 @@ export class AdminService {
     );
   }
 
+  // ── Departments ──
+  getDepartments(): Observable<Department[]> {
+    return this.http.get<Department[]>(`${this.base}/departments`).pipe(catchError(() => of([])));
+  }
+
+  getDepartmentsByHospital(hospitalId: number): Observable<Department[]> {
+    return this.http.get<Department[]>(`${this.base}/departments/hospital/${hospitalId}`).pipe(catchError(() => of([])));
+  }
+
   // ── Doctors ──
   getDoctors(): Observable<AdminDoctor[]> {
     return this.http.get<AdminDoctor[]>(`${this.base}/doctors`).pipe(catchError(() => of([])));
   }
 
-  createDoctor(data: any): Observable<AdminDoctor | null> {
-    return this.http.post<AdminDoctor>(`${this.base}/doctors`, data).pipe(catchError(() => of(null)));
+  registerDoctor(data: DoctorCreateRequest): Observable<AdminDoctor | null> {
+    return this.http.post<AdminDoctor>(`${this.base}/doctors/register`, data).pipe(catchError(() => of(null)));
   }
 
-  updateDoctor(id: number, data: any): Observable<AdminDoctor | null> {
-    return this.http.put<AdminDoctor>(`${this.base}/doctors/${id}`, data).pipe(catchError(() => of(null)));
+  updateDoctorFull(id: number, data: DoctorCreateRequest): Observable<AdminDoctor | null> {
+    return this.http.put<AdminDoctor>(`${this.base}/doctors/${id}/update`, data).pipe(catchError(() => of(null)));
   }
 
   deleteDoctor(id: number): Observable<boolean> {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { LayoutService } from '../../services/layout.service';
-import { AdminService, AdminDoctor, Hospital } from '../../services/admin.service';
+import { AdminService, AdminDoctor, Hospital, Department, DoctorCreateRequest } from '../../services/admin.service';
 
 @Component({
   selector: 'app-admin-doctors',
@@ -16,6 +16,7 @@ export class AdminDoctorsComponent implements OnInit {
   allDoctors: AdminDoctor[] = [];
   filtered: AdminDoctor[] = [];
   hospitals: Hospital[] = [];
+  departments: Department[] = [];
 
   searchQuery = '';
   hospitalFilter = '';
@@ -31,13 +32,24 @@ export class AdminDoctorsComponent implements OnInit {
 
   deleteConfirmId: number | null = null;
 
-  form = {
+  form: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    specialization: string;
+    availabilityStatus: string;
+    hospitalId: string;
+    departmentId: string;
+  } = {
     name: '',
     email: '',
     phone: '',
+    password: '',
     specialization: '',
     availabilityStatus: 'AVAILABLE',
-    hospitalId: ''
+    hospitalId: '',
+    departmentId: ''
   };
 
   page = 1;
@@ -46,7 +58,7 @@ export class AdminDoctorsComponent implements OnInit {
   readonly avatarBg = ['#EBF3FC', '#EAF3DE', '#FBEAF0', '#E1F5EE'];
   readonly avatarText = ['#185FA5', '#3B6D11', '#993556', '#0F6E56'];
 
-  constructor(public layout: LayoutService, private svc: AdminService) {}
+  constructor(public layout: LayoutService, public svc: AdminService) {}
 
   ngOnInit(): void {
     forkJoin({
@@ -88,9 +100,7 @@ export class AdminDoctorsComponent implements OnInit {
     }
 
     if (this.statusFilter) {
-      result = result.filter(
-        d => this.svc.normalizeStatus(d.availabilityStatus) === this.statusFilter
-      );
+      result = result.filter(d => d.availabilityStatus === this.statusFilter);
     }
 
     if (this.searchQuery.trim()) {
@@ -116,10 +126,13 @@ export class AdminDoctorsComponent implements OnInit {
       name: '',
       email: '',
       phone: '',
+      password: '',
       specialization: '',
       availabilityStatus: 'AVAILABLE',
-      hospitalId: ''
+      hospitalId: '',
+      departmentId: ''
     };
+    this.departments = [];
     this.editingId = null;
     this.saveError = '';
     this.showModal = true;
@@ -130,13 +143,31 @@ export class AdminDoctorsComponent implements OnInit {
       name: d.user.name,
       email: d.user.email,
       phone: d.user.phone || '',
+      password: '',
       specialization: d.specialization,
       availabilityStatus: d.availabilityStatus,
-      hospitalId: String(d.hospital?.hospitalId || '')
+      hospitalId: String(d.hospital?.hospitalId || ''),
+      departmentId: String(d.department?.departmentId || '')
     };
+    this.departments = [];
+    if (d.hospital?.hospitalId) {
+      this.svc.getDepartmentsByHospital(d.hospital.hospitalId).subscribe({
+        next: (deps) => { this.departments = deps; }
+      });
+    }
     this.editingId = d.doctorId;
     this.saveError = '';
     this.showModal = true;
+  }
+
+  onHospitalChange(): void {
+    this.form.departmentId = '';
+    this.departments = [];
+    if (this.form.hospitalId) {
+      this.svc.getDepartmentsByHospital(Number(this.form.hospitalId)).subscribe({
+        next: (deps) => { this.departments = deps; }
+      });
+    }
   }
 
   closeModal(): void {
@@ -145,27 +176,44 @@ export class AdminDoctorsComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.form.name || !this.form.email || !this.form.specialization) {
+      this.saveError = 'Name, email, and specialization are required.';
+      return;
+    }
+    if (!this.editingId && !this.form.password) {
+      this.saveError = 'Password is required for new doctors.';
+      return;
+    }
+    if (!this.form.hospitalId) {
+      this.saveError = 'Please select a hospital.';
+      return;
+    }
+
     this.saving = true;
     this.saveError = '';
 
-    const payload = {
+    const payload: DoctorCreateRequest = {
+      name: this.form.name,
+      email: this.form.email,
+      phone: this.form.phone,
+      password: this.form.password,
       specialization: this.form.specialization,
       availabilityStatus: this.form.availabilityStatus,
-      hospital: this.form.hospitalId ? { hospitalId: Number(this.form.hospitalId) } : null,
-      user: {
-        name: this.form.name,
-        email: this.form.email,
-        phone: this.form.phone
-      }
+      hospitalId: Number(this.form.hospitalId),
+      departmentId: this.form.departmentId ? Number(this.form.departmentId) : null
     };
 
     const op = this.editingId
-      ? this.svc.updateDoctor(this.editingId, payload)
-      : this.svc.createDoctor(payload);
+      ? this.svc.updateDoctorFull(this.editingId, payload)
+      : this.svc.registerDoctor(payload);
 
     op.subscribe({
-      next: () => {
+      next: (result) => {
         this.saving = false;
+        if (!result) {
+          this.saveError = 'Failed to save doctor. Email may already be registered.';
+          return;
+        }
         this.closeModal();
         this.loadDoctors();
       },
@@ -216,10 +264,12 @@ export class AdminDoctorsComponent implements OnInit {
   }
 
   getStatusClass(s: string): string {
-    const n = this.svc.normalizeStatus(s);
-    if (n === 'AVAILABLE') return 'badge-available';
-    if (n === 'UNAVAILABLE') return 'badge-unavailable';
-    return 'badge-default';
+    switch (s) {
+      case 'AVAILABLE': return 'badge-available';
+      case 'UNAVAILABLE': return 'badge-unavailable';
+      case 'ON_LEAVE': return 'badge-leave';
+      default: return 'badge-default';
+    }
   }
 
   getInitials(name: string): string {
@@ -234,6 +284,10 @@ export class AdminDoctorsComponent implements OnInit {
 
   getHospitalName(d: AdminDoctor): string {
     return d.hospital?.hospitalName || '—';
+  }
+
+  getDepartmentName(d: AdminDoctor): string {
+    return d.department?.departmentName || '—';
   }
 
   getAvatarBg(index: number): string {

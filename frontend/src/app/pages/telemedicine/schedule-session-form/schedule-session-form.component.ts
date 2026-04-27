@@ -97,8 +97,8 @@ export class ScheduleSessionFormComponent implements OnInit {
       appointmentDate: v.date,
       appointmentTime: v.time + ':00',
       appointmentType: 'VIDEO',
-      status:          'PENDING',
-      sessionUrl:      v.reason, // stored in sessionUrl field — TODO: add dedicated reason field
+      status:          'SCHEDULED',
+      sessionUrl:      v.reason,
     };
 
     if (this.doctorId)   body.doctor   = { doctorId: this.doctorId };

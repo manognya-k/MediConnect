@@ -6,6 +6,10 @@ export interface TelemedicineSession {
   patientName: string;
   patientCode: string;
   patientInitials: string;
+  doctorName: string;
+  doctorCode: string;
+  doctorInitials: string;
+  doctorSpecialization: string;
   avatarBg: string;
   avatarColor: string;
   reason: string;

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, AuthResponse } from '../../services/auth.service';
@@ -350,6 +350,25 @@ export class DoctorDashboardComponent implements OnInit {
   getUserInitials(): string {
     const name = this.currentUser?.name || 'Dr';
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  joinConsultation(appt: AppointmentEntity) {
+    const url = appt.sessionUrl || `https://meet.jit.si/mediconnect-${appt.appointmentId}`;
+    window.open(url, '_blank');
+  }
+
+  markAllRead() {
+    if (!this.notifications.length) return;
+    this.notifications.forEach(n => {
+      this.dashboardService.markNotificationRead(n).subscribe();
+    });
+    this.notifications = [];
+    this.unreadNotifCount = 0;
+    this.urgentNotifCount = 0;
+  }
+
+  scrollToNotifications() {
+    document.getElementById('notifications-card')?.scrollIntoView({ behavior: 'smooth' });
   }
 
   logout() {

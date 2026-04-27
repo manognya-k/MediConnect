@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable, Subject, Subscription, combineLatest } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LayoutService } from '../../services/layout.service';
 import { AppointmentService } from '../../services/appointment.service';
@@ -42,10 +42,11 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   showScheduleForm = false;
   joiningId: string | null = null;
 
+  isPatient = false;
   doctorId: number | null = null;
+  patientId: number | null = null;
   hospitalId: number | null = null;
 
-  // Per-session observables
   countdowns = new Map<string, Observable<string>>();
   elapseds = new Map<string, Observable<string>>();
 
@@ -62,7 +63,7 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.resolveDoctorAndLoad();
+    this.resolveUserAndLoad();
   }
 
   ngOnDestroy() {
@@ -70,34 +71,51 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private resolveDoctorAndLoad() {
+  private resolveUserAndLoad() {
     const user = this.auth.getUser();
-    if (!user) { this.loadAll(null); return; }
-    this.dashSvc.getAllDoctors().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (docs) => {
-        const doc = docs.find(d => d.user?.userId === user.userId);
-        if (doc) {
-          this.doctorId = doc.doctorId;
-          this.hospitalId = doc.hospital?.hospitalId ?? null;
-        }
-        this.loadAll(this.doctorId);
-      },
-      error: () => this.loadAll(null)
-    });
+    if (!user) { this.loadAll(); return; }
+
+    if (user.role === 'PATIENT') {
+      this.isPatient = true;
+      this.dashSvc.getAllPatients().pipe(takeUntil(this.destroy$)).subscribe({
+        next: (patients) => {
+          const pat = patients.find(p => p.user?.userId === user.userId);
+          if (pat) this.patientId = pat.patientId;
+          this.loadAll();
+        },
+        error: () => this.loadAll()
+      });
+    } else {
+      this.isPatient = false;
+      this.dashSvc.getAllDoctors().pipe(takeUntil(this.destroy$)).subscribe({
+        next: (docs) => {
+          const doc = docs.find(d => d.user?.userId === user.userId);
+          if (doc) {
+            this.doctorId = doc.doctorId;
+            this.hospitalId = doc.hospital?.hospitalId ?? null;
+          }
+          this.loadAll();
+        },
+        error: () => this.loadAll()
+      });
+    }
   }
 
-  loadAll(doctorId: number | null) {
+  loadAll() {
     this.loading = true;
     this.error = '';
 
-    const req = doctorId
-      ? this.apptSvc.getByDoctor(doctorId)
-      : this.apptSvc.getAll();
+    const viewAs = this.isPatient ? 'patient' : 'doctor';
+    const req = this.isPatient && this.patientId
+      ? this.apptSvc.getByPatient(this.patientId)
+      : this.doctorId
+        ? this.apptSvc.getByDoctor(this.doctorId)
+        : this.apptSvc.getAll();
 
     req.pipe(takeUntil(this.destroy$)).subscribe({
       next: (appointments: BackendAppointment[]) => {
         const videoAppts = this.teleS.filterVideoAppointments(appointments);
-        this.allSessions = videoAppts.map((a, i) => this.teleS.mapToSession(a, i));
+        this.allSessions = videoAppts.map((a, i) => this.teleS.mapToSession(a, i, viewAs));
         this.stats = this.teleS.computeStats(this.allSessions);
         this.liveAndUpcoming = this.teleS.getLiveAndUpcoming(this.allSessions);
         this.buildTimerObservables();
@@ -200,7 +218,7 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
 
   onSessionScheduled() {
     this.showScheduleForm = false;
-    this.loadAll(this.doctorId);
+    this.loadAll();
     this.toast.show('Session scheduled successfully.', 'success');
   }
 

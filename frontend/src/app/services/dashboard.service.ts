@@ -121,4 +121,11 @@ export class DashboardService {
       catchError(() => of([]))
     );
   }
+
+  markNotificationRead(notif: NotificationEntity): Observable<NotificationEntity | null> {
+    return this.http.put<NotificationEntity>(
+      `${BASE}/notifications/${notif.notificationId}`,
+      { ...notif, isRead: true }
+    ).pipe(catchError(() => of(null)));
+  }
 }

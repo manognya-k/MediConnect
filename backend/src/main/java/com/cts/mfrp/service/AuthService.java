@@ -3,8 +3,12 @@ package com.cts.mfrp.service;
 import com.cts.mfrp.dto.LoginRequest;
 import com.cts.mfrp.dto.LoginResponse;
 import com.cts.mfrp.dto.RegisterRequest;
+import com.cts.mfrp.entity.Doctor;
 import com.cts.mfrp.entity.Patient;
 import com.cts.mfrp.entity.User;
+import com.cts.mfrp.repository.DepartmentRepository;
+import com.cts.mfrp.repository.DoctorRepository;
+import com.cts.mfrp.repository.HospitalRepository;
 import com.cts.mfrp.repository.PatientRepository;
 import com.cts.mfrp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,9 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final DoctorRepository doctorRepository;
+    private final HospitalRepository hospitalRepository;
+    private final DepartmentRepository departmentRepository;
 
     public LoginResponse login(LoginRequest request) {
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
@@ -55,6 +62,22 @@ public class AuthService {
             patient.setBloodGroup(request.getBloodGroup());
             patient.setGender(request.getGender());
             patientRepository.save(patient);
+        }
+
+        if ("DOCTOR".equalsIgnoreCase(request.getRole())) {
+            Doctor doctor = new Doctor();
+            doctor.setUser(savedUser);
+            doctor.setSpecialization(request.getSpecialization() != null ? request.getSpecialization() : "General");
+            doctor.setAvailabilityStatus(
+                request.getAvailabilityStatus() != null ? request.getAvailabilityStatus() : "AVAILABLE"
+            );
+            if (request.getHospitalId() != null) {
+                hospitalRepository.findById(request.getHospitalId()).ifPresent(doctor::setHospital);
+            }
+            if (request.getDepartmentId() != null) {
+                departmentRepository.findById(request.getDepartmentId()).ifPresent(doctor::setDepartment);
+            }
+            doctorRepository.save(doctor);
         }
 
         return new LoginResponse(savedUser.getUserId(), savedUser.getName(), savedUser.getEmail(), savedUser.getRole());

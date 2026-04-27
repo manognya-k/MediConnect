@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AdminService, Hospital, Department } from '../../services/admin.service';
 
 @Component({
   selector: 'app-register',
@@ -11,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   activeTab: 'PATIENT' | 'DOCTOR' | 'ADMIN' = 'PATIENT';
 
   firstName = '';
@@ -22,6 +23,8 @@ export class RegisterComponent {
   bloodGroup = '';
   gender = '';
   specialization = '';
+  hospitalId = '';
+  departmentId = '';
   password = '';
   confirmPassword = '';
   showPassword = false;
@@ -31,9 +34,22 @@ export class RegisterComponent {
   errorMessage = '';
   successMessage = '';
 
+  hospitals: Hospital[] = [];
+  departments: Department[] = [];
+
   bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private adminService: AdminService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.adminService.getHospitals().subscribe({
+      next: (h) => { this.hospitals = h; }
+    });
+  }
 
   setTab(tab: 'PATIENT' | 'DOCTOR' | 'ADMIN') {
     this.activeTab = tab;
@@ -50,9 +66,22 @@ export class RegisterComponent {
     this.bloodGroup = '';
     this.gender = '';
     this.specialization = '';
+    this.hospitalId = '';
+    this.departmentId = '';
+    this.departments = [];
     this.password = '';
     this.confirmPassword = '';
     this.agreeTerms = false;
+  }
+
+  onHospitalChange(): void {
+    this.departmentId = '';
+    this.departments = [];
+    if (this.hospitalId) {
+      this.adminService.getDepartmentsByHospital(Number(this.hospitalId)).subscribe({
+        next: (d) => { this.departments = d; }
+      });
+    }
   }
 
   togglePassword() {
@@ -78,6 +107,10 @@ export class RegisterComponent {
       this.errorMessage = 'Password must be at least 6 characters.';
       return;
     }
+    if (this.activeTab === 'DOCTOR' && !this.hospitalId) {
+      this.errorMessage = 'Please select a hospital.';
+      return;
+    }
     if (!this.agreeTerms) {
       this.errorMessage = 'Please agree to the Terms of Service.';
       return;
@@ -85,7 +118,7 @@ export class RegisterComponent {
 
     this.loading = true;
 
-    const request = {
+    const request: any = {
       firstName: this.firstName,
       lastName: this.lastName,
       email: this.email,
@@ -98,9 +131,14 @@ export class RegisterComponent {
       specialization: this.specialization || undefined
     };
 
+    if (this.activeTab === 'DOCTOR') {
+      request.hospitalId = Number(this.hospitalId);
+      request.departmentId = this.departmentId ? Number(this.departmentId) : undefined;
+      request.availabilityStatus = 'AVAILABLE';
+    }
+
     this.authService.register(request).subscribe({
-      next: (response) => {
-        this.authService.saveUser(response);
+      next: () => {
         this.loading = false;
         this.router.navigate(['/login']);
       },

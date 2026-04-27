@@ -239,6 +239,37 @@
                   [(ngModel)]="specialization" name="specialization" />
               </div>
             </div>
+
+            <div class="form-group">
+              <label class="form-label">Hospital <span style="color:#DC2626">*</span></label>
+              <div class="input-wrapper select-wrapper">
+                <select class="form-input form-select" [(ngModel)]="hospitalId" name="hospitalId"
+                  (ngModelChange)="onHospitalChange()" required>
+                  <option value="">— Select Hospital —</option>
+                  <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+                </select>
+                <span class="select-arrow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9l6 6 6-6" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="hospitalId">
+              <label class="form-label">Department</label>
+              <div class="input-wrapper select-wrapper">
+                <select class="form-input form-select" [(ngModel)]="departmentId" name="departmentId">
+                  <option value="">— Select Department (optional) —</option>
+                  <option *ngFor="let d of departments" [value]="d.departmentId">{{ d.departmentName }}</option>
+                </select>
+                <span class="select-arrow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9l6 6 6-6" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
           </ng-container>
 
           <!-- Password -->

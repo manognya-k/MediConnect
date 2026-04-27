@@ -7,12 +7,15 @@ import { PatientService, PagedResult } from '../../services/patient.service';
 import { Patient, PatientStats, PatientFilter } from '../../models/patient.model';
 import { LayoutService } from '../../services/layout.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthService } from '../../services/auth.service';
+import { DashboardService } from '../../services/dashboard.service';
 import { PatientFormComponent } from './patient-form/patient-form.component';
+import { AppointmentFormComponent } from '../appointments/appointment-form/appointment-form.component';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, PatientFormComponent],
+  imports: [CommonModule, FormsModule, DatePipe, PatientFormComponent, AppointmentFormComponent],
   templateUrl: './patients.component.html',
   styleUrl: './patients.component.scss'
 })
@@ -31,6 +34,11 @@ export class PatientsComponent implements OnInit, OnDestroy {
   showForm = false;
   editPatient: Patient | null = null;
 
+  showScheduleForm = false;
+  schedulingPatient: Patient | null = null;
+  doctorId: number | null = null;
+  hospitalId: number | null = null;
+
   private destroy$ = new Subject<void>();
   private search$ = new Subject<string>();
 
@@ -47,10 +55,26 @@ export class PatientsComponent implements OnInit, OnDestroy {
     public layout: LayoutService,
     private patientService: PatientService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    private auth: AuthService,
+    private dashSvc: DashboardService
   ) {}
 
   ngOnInit() {
+    // Resolve doctor context for appointment scheduling
+    const user = this.auth.getUser();
+    if (user) {
+      this.dashSvc.getAllDoctors().subscribe({
+        next: (doctors) => {
+          const doc = doctors.find(d => d.user?.userId === user.userId);
+          if (doc) {
+            this.doctorId = doc.doctorId;
+            this.hospitalId = doc.hospital?.hospitalId ?? null;
+          }
+        }
+      });
+    }
+
     this.search$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -74,7 +98,6 @@ export class PatientsComponent implements OnInit, OnDestroy {
         this.totalPages = Math.ceil(res.total / this.filter.pageSize);
         this.buildPageNumbers();
 
-        // Compute stats from full list on first load
         if (this.stats.total === 0) {
           this.patientService.getPatients({ ...this.filter, page: 1, pageSize: 99999, search: '', gender: '', bloodGroup: '', status: '' }).subscribe(all => {
             this.stats = this.patientService.getStats(all.data);
@@ -143,10 +166,22 @@ export class PatientsComponent implements OnInit, OnDestroy {
   openEditForm(p: Patient, event: Event) { event.stopPropagation(); this.editPatient = p; this.showForm = true; }
   closeForm() { this.showForm = false; this.editPatient = null; }
 
+  openScheduleForm(p: Patient, event: Event) {
+    event.stopPropagation();
+    this.schedulingPatient = p;
+    this.showScheduleForm = true;
+  }
+
   onFormSaved() {
     this.closeForm();
-    this.stats = { ...this.stats, total: 0 }; // force stats refresh
+    this.stats = { ...this.stats, total: 0 };
     this.load();
     this.toastService.show(this.editPatient ? 'Patient updated.' : 'Patient added successfully.', 'success');
+  }
+
+  onAppointmentScheduled() {
+    this.showScheduleForm = false;
+    this.schedulingPatient = null;
+    this.toastService.show('Appointment scheduled successfully.', 'success');
   }
 }

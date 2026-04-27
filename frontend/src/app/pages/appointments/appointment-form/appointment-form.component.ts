@@ -24,6 +24,8 @@ export class AppointmentFormComponent implements OnInit {
   @Input() editData: Appointment | null = null;
   @Input() doctorId: number | null = null;
   @Input() hospitalId: number | null = null;
+  @Input() preselectedPatientId: number | null = null;
+  @Input() preselectedPatientName: string = '';
   @Output() saved = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -69,6 +71,12 @@ export class AppointmentFormComponent implements OnInit {
         name: this.editData.patientName
       };
       this.patientQuery = this.editData.patientName;
+    } else if (this.preselectedPatientId) {
+      this.selectedPatient = {
+        patientId: this.preselectedPatientId,
+        name: this.preselectedPatientName
+      };
+      this.patientQuery = this.preselectedPatientName;
     }
 
     this.loadPatients();

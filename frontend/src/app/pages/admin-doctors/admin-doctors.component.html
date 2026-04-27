@@ -178,11 +178,22 @@
           </select>
         </div>
         <div class="field">
-          <label class="field-label">Hospital</label>
-          <select class="inp inp-full" [(ngModel)]="form.hospitalId">
+          <label class="field-label">Hospital *</label>
+          <select class="inp inp-full" [(ngModel)]="form.hospitalId" (ngModelChange)="onHospitalChange()">
             <option value="">— Select Hospital —</option>
             <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
           </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Department</label>
+          <select class="inp inp-full" [(ngModel)]="form.departmentId" [disabled]="!form.hospitalId">
+            <option value="">— Select Department —</option>
+            <option *ngFor="let d of departments" [value]="d.departmentId">{{ d.departmentName }}</option>
+          </select>
+        </div>
+        <div class="field" *ngIf="!editingId">
+          <label class="field-label">Password *</label>
+          <input class="inp inp-full" type="password" placeholder="Set login password" [(ngModel)]="form.password" />
         </div>
       </div>
     </div>

@@ -118,6 +118,13 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'telemedicine',
+        loadComponent: () =>
+          import('./pages/telemedicine/telemedicine.component').then(
+            (m) => m.TelemedicineComponent
+          )
+      },
+      {
         path: 'medical-records',
         loadComponent: () =>
           import('./pages/patient-medical-records/patient-medical-records.component').then(

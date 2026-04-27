@@ -87,6 +87,7 @@
             <th>Specialization</th>
             <th>Hospital</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -108,9 +109,19 @@
                 {{ getStatusLabel(appt.status) }}
               </span>
             </td>
+            <td>
+              <button class="join-btn" *ngIf="canJoin(appt)" (click)="joinSession(appt)">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="margin-right:4px">
+                  <rect x="1" y="4" width="9" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M10 7l4-2.5v7L10 9" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+                Join
+              </button>
+              <span *ngIf="!canJoin(appt)" class="no-action">—</span>
+            </td>
           </tr>
           <tr *ngIf="paged.length === 0">
-            <td colspan="7" class="empty-cell">No appointments found</td>
+            <td colspan="8" class="empty-cell">No appointments found</td>
           </tr>
         </tbody>
       </table>

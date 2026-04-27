@@ -29,6 +29,10 @@ export class AppointmentService {
     return this.http.get<BackendAppointment[]>(`${BASE}/appointments/doctor/${doctorId}`);
   }
 
+  getByPatient(patientId: number): Observable<BackendAppointment[]> {
+    return this.http.get<BackendAppointment[]>(`${BASE}/appointments/patient/${patientId}`);
+  }
+
   getById(id: number): Observable<BackendAppointment> {
     return this.http.get<BackendAppointment>(`${BASE}/appointments/${id}`);
   }

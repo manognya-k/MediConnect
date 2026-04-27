@@ -1,5 +1,6 @@
 package com.cts.mfrp.controller;
 
+import com.cts.mfrp.dto.DoctorCreateRequest;
 import com.cts.mfrp.entity.Doctor;
 import com.cts.mfrp.service.DoctorService;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +10,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/doctors")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class DoctorController {
+
     private final DoctorService doctorService;
 
     @GetMapping
@@ -33,20 +36,21 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getDoctorsBySpecialization(specialization));
     }
 
-    @PostMapping
-    public ResponseEntity<Doctor> createDoctor(@RequestBody Doctor doctor) {
-        return ResponseEntity.ok(doctorService.saveDoctor(doctor));
+    /** Admin: create doctor + user atomically */
+    @PostMapping("/register")
+    public ResponseEntity<Doctor> registerDoctor(@RequestBody DoctorCreateRequest req) {
+        return ResponseEntity.ok(doctorService.createDoctorWithUser(req));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Doctor> updateDoctor(@PathVariable Integer id, @RequestBody Doctor doctor) {
-        doctor.setDoctorId(id);
-        return ResponseEntity.ok(doctorService.saveDoctor(doctor));
+    /** Admin: update doctor + user fields */
+    @PutMapping("/{id}/update")
+    public ResponseEntity<Doctor> updateDoctor(@PathVariable Integer id, @RequestBody DoctorCreateRequest req) {
+        return ResponseEntity.ok(doctorService.updateDoctorWithUser(id, req));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDoctor(@PathVariable Integer id) {
         doctorService.deleteDoctor(id);
-        return ResponseEntity.noContent().build(); // FIXED: was ok()
+        return ResponseEntity.noContent().build();
     }
 }

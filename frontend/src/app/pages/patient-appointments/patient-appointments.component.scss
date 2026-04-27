@@ -268,6 +268,24 @@ $muted: #6B7280;
 
 .loading-state { padding: 8px 0; }
 
+.join-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover { background: #DBEAFE; border-color: #93C5FD; }
+}
+
+.no-action { color: #9CA3AF; font-size: 13px; }
+
 @media (max-width: 900px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
 }

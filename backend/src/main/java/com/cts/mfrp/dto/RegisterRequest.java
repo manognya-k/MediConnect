@@ -15,4 +15,7 @@ public class RegisterRequest {
     private String bloodGroup;
     private String gender;
     private String specialization;
+    private Integer hospitalId;
+    private Integer departmentId;
+    private String availabilityStatus;
 }

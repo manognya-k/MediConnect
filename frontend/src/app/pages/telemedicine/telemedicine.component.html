@@ -13,7 +13,7 @@
         <p class="page-sub">Video consultations via session URL</p>
       </div>
     </div>
-    <button class="btn btn-primary" (click)="showScheduleForm = true">
+    <button class="btn btn-primary" *ngIf="!isPatient" (click)="showScheduleForm = true">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
@@ -60,7 +60,7 @@
   <!-- Error -->
   <div class="error-bar" *ngIf="!loading && error">
     <span>{{ error }}</span>
-    <button class="retry-btn" (click)="loadAll(doctorId)">Retry</button>
+    <button class="retry-btn" (click)="loadAll()">Retry</button>
   </div>
 
   <!-- Empty -->
@@ -81,11 +81,14 @@
       <!-- Card Top -->
       <div class="sc-top">
         <div class="av" [style.background]="s.avatarBg" [style.color]="s.avatarColor">
-          {{ s.patientInitials }}
+          {{ isPatient ? s.doctorInitials : s.patientInitials }}
         </div>
         <div class="sc-patient">
-          <div class="sc-name">{{ s.patientName }}</div>
-          <div class="sc-meta">{{ s.patientCode }} · {{ s.reason }}</div>
+          <div class="sc-name">{{ isPatient ? s.doctorName : s.patientName }}</div>
+          <div class="sc-meta">
+            {{ isPatient ? s.doctorSpecialization : s.patientCode }}
+            · {{ s.reason }}
+          </div>
         </div>
 
         <!-- Live badge -->
@@ -141,7 +144,7 @@
           <div class="sc-label">Type</div>
           <div class="sc-value">Video</div>
         </div>
-        <div class="sc-field">
+        <div class="sc-field" *ngIf="!isPatient">
           <div class="sc-label">Blood group</div>
           <div class="sc-value">{{ s.bloodGroup }}</div>
         </div>
@@ -190,7 +193,7 @@
       <table>
         <thead>
           <tr>
-            <th>Patient</th>
+            <th>{{ isPatient ? 'Doctor' : 'Patient' }}</th>
             <th>Date</th>
             <th>Duration</th>
             <th>Reason</th>
@@ -204,9 +207,9 @@
                 <div class="av av-sm"
                      [style.background]="s.avatarBg"
                      [style.color]="s.avatarColor">
-                  {{ s.patientInitials }}
+                  {{ isPatient ? s.doctorInitials : s.patientInitials }}
                 </div>
-                {{ s.patientName }}
+                {{ isPatient ? s.doctorName : s.patientName }}
               </div>
             </td>
             <td>{{ formatDate(s.scheduledTime) }}</td>
@@ -250,9 +253,9 @@
 
 </div>
 
-<!-- Schedule Session Modal -->
+<!-- Schedule Session Modal (doctor only) -->
 <app-schedule-session-form
-  *ngIf="showScheduleForm"
+  *ngIf="showScheduleForm && !isPatient"
   [doctorId]="doctorId"
   [hospitalId]="hospitalId"
   (saved)="onSessionScheduled()"

@@ -16,7 +16,12 @@
         <!-- Patient -->
         <div class="field field-full">
           <label class="field-label">Patient <span class="req">*</span></label>
-          <div class="autocomplete-wrap">
+          <!-- Locked when pre-selected from patient detail -->
+          <div *ngIf="preselectedPatientId && !editData" class="field-input" style="background:#f9fafb;color:#374151;cursor:default;">
+            {{ preselectedPatientName }}
+          </div>
+          <!-- Autocomplete otherwise -->
+          <div class="autocomplete-wrap" *ngIf="!preselectedPatientId || editData">
             <input
               class="field-input"
               [class.invalid]="patientError"

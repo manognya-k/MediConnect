@@ -83,8 +83,9 @@ function apptToISO(date: string, time: string): string {
 @Injectable({ providedIn: 'root' })
 export class TelemedicineService {
 
-  mapToSession(a: BackendAppointment, index: number): TelemedicineSession {
-    const name = a.patient?.user?.name || 'Unknown';
+  mapToSession(a: BackendAppointment, index: number, viewAs: 'doctor' | 'patient' = 'doctor'): TelemedicineSession {
+    const patientName = a.patient?.user?.name || 'Unknown';
+    const doctorName = a.doctor?.user?.name || 'Unknown Doctor';
     const av = AVATAR_COLORS[index % AVATAR_COLORS.length];
     const status = deriveStatus(a);
     const isoStart = apptToISO(a.appointmentDate, a.appointmentTime);
@@ -95,17 +96,22 @@ export class TelemedicineService {
     const joinUrl = hasRealUrl ? sessionUrl : `https://meet.jit.si/mediconnect-${a.appointmentId}`;
 
     const estimatedDuration = 30;
-    // Deterministic mock duration for completed sessions (15–54 min)
     const actualDuration = status === 'Completed'
       ? 15 + (a.appointmentId % 40)
       : undefined;
 
+    const doctorId = a.doctor?.doctorId || 0;
+
     return {
       id: String(a.appointmentId),
       patientId: String(a.patient?.patientId || ''),
-      patientName: name,
+      patientName,
       patientCode: 'PT-' + String(a.patient?.patientId || 0).padStart(4, '0'),
-      patientInitials: initials(name),
+      patientInitials: initials(patientName),
+      doctorName,
+      doctorCode: 'DR-' + String(doctorId).padStart(4, '0'),
+      doctorInitials: initials(doctorName),
+      doctorSpecialization: a.doctor?.specialization || 'General',
       avatarBg: av.bg,
       avatarColor: av.color,
       reason,
@@ -122,7 +128,10 @@ export class TelemedicineService {
   }
 
   filterVideoAppointments(appointments: BackendAppointment[]): BackendAppointment[] {
-    return appointments.filter(a => (a.appointmentType || '').toUpperCase() === 'VIDEO');
+    return appointments.filter(a => {
+      const t = (a.appointmentType || '').toUpperCase();
+      return t === 'VIDEO' || t === 'ONLINE';
+    });
   }
 
   getLiveAndUpcoming(sessions: TelemedicineSession[]): TelemedicineSession[] {
