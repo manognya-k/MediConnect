@@ -121,6 +121,27 @@ $sb-width: 200px;
   flex-shrink: 0;
 }
 
+.sb-foot-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-logout-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid $border;
+  background: #fff;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #9CA3AF;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  &:hover { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+}
+
 .sb-av {
   width: 30px;
   height: 30px;

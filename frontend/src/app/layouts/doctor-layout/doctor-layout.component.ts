@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
@@ -17,7 +17,7 @@ export class DoctorLayoutComponent implements OnInit {
   doctorRole = 'Cardiologist';
   initials = 'SJ';
 
-  constructor(public layout: LayoutService, private auth: AuthService) {}
+  constructor(public layout: LayoutService, private auth: AuthService, private router: Router) {}
 
   ngOnInit() {
     const user = this.auth.getUser();
@@ -26,5 +26,10 @@ export class DoctorLayoutComponent implements OnInit {
       const parts = (user.name || '').split(' ');
       this.initials = parts.map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'SJ';
     }
+  }
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/login']);
   }
 }

@@ -51,10 +51,16 @@
 
     <div class="sb-foot">
       <div class="sb-av">{{ initials }}</div>
-      <div>
+      <div class="sb-foot-info">
         <div class="sb-name">{{ doctorName }}</div>
-        <div class="sb-role">Cardiologist</div>
+        <div class="sb-role">Doctor</div>
       </div>
+      <button class="sb-logout-btn" title="Logout" (click)="logout()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M11 11l3-3-3-3M14 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
   </aside>
 
