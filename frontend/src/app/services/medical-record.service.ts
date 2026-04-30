@@ -50,6 +50,10 @@ export class MedicalRecordService {
     return this.http.get<BackendMedicalRecord[]>(`${BASE}/medical-records/patient/${patientId}`);
   }
 
+  getByDoctor(doctorId: number): Observable<BackendMedicalRecord[]> {
+    return this.http.get<BackendMedicalRecord[]>(`${BASE}/medical-records/doctor/${doctorId}`);
+  }
+
   create(body: any): Observable<BackendMedicalRecord> {
     return this.http.post<BackendMedicalRecord>(`${BASE}/medical-records`, body);
   }

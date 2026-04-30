@@ -57,7 +57,7 @@
       <label>Hospital</label>
       <select [(ngModel)]="selectedHospitalId" (change)="applyFilter()">
         <option value="">All Hospitals</option>
-        <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+        <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
       </select>
     </div>
     <div class="filter-group">
@@ -187,7 +187,7 @@
         <label>Hospital</label>
         <select [(ngModel)]="form.hospitalId">
           <option value="">— None —</option>
-          <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+          <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
         </select>
       </div>
     </div>

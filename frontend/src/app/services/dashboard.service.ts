@@ -92,6 +92,12 @@ export class DashboardService {
     );
   }
 
+  getLabReportsByDoctor(doctorId: number): Observable<LabReportEntity[]> {
+    return this.http.get<LabReportEntity[]>(`${BASE}/lab-reports/doctor/${doctorId}`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
   getUnreadNotifications(userId: number): Observable<NotificationEntity[]> {
     return this.http.get<NotificationEntity[]>(`${BASE}/notifications/user/${userId}/unread`).pipe(
       catchError(() => of([]))

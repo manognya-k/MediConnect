@@ -16,10 +16,11 @@ export class AdminDoctorsComponent implements OnInit {
   allDoctors: AdminDoctor[] = [];
   filtered: AdminDoctor[] = [];
   hospitals: Hospital[] = [];
-  departments: Department[] = [];
+  allDepartments: Department[] = [];
 
   searchQuery = '';
   hospitalFilter = '';
+  departmentFilter = '';
   statusFilter = '';
 
   loading = true;
@@ -63,11 +64,13 @@ export class AdminDoctorsComponent implements OnInit {
   ngOnInit(): void {
     forkJoin({
       hospitals: this.svc.getHospitals(),
-      doctors: this.svc.getDoctors()
+      doctors: this.svc.getDoctors(),
+      departments: this.svc.getDepartments()
     }).subscribe({
-      next: ({ hospitals, doctors }) => {
+      next: ({ hospitals, doctors, departments }) => {
         this.hospitals = hospitals;
         this.allDoctors = doctors;
+        this.allDepartments = departments;
         this.applyFilter();
         this.loading = false;
       },
@@ -79,15 +82,33 @@ export class AdminDoctorsComponent implements OnInit {
   }
 
   private loadDoctors(): void {
-    this.svc.getDoctors().subscribe({
-      next: (doctors) => {
+    forkJoin({
+      doctors: this.svc.getDoctors(),
+      departments: this.svc.getDepartments()
+    }).subscribe({
+      next: ({ doctors, departments }) => {
         this.allDoctors = doctors;
+        this.allDepartments = departments;
         this.applyFilter();
       },
-      error: () => {
-        this.error = 'Failed to reload doctors.';
-      }
+      error: () => { this.error = 'Failed to reload doctors.'; }
     });
+  }
+
+  /** Departments for the current modal hospital selection — no API call needed */
+  get modalDepartments(): Department[] {
+    if (!this.form.hospitalId) return [];
+    return this.allDepartments.filter(
+      d => String(d.hospital?.hospitalId) === this.form.hospitalId
+    );
+  }
+
+  /** Departments for the toolbar filter (all, or scoped to selected hospital filter) */
+  get filterDepartments(): Department[] {
+    if (!this.hospitalFilter) return this.allDepartments;
+    return this.allDepartments.filter(
+      d => String(d.hospital?.hospitalId) === String(this.hospitalFilter)
+    );
   }
 
   applyFilter(): void {
@@ -96,6 +117,12 @@ export class AdminDoctorsComponent implements OnInit {
     if (this.hospitalFilter) {
       result = result.filter(
         d => String(d.hospital?.hospitalId) === String(this.hospitalFilter)
+      );
+    }
+
+    if (this.departmentFilter) {
+      result = result.filter(
+        d => String(d.department?.departmentId) === String(this.departmentFilter)
       );
     }
 
@@ -114,10 +141,15 @@ export class AdminDoctorsComponent implements OnInit {
     }
 
     this.filtered = result;
+    this.page = 1;
   }
 
   onSearch(): void {
-    this.page = 1;
+    this.applyFilter();
+  }
+
+  onHospitalFilterChange(): void {
+    this.departmentFilter = '';
     this.applyFilter();
   }
 
@@ -132,7 +164,6 @@ export class AdminDoctorsComponent implements OnInit {
       hospitalId: '',
       departmentId: ''
     };
-    this.departments = [];
     this.editingId = null;
     this.saveError = '';
     this.showModal = true;
@@ -149,12 +180,6 @@ export class AdminDoctorsComponent implements OnInit {
       hospitalId: String(d.hospital?.hospitalId || ''),
       departmentId: String(d.department?.departmentId || '')
     };
-    this.departments = [];
-    if (d.hospital?.hospitalId) {
-      this.svc.getDepartmentsByHospital(d.hospital.hospitalId).subscribe({
-        next: (deps) => { this.departments = deps; }
-      });
-    }
     this.editingId = d.doctorId;
     this.saveError = '';
     this.showModal = true;
@@ -162,12 +187,6 @@ export class AdminDoctorsComponent implements OnInit {
 
   onHospitalChange(): void {
     this.form.departmentId = '';
-    this.departments = [];
-    if (this.form.hospitalId) {
-      this.svc.getDepartmentsByHospital(Number(this.form.hospitalId)).subscribe({
-        next: (deps) => { this.departments = deps; }
-      });
-    }
   }
 
   closeModal(): void {

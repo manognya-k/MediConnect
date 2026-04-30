@@ -25,9 +25,13 @@
       <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input class="inp search-inp" type="text" placeholder="Search name, email, specialization…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" />
     </div>
-    <select class="inp sel" [(ngModel)]="hospitalFilter" (ngModelChange)="onSearch()">
+    <select class="inp sel" [(ngModel)]="hospitalFilter" (ngModelChange)="onHospitalFilterChange()">
       <option value="">All Hospitals</option>
-      <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+      <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
+    </select>
+    <select class="inp sel" [(ngModel)]="departmentFilter" (ngModelChange)="onSearch()">
+      <option value="">All Departments</option>
+      <option *ngFor="let d of filterDepartments" [value]="d.departmentId + ''">{{ d.departmentName }}</option>
     </select>
     <select class="inp sel" [(ngModel)]="statusFilter" (ngModelChange)="onSearch()">
       <option value="">All Statuses</option>
@@ -47,6 +51,7 @@
         <tr>
           <th>Doctor</th>
           <th>Specialization</th>
+          <th>Department</th>
           <th>Hospital</th>
           <th>Status</th>
           <th>Actions</th>
@@ -57,6 +62,7 @@
         <ng-container *ngIf="loading">
           <tr *ngFor="let s of [1,2,3,4,5]" class="skeleton-row">
             <td><div class="skel skel-doc"></div></td>
+            <td><div class="skel skel-sm"></div></td>
             <td><div class="skel skel-sm"></div></td>
             <td><div class="skel skel-sm"></div></td>
             <td><div class="skel skel-xs"></div></td>
@@ -81,8 +87,12 @@
                   </div>
                 </div>
               </td>
-              <td>{{ d.specialization }}</td>
-              <td>{{ getHospitalName(d) }}</td>
+              <td class="cell-muted">{{ d.specialization }}</td>
+              <td>
+                <span *ngIf="d.department" class="dept-badge">{{ d.department.departmentName }}</span>
+                <span *ngIf="!d.department" class="cell-muted">—</span>
+              </td>
+              <td class="cell-muted">{{ getHospitalName(d) }}</td>
               <td>
                 <span class="badge" [ngClass]="getStatusClass(d.availabilityStatus)">
                   {{ d.availabilityStatus }}
@@ -101,7 +111,7 @@
             </tr>
             <!-- Delete confirm row -->
             <tr *ngIf="deleteConfirmId === d.doctorId" class="confirm-row">
-              <td colspan="5">
+              <td colspan="6">
                 <div class="confirm-bar">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <span>Delete <strong>Dr. {{ d.user.name }}</strong>? This action cannot be undone.</span>
@@ -116,7 +126,7 @@
 
           <!-- Empty state -->
           <tr *ngIf="filtered.length === 0">
-            <td colspan="5">
+            <td colspan="6">
               <div class="empty-state">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <p>No doctors found</p>
@@ -181,15 +191,18 @@
           <label class="field-label">Hospital *</label>
           <select class="inp inp-full" [(ngModel)]="form.hospitalId" (ngModelChange)="onHospitalChange()">
             <option value="">— Select Hospital —</option>
-            <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+            <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
           </select>
         </div>
         <div class="field">
           <label class="field-label">Department</label>
           <select class="inp inp-full" [(ngModel)]="form.departmentId" [disabled]="!form.hospitalId">
             <option value="">— Select Department —</option>
-            <option *ngFor="let d of departments" [value]="d.departmentId">{{ d.departmentName }}</option>
+            <option *ngFor="let dep of modalDepartments" [value]="dep.departmentId + ''">{{ dep.departmentName }}</option>
           </select>
+          <span class="field-hint" *ngIf="form.hospitalId && modalDepartments.length === 0">
+            No departments for this hospital yet. Create them in Admin › Departments.
+          </span>
         </div>
         <div class="field" *ngIf="!editingId">
           <label class="field-label">Password *</label>

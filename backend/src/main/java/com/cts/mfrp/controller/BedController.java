@@ -41,6 +41,13 @@ public class BedController {
     @PutMapping("/{id}")
     public ResponseEntity<Bed> updateBed(@PathVariable Integer id, @RequestBody Bed bed) {
         bed.setBedId(id);
+        // Preserve the existing patient assignment if the request doesn't include one
+        if (bed.getPatient() == null) {
+            Bed existing = bedService.getBedById(id);
+            if (existing != null) {
+                bed.setPatient(existing.getPatient());
+            }
+        }
         return ResponseEntity.ok(bedService.saveBed(bed));
     }
 

@@ -12,22 +12,22 @@ public class Doctor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer doctorId;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
-    
+
     @ManyToOne
     @JoinColumn(name = "hospital_id")
     private Hospital hospital;
-    
+
     private String specialization;
     private String availabilityStatus;
-    
+
     @JsonIgnore
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
     private List<Appointment> appointments;
@@ -35,4 +35,8 @@ public class Doctor {
     @JsonIgnore
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
     private List<MedicalRecord> medicalRecords;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
+    private List<LabReport> labReports;
 }

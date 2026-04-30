@@ -61,20 +61,6 @@ export class PatientsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Resolve doctor context for appointment scheduling
-    const user = this.auth.getUser();
-    if (user) {
-      this.dashSvc.getAllDoctors().subscribe({
-        next: (doctors) => {
-          const doc = doctors.find(d => d.user?.userId === user.userId);
-          if (doc) {
-            this.doctorId = doc.doctorId;
-            this.hospitalId = doc.hospital?.hospitalId ?? null;
-          }
-        }
-      });
-    }
-
     this.search$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -83,7 +69,48 @@ export class PatientsComponent implements OnInit, OnDestroy {
       this.filter = { ...this.filter, search: v, page: 1 };
       this.load();
     });
-    this.load();
+
+    const user = this.auth.getUser();
+    if (user) {
+      this.dashSvc.getAllDoctors().subscribe({
+        next: (doctors) => {
+          const doc = doctors.find(d => d.user?.userId === user.userId);
+          if (doc) {
+            this.doctorId = doc.doctorId;
+            this.hospitalId = doc.hospital?.hospitalId ?? null;
+            if (this.hospitalId) {
+              this.patientService.getPatientsByHospital(this.hospitalId).subscribe({
+                next: (hosPts) => {
+                  if (hosPts.length > 0) {
+                    const ids = hosPts.map(p => p.rawId);
+                    this.filter = { ...this.filter, patientIds: ids };
+                  } else {
+                    const apptFallback = this.dashSvc.getAppointmentsByDoctor(doc.doctorId);
+                    apptFallback.subscribe({
+                      next: (appts) => {
+                        const ids = [...new Set(
+                          appts.filter(a => a.patient?.patientId).map(a => a.patient!.patientId)
+                        )];
+                        if (ids.length > 0) this.filter = { ...this.filter, patientIds: ids };
+                      }
+                    });
+                  }
+                  this.load();
+                },
+                error: () => this.load()
+              });
+            } else {
+              this.load();
+            }
+          } else {
+            this.load();
+          }
+        },
+        error: () => this.load()
+      });
+    } else {
+      this.load();
+    }
   }
 
   ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }

@@ -107,18 +107,21 @@ export class PatientDashboardComponent implements OnInit {
       this.recordsLoading = false;
     }
 
-    // Lab Reports (filter client-side)
-    this.portalService.getAllLabReports().subscribe({
-      next: (reports) => {
-        const mine = pid ? reports.filter(r => r.patient?.patientId === pid) : [];
-        this.labCount = mine.length;
-        this.recentLabReports = [...mine]
-          .sort((a, b) => (b.reportDate || '').localeCompare(a.reportDate || ''))
-          .slice(0, 4);
-        this.labLoading = false;
-      },
-      error: () => { this.labError = 'Failed to load lab reports'; this.labLoading = false; }
-    });
+    // Lab Reports — scoped to this patient
+    if (pid) {
+      this.portalService.getPatientLabReports(pid).subscribe({
+        next: (reports) => {
+          this.labCount = reports.length;
+          this.recentLabReports = [...reports]
+            .sort((a, b) => (b.reportDate || '').localeCompare(a.reportDate || ''))
+            .slice(0, 4);
+          this.labLoading = false;
+        },
+        error: () => { this.labError = 'Failed to load lab reports'; this.labLoading = false; }
+      });
+    } else {
+      this.labLoading = false;
+    }
   }
 
   formatUpcomingDate(dateStr: string, timeStr: string): string {

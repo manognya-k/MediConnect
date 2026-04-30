@@ -23,6 +23,10 @@ public class LabReportService {
         return labReportRepository.findByPatientPatientId(patientId);
     }
 
+    public List<LabReport> getReportsByDoctor(Integer doctorId) {
+        return labReportRepository.findByDoctorDoctorId(doctorId);
+    }
+
     public LabReport saveReport(LabReport report) {
         return labReportRepository.save(report);
     }

@@ -31,7 +31,7 @@ export class DoctorDashboardComponent implements OnInit {
   currentUser: AuthResponse | null = null;
   doctorInfo: DoctorEntity | null = null;
   hospitalName = 'Central Hospital';
-  departmentName = 'Cardiology';
+  departmentName = '—';
   today = new Date();
 
   loading = true;
@@ -94,7 +94,7 @@ export class DoctorDashboardComponent implements OnInit {
           this.departmentName =
             this.doctorInfo.department?.departmentName ||
             this.doctorInfo.specialization ||
-            'Cardiology';
+            '—';
         }
 
         this.loadDashboardData();
@@ -110,15 +110,14 @@ export class DoctorDashboardComponent implements OnInit {
     const doctorId = this.doctorInfo?.doctorId;
     const hospitalId = this.doctorInfo?.hospital?.hospitalId;
 
-    // Total patients
-    this.dashboardService.getAllPatients().subscribe(patients => {
-      this.totalPatients = patients.length;
-    });
-
-    // Appointments
+    // Appointments + unique patient count
     if (doctorId) {
       this.dashboardService.getAppointmentsByDoctor(doctorId).subscribe({
         next: (appts) => {
+          this.totalPatients = new Set(
+            appts.filter(a => a.patient?.patientId).map(a => a.patient!.patientId)
+          ).size;
+
           const todayStr = this.formatDateISO(this.today);
           this.todayAppointments = appts
             .filter(a => a.appointmentDate === todayStr)
@@ -154,12 +153,14 @@ export class DoctorDashboardComponent implements OnInit {
       this.apptLoading = false;
     }
 
-    // Lab reports — scoped to this doctor when possible
-    this.dashboardService.getAllLabReports().subscribe({
+    // Lab reports — scoped to this doctor
+    const labObs = doctorId
+      ? this.dashboardService.getLabReportsByDoctor(doctorId)
+      : this.dashboardService.getAllLabReports();
+    labObs.subscribe({
       next: (reports) => {
-        const mine = doctorId ? reports.filter(r => r.doctor?.doctorId === doctorId) : reports;
-        this.labReports = mine.slice(0, 4);
-        this.pendingLabCount = mine.filter(
+        this.labReports = reports.slice(0, 4);
+        this.pendingLabCount = reports.filter(
           r => !r.result || r.result.toUpperCase() === 'PENDING'
         ).length;
         this.labLoading = false;

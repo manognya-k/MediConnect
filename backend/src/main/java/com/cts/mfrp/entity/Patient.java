@@ -23,7 +23,11 @@ public class Patient {
     private String bloodGroup;
     private String address;
     private String emergencyContact;
-    
+
+    @ManyToOne
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
+
     @JsonIgnore
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     private List<Appointment> appointments;

@@ -23,6 +23,11 @@ public class PatientController {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
+    @GetMapping("/hospital/{hospitalId}")
+    public ResponseEntity<List<Patient>> getPatientsByHospital(@PathVariable Integer hospitalId) {
+        return ResponseEntity.ok(patientService.getPatientsByHospital(hospitalId));
+    }
+
     @PostMapping
     public ResponseEntity<Patient> createPatient(@RequestBody Patient patient) {
         return ResponseEntity.ok(patientService.savePatient(patient));

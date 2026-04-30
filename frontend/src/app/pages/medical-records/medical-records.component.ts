@@ -83,13 +83,12 @@ export class MedicalRecordsComponent implements OnInit, OnDestroy {
   loadAll() {
     this.loading = true;
     this.error = '';
-    this.svc.getAll().subscribe({
+    const obs = this.doctorId
+      ? this.svc.getByDoctor(this.doctorId)
+      : this.svc.getAll();
+    obs.subscribe({
       next: (records) => {
-        // Scope to this doctor's records when doctorId is available
-        const scoped = this.doctorId
-          ? records.filter(r => r.doctor?.doctorId === this.doctorId)
-          : records;
-        this.allBackendRecords = scoped.length > 0 ? scoped : records;
+        this.allBackendRecords = records;
         this.allPatients = this.svc.buildPatientList(this.allBackendRecords);
         this.filteredPatients = [...this.allPatients];
         this.loading = false;

@@ -27,6 +27,11 @@ public class LabReportController {
     public ResponseEntity<List<LabReport>> getReportsByPatient(@PathVariable Integer patientId) {
         return ResponseEntity.ok(labReportService.getReportsByPatient(patientId));
     }
+
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<LabReport>> getReportsByDoctor(@PathVariable Integer doctorId) {
+        return ResponseEntity.ok(labReportService.getReportsByDoctor(doctorId));
+    }
     
     @PostMapping
     public ResponseEntity<LabReport> createReport(@RequestBody LabReport report) {

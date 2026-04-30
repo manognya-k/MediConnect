@@ -46,6 +46,7 @@ export interface AdminPatient {
   dateOfBirth?: string;
   emergencyContact?: string;
   address?: string;
+  hospital?: { hospitalId: number; hospitalName?: string } | null;
 }
 
 export interface AdminBed {
@@ -110,6 +111,21 @@ export class AdminService {
 
   getDepartmentsByHospital(hospitalId: number): Observable<Department[]> {
     return this.http.get<Department[]>(`${this.base}/departments/hospital/${hospitalId}`).pipe(catchError(() => of([])));
+  }
+
+  createDepartment(data: Partial<Department>): Observable<Department | null> {
+    return this.http.post<Department>(`${this.base}/departments`, data).pipe(catchError(() => of(null)));
+  }
+
+  updateDepartment(id: number, data: Partial<Department>): Observable<Department | null> {
+    return this.http.put<Department>(`${this.base}/departments/${id}`, data).pipe(catchError(() => of(null)));
+  }
+
+  deleteDepartment(id: number): Observable<boolean> {
+    return this.http.delete(`${this.base}/departments/${id}`).pipe(
+      map(() => true),
+      catchError(() => of(false))
+    );
   }
 
   // ── Doctors ──

@@ -21,6 +21,10 @@
       <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input class="inp search-inp" type="text" placeholder="Search name, email, phone…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" />
     </div>
+    <select class="inp sel" [(ngModel)]="hospitalFilter" (ngModelChange)="onSearch()">
+      <option value="">All Hospitals</option>
+      <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
+    </select>
     <select class="inp sel" [(ngModel)]="bloodGroupFilter" (ngModelChange)="onSearch()">
       <option value="">All Blood Groups</option>
       <option *ngFor="let bg of bloodGroups" [value]="bg">{{ bg }}</option>
@@ -42,6 +46,7 @@
       <thead>
         <tr>
           <th>Patient</th>
+          <th>Hospital</th>
           <th>Phone</th>
           <th>Blood Group</th>
           <th>Gender</th>
@@ -54,6 +59,7 @@
         <ng-container *ngIf="loading">
           <tr *ngFor="let s of [1,2,3,4,5]" class="skeleton-row">
             <td><div class="skel skel-doc"></div></td>
+            <td><div class="skel skel-sm"></div></td>
             <td><div class="skel skel-sm"></div></td>
             <td><div class="skel skel-xs"></div></td>
             <td><div class="skel skel-xs"></div></td>
@@ -78,6 +84,7 @@
                 </div>
               </div>
             </td>
+            <td class="cell-muted">{{ getHospitalForPatient(p) }}</td>
             <td class="cell-muted">{{ p.user.phone || '—' }}</td>
             <td>
               <span *ngIf="p.bloodGroup" class="blood-badge">{{ p.bloodGroup }}</span>
@@ -100,7 +107,7 @@
 
           <!-- Empty state -->
           <tr *ngIf="filtered.length === 0">
-            <td colspan="6">
+            <td colspan="7">
               <div class="empty-state">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 <p>No patients found</p>

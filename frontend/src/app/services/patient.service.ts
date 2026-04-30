@@ -32,6 +32,11 @@ export class PatientService {
         this._loaded = true;
         let filtered = all;
 
+        if (filter.patientIds && filter.patientIds.length > 0) {
+          const ids = new Set(filter.patientIds);
+          filtered = filtered.filter(p => ids.has(p.rawId));
+        }
+
         if (filter.search) {
           const q = filter.search.toLowerCase();
           filtered = filtered.filter(p =>
@@ -69,6 +74,13 @@ export class PatientService {
     return this.http.get<BackendPatient>(`${BASE}/patients/${id}`).pipe(
       map((p) => mapBackendPatient(p, 0)),
       catchError(err => throwError(() => err))
+    );
+  }
+
+  getPatientsByHospital(hospitalId: number): Observable<Patient[]> {
+    return this.http.get<BackendPatient[]>(`${BASE}/patients/hospital/${hospitalId}`).pipe(
+      map(list => list.map((p, i) => mapBackendPatient(p, i))),
+      catchError(() => of([]))
     );
   }
 

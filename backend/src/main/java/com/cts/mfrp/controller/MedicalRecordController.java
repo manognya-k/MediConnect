@@ -28,6 +28,11 @@ public class MedicalRecordController {
         return ResponseEntity.ok(medicalRecordService.getRecordsByPatient(patientId));
     }
 
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<MedicalRecord>> getRecordsByDoctor(@PathVariable Integer doctorId) {
+        return ResponseEntity.ok(medicalRecordService.getRecordsByDoctor(doctorId));
+    }
+
     @PostMapping
     public ResponseEntity<MedicalRecord> createRecord(@RequestBody MedicalRecord record) {
         return ResponseEntity.ok(medicalRecordService.saveRecord(record));

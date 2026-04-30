@@ -56,13 +56,12 @@ export class PatientLabReportsComponent implements OnInit {
       next: (patients) => {
         this.patientInfo = patients.find(p => p.user?.userId === this.currentUser?.userId) || null;
         const pid = this.patientInfo?.patientId;
+        if (!pid) { this.loading = false; return; }
 
-        this.portalService.getAllLabReports().subscribe({
+        this.portalService.getPatientLabReports(pid).subscribe({
           next: (reports) => {
-            this.allReports = pid
-              ? [...reports.filter(r => r.patient?.patientId === pid)]
-                  .sort((a, b) => (b.reportDate || '').localeCompare(a.reportDate || ''))
-              : [];
+            this.allReports = [...reports]
+              .sort((a, b) => (b.reportDate || '').localeCompare(a.reportDate || ''));
             this.computeStats();
             this.applyFilter();
             this.loading = false;

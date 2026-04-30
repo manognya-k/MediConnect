@@ -79,6 +79,13 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'beds',
+        loadComponent: () =>
+          import('./pages/doctor-beds/doctor-beds.component').then(
+            (m) => m.DoctorBedsComponent
+          )
+      },
+      {
         path: 'supply-chain',
         loadComponent: () =>
           import('./pages/supply-chain/supply-chain.component').then(
@@ -156,6 +163,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./pages/admin-dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent) },
       { path: 'hospitals', loadComponent: () => import('./pages/admin-hospitals/admin-hospitals.component').then((m) => m.AdminHospitalsComponent) },
+      { path: 'departments', loadComponent: () => import('./pages/admin-departments/admin-departments.component').then((m) => m.AdminDepartmentsComponent) },
       { path: 'doctors', loadComponent: () => import('./pages/admin-doctors/admin-doctors.component').then((m) => m.AdminDoctorsComponent) },
       { path: 'patients', loadComponent: () => import('./pages/admin-patients/admin-patients.component').then((m) => m.AdminPatientsComponent) },
       { path: 'appointments', loadComponent: () => import('./pages/admin-appointments/admin-appointments.component').then((m) => m.AdminAppointmentsComponent) },

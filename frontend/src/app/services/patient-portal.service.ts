@@ -63,8 +63,8 @@ export class PatientPortalService {
     );
   }
 
-  getAllLabReports(): Observable<PortalLabReport[]> {
-    return this.http.get<PortalLabReport[]>(`${BASE}/lab-reports`).pipe(catchError(() => of([])));
+  getPatientLabReports(patientId: number): Observable<PortalLabReport[]> {
+    return this.http.get<PortalLabReport[]>(`${BASE}/lab-reports/patient/${patientId}`).pipe(catchError(() => of([])));
   }
 
   updatePatient(id: number, data: Partial<BackendPatient>): Observable<BackendPatient | null> {

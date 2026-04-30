@@ -1,0 +1,124 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="hamburger" (click)="layout.toggle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">Departments</h1>
+        <p class="page-sub">{{ allDepartments.length }} departments across all hospitals</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="openAdd()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add Department
+    </button>
+  </div>
+
+  <div class="error-bar" *ngIf="error">{{ error }}</div>
+
+  <div class="filters-row">
+    <div class="filter-group search-group">
+      <label>Search</label>
+      <input type="text" [(ngModel)]="searchQuery" (input)="applyFilter()" placeholder="Search department name…" />
+    </div>
+    <div class="filter-group">
+      <label>Hospital</label>
+      <select [(ngModel)]="hospitalFilter" (change)="applyFilter()">
+        <option value="">All Hospitals</option>
+        <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <ng-container *ngIf="loading">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading">
+      <table class="data-table" *ngIf="filtered.length > 0; else emptyState">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Department Name</th>
+            <th>Hospital</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of paged; let i = index">
+            <td class="dept-id">{{ (page-1)*pageSize + i + 1 }}</td>
+            <td class="dept-name">{{ d.departmentName }}</td>
+            <td>{{ d.hospital?.hospitalName || '—' }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-edit" (click)="openEdit(d)">Edit</button>
+                <ng-container *ngIf="deleteConfirmId !== d.departmentId">
+                  <button class="btn-delete" (click)="confirmDelete(d.departmentId)">Delete</button>
+                </ng-container>
+                <ng-container *ngIf="deleteConfirmId === d.departmentId">
+                  <span *ngIf="!deleteError" class="confirm-text">Confirm?</span>
+                  <span *ngIf="deleteError" class="confirm-text delete-error-text">{{ deleteError }}</span>
+                  <button *ngIf="!deleteError" class="btn-confirm-yes" (click)="doDelete(d.departmentId)">Yes</button>
+                  <button class="btn-confirm-no" (click)="cancelDelete()">{{ deleteError ? 'OK' : 'No' }}</button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M3 15h6"/>
+          </svg>
+          <p>No departments found</p>
+          <span>Try adjusting your filters or add a new department</span>
+        </div>
+      </ng-template>
+
+      <div class="pagination" *ngIf="filtered.length > pageSize">
+        <button class="pg-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">&#8592;</button>
+        <button class="pg-btn" *ngFor="let p of pages" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+        <button class="pg-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">&#8594;</button>
+        <span class="pg-info">{{ (page-1)*pageSize + 1 }}–{{ page*pageSize > filtered.length ? filtered.length : page*pageSize }} of {{ filtered.length }}</span>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingId !== null ? 'Edit Department' : 'Add Department' }}</h2>
+      <button class="modal-close" (click)="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="save-error" *ngIf="saveError">{{ saveError }}</div>
+      <div class="form-group">
+        <label>Department Name <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="form.departmentName" placeholder="e.g. Cardiology, Neurology" />
+      </div>
+      <div class="form-group">
+        <label>Hospital</label>
+        <select [(ngModel)]="form.hospitalId">
+          <option value="">— None —</option>
+          <option *ngFor="let h of hospitals" [value]="h.hospitalId + ''">{{ h.hospitalName }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()" [disabled]="saving">Cancel</button>
+      <button class="btn-save" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving">Saving…</span>
+        <span *ngIf="!saving">{{ editingId !== null ? 'Update Department' : 'Add Department' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

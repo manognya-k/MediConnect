@@ -41,8 +41,15 @@ public class DoctorService {
         return doctorRepository.save(doctor);
     }
 
+    @Transactional
     public void deleteDoctor(Integer id) {
-        doctorRepository.deleteById(id);
+        Doctor doctor = doctorRepository.findById(id).orElse(null);
+        if (doctor == null) return;
+        User user = doctor.getUser();
+        doctorRepository.delete(doctor);
+        if (user != null) {
+            userRepository.deleteById(user.getUserId());
+        }
     }
 
     @Transactional
@@ -95,6 +102,8 @@ public class DoctorService {
         }
         if (req.getDepartmentId() != null) {
             departmentRepository.findById(req.getDepartmentId()).ifPresent(doctor::setDepartment);
+        } else {
+            doctor.setDepartment(null);
         }
         return doctorRepository.save(doctor);
     }

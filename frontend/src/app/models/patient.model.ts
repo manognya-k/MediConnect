@@ -54,6 +54,7 @@ export interface PatientFilter {
   gender: string;
   bloodGroup: string;
   status: string;
+  patientIds?: number[];
 }
 
 export function mapBackendPatient(bp: BackendPatient, index: number): Patient {

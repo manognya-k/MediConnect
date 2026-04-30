@@ -66,7 +66,11 @@ export class AdminDashboardComponent implements OnInit {
         this.hospitalStats = hospitals.map(hospital => ({
           hospital,
           doctorCount: doctors.filter(d => d.hospital?.hospitalId === hospital.hospitalId).length,
-          patientCount: patients.length,
+          patientCount: new Set(
+            appointments
+              .filter(a => a.hospital?.hospitalId === hospital.hospitalId && a.patient?.patientId)
+              .map(a => a.patient!.patientId)
+          ).size,
           appointmentCount: appointments.filter(a =>
             a.hospital?.hospitalId === hospital.hospitalId && a.appointmentDate === todayStr
           ).length,

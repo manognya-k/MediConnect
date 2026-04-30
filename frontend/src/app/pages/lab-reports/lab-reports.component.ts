@@ -101,12 +101,12 @@ export class LabReportsComponent implements OnInit, OnDestroy {
   private load() {
     this.loading = true;
     this.error = '';
-    this.svc.getAll().subscribe({
+    const obs = this.doctorId
+      ? this.svc.getByDoctor(this.doctorId)
+      : this.svc.getAll();
+    obs.subscribe({
       next: (all) => {
-        const scoped = this.doctorId
-          ? all.filter(r => r.doctor?.doctorId === this.doctorId)
-          : all;
-        this.allReports = scoped.length > 0 ? scoped : all;
+        this.allReports = all;
         this.applyFilter();
         this.loading = false;
       },

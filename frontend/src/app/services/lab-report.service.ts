@@ -29,6 +29,14 @@ export class LabReportService {
     return this.http.get<BackendLabReport>(`${BASE}/lab-reports/${id}`);
   }
 
+  getByDoctor(doctorId: number): Observable<BackendLabReport[]> {
+    return this.http.get<BackendLabReport[]>(`${BASE}/lab-reports/doctor/${doctorId}`);
+  }
+
+  getByPatient(patientId: number): Observable<BackendLabReport[]> {
+    return this.http.get<BackendLabReport[]>(`${BASE}/lab-reports/patient/${patientId}`);
+  }
+
   create(data: Partial<BackendLabReport>): Observable<BackendLabReport> {
     return this.http.post<BackendLabReport>(`${BASE}/lab-reports`, data).pipe(
       catchError(err => throwError(() => err))

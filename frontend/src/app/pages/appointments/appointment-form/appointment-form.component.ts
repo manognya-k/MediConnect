@@ -83,11 +83,24 @@ export class AppointmentFormComponent implements OnInit {
   }
 
   private loadPatients() {
-    this.http.get<any[]>(`${BASE}/patients`).subscribe({
+    const url = this.hospitalId
+      ? `${BASE}/patients/hospital/${this.hospitalId}`
+      : `${BASE}/patients`;
+    this.http.get<any[]>(url).subscribe({
       next: (pts) => {
         this.allPatients = pts
           .filter(p => p.user?.name)
           .map(p => ({ patientId: p.patientId, name: p.user.name }));
+        if (this.allPatients.length === 0 && this.hospitalId) {
+          this.http.get<any[]>(`${BASE}/patients`).subscribe({
+            next: (all) => {
+              this.allPatients = all
+                .filter(p => p.user?.name)
+                .map(p => ({ patientId: p.patientId, name: p.user.name }));
+            },
+            error: () => {}
+          });
+        }
       },
       error: () => {}
     });

@@ -15,6 +15,10 @@ public class PatientService {
         return patientRepository.findAll();
     }
 
+    public List<Patient> getPatientsByHospital(Integer hospitalId) {
+        return patientRepository.findByHospitalHospitalId(hospitalId);
+    }
+
     public Patient getPatientById(Integer id) {
         return patientRepository.findById(id).orElse(null);
     }

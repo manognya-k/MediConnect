@@ -20,6 +20,7 @@ export class AdminPatientsComponent implements OnInit {
   searchQuery = '';
   bloodGroupFilter = '';
   genderFilter = '';
+  hospitalFilter = '';
 
   loading = true;
   error = '';
@@ -57,6 +58,10 @@ export class AdminPatientsComponent implements OnInit {
 
   applyFilter(): void {
     let result = [...this.allPatients];
+
+    if (this.hospitalFilter) {
+      result = result.filter(p => p.hospital?.hospitalId === Number(this.hospitalFilter));
+    }
 
     if (this.bloodGroupFilter) {
       result = result.filter(p => p.bloodGroup === this.bloodGroupFilter);
@@ -140,8 +145,8 @@ export class AdminPatientsComponent implements OnInit {
     return age >= 0 ? `${age} yrs` : '—';
   }
 
-  getHospitalForPatient(_p: AdminPatient): string {
-    return '—';
+  getHospitalForPatient(p: AdminPatient): string {
+    return p.hospital?.hospitalName || '—';
   }
 
   getAvatarBg(index: number): string {
