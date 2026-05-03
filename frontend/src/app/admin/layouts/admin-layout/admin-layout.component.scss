@@ -1,0 +1,243 @@
+// ── Admin CSS tokens ─────────────────────────────────────────────────────────
+:host {
+  --bg:      #0B0F1A;
+  --surface: #111827;
+  --surf2:   #1A2235;
+  --surf3:   #222D42;
+  --border:  rgba(255,255,255,.07);
+  --border2: rgba(255,255,255,.12);
+  --teal:    #0AAFB8;
+  --teal-lt: rgba(10,175,184,.15);
+  --text:    #F1F5F9;
+  --mid:     #94A3B8;
+  --sub:     #475569;
+  --sb-w:    220px;
+  display: contents;
+}
+
+// ── Shell ─────────────────────────────────────────────────────────────────────
+
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+
+.sb {
+  width: var(--sb-w);
+  min-width: var(--sb-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 30;
+  overflow-y: auto;
+}
+
+// Logo
+.sb-logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.sb-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sb-brand {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sb-brand-sub {
+  font-size: 9px;
+  color: var(--teal);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+// Admin user chip
+.sb-admin {
+  margin: 12px 14px;
+  padding: 10px 12px;
+  background: var(--surf2);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sb-admin-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #0066AA);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.sb-admin-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.sb-admin-role {
+  font-size: 10px;
+  color: var(--teal);
+  margin-top: 1px;
+}
+
+// Navigation
+.sb-nav {
+  flex: 1;
+  padding: 8px 10px;
+  overflow-y: auto;
+}
+
+.nav-sec {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--sub);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 10px 8px 5px;
+}
+
+.ni {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--mid);
+  text-decoration: none;
+  transition: all 0.15s;
+  margin-bottom: 1px;
+  position: relative;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--surf2);
+    color: var(--text);
+  }
+
+  &.active {
+    background: var(--teal-lt);
+    color: var(--teal);
+    font-weight: 500;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2.5px;
+      height: 16px;
+      background: var(--teal);
+      border-radius: 0 2px 2px 0;
+    }
+  }
+}
+
+.ni-badge {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  background: #EF4444;
+  color: #fff;
+  border-radius: 99px;
+  padding: 1px 5px;
+  font-family: 'IBM Plex Mono', monospace;
+
+  &.amber {
+    background: #F59E0B;
+    color: #000;
+  }
+}
+
+.nd {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 8px;
+}
+
+// Footer
+.sb-foot {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+
+  &:hover { background: var(--surf2); }
+}
+
+.sf-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-label {
+  font-size: 11px;
+  color: var(--mid);
+}
+
+// ── Main area ─────────────────────────────────────────────────────────────────
+
+.main {
+  margin-left: var(--sb-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}

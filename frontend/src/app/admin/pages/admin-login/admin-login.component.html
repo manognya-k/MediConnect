@@ -1,0 +1,107 @@
+<div class="login-shell">
+
+  <!-- Left branding panel -->
+  <div class="login-brand">
+    <div class="brand-content">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-name">MediConnect</div>
+      <div class="brand-sub">Admin Control Panel</div>
+
+      <div class="brand-divider"></div>
+
+      <div class="brand-feature">
+        <div class="bf-dot bf-teal"></div>
+        <span>Real-time hospital network monitoring</span>
+      </div>
+      <div class="brand-feature">
+        <div class="bf-dot bf-green"></div>
+        <span>AI-powered operational insights</span>
+      </div>
+      <div class="brand-feature">
+        <div class="bf-dot bf-amber"></div>
+        <span>Multi-branch administration & analytics</span>
+      </div>
+    </div>
+
+    <div class="brand-grid"></div>
+    <div class="brand-glow brand-glow-1"></div>
+    <div class="brand-glow brand-glow-2"></div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="login-form-panel">
+    <div class="form-card">
+
+      <div class="form-logo">
+        <div class="form-mark">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v12M2 8h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="form-title">Admin Sign In</h1>
+      <p class="form-sub">Access restricted to authorised personnel only.</p>
+
+      <div *ngIf="errorMsg" class="error-banner">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="#EF4444" stroke-width="1.5"/>
+          <path d="M8 5v4" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="11" r=".75" fill="#EF4444"/>
+        </svg>
+        {{ errorMsg }}
+      </div>
+
+      <div class="field">
+        <label class="field-label">Email address</label>
+        <input class="field-input"
+               type="email"
+               placeholder="admin@mediconnect.com"
+               [(ngModel)]="email"
+               [disabled]="isLoading"
+               (keydown)="onKeydown($event)"/>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Password</label>
+        <div class="pw-wrap">
+          <input class="field-input"
+                 [type]="showPw ? 'text' : 'password'"
+                 placeholder="Enter password"
+                 [(ngModel)]="password"
+                 [disabled]="isLoading"
+                 (keydown)="onKeydown($event)"/>
+          <button class="pw-toggle" type="button" (click)="showPw = !showPw">
+            <svg *ngIf="!showPw" width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M1 8C2.5 5 5 3 8 3s5.5 2 7 5c-1.5 3-4 5-7 5S2.5 11 1 8z" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <svg *ngIf="showPw" width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M2 2l12 12M6.5 6.8A2 2 0 009.2 9.5M4.5 4.7C2.9 5.7 1.7 6.9 1 8c1.5 3 4 5 7 5 1.2 0 2.3-.3 3.3-.8M6 3.4C6.6 3.1 7.3 3 8 3c3 0 5.5 2 7 5-.5 1-1.2 2-2.1 2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="submit-btn"
+              [class.loading]="isLoading"
+              [disabled]="isLoading"
+              (click)="submit()">
+        <span *ngIf="!isLoading">Sign In to Admin Panel</span>
+        <span *ngIf="isLoading" class="spinner-row">
+          <span class="spinner"></span>
+          Authenticating…
+        </span>
+      </button>
+
+      <p class="hint-text">
+        Default credentials: <span class="hint-mono">admin&#64;mediconnect.com</span> / <span class="hint-mono">Admin&#64;123</span>
+      </p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,375 @@
+:host {
+  --bg:        #F2F4F8;
+  --white:     #FFFFFF;
+  --navy:      #0D2B4E;
+  --blue:      #1A5FA8;
+  --blue-mid:  #2272C3;
+  --blue-lt:   #E8F2FD;
+  --green:     #0F7B50;
+  --green-lt:  #E6F5EF;
+  --amber:     #B45309;
+  --amber-lt:  #FEF3CD;
+  --red:       #B91C1C;
+  --red-lt:    #FEE2E2;
+  --text:      #0D1B2A;
+  --mid:       #4A5568;
+  --sub:       #8A94A6;
+  --border:    #E2E8F0;
+  --shadow:    0 1px 4px rgba(13,43,78,.07), 0 4px 16px rgba(13,43,78,.05);
+  --radius:    16px;
+}
+
+.rm-page {
+  font-family: 'DM Sans', sans-serif;
+}
+
+.content {
+  padding: 28px 32px;
+}
+
+// ── Skeletons ─────────────────────────────────────────────────────────────────
+
+@keyframes skeletonPulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+
+.skeleton {
+  background: var(--border);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.sk-stat  { height: 90px;  border-radius: 14px; }
+.sk-title { height: 20px;  width: 160px; border-radius: 8px; margin-bottom: 16px; }
+
+.sk-slot {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 18px;
+}
+
+.sk-dot-area {
+  width: 32px;
+  height: 80px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sk-pills { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.sk-pill  { height: 52px; border-radius: 12px; }
+.sk-pill-short { width: 70%; }
+
+.sk-rx-card { height: 72px; border-radius: 14px; margin-bottom: 10px; }
+
+// ── Stat cards ────────────────────────────────────────────────────────────────
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+
+.stat-val {
+  font-family: 'Fraunces', 'Instrument Serif', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.stat-sub {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 99px;
+  margin-top: 4px;
+}
+
+// Badge colours
+.b-blue  { background: var(--blue-lt);  color: var(--blue);  }
+.b-green { background: var(--green-lt); color: var(--green); }
+.b-amber { background: var(--amber-lt); color: var(--amber); }
+.b-red   { background: var(--red-lt);   color: var(--red);   }
+.b-sub   { background: var(--bg);       color: var(--sub);   }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+// ── Main two-column grid ──────────────────────────────────────────────────────
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+}
+
+// ── Schedule — header ─────────────────────────────────────────────────────────
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.timeline-title {
+  font-family: 'Fraunces', 'Instrument Serif', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.timeline-date {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+// ── Time slots ────────────────────────────────────────────────────────────────
+
+.time-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.time-slot {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 0;
+}
+
+// Time label
+.ts-time {
+  width: 72px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub);
+  padding-top: 14px;
+  text-align: right;
+  flex-shrink: 0;
+
+  &.ts-time-next {
+    color: var(--amber);
+    font-weight: 700;
+  }
+}
+
+// Dot + track column
+.ts-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.ts-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--blue-mid);
+  background: var(--white);
+  flex-shrink: 0;
+  margin-top: 16px;
+  z-index: 1;
+  position: relative;
+
+  &.done {
+    background: var(--blue-mid);
+    border-color: var(--blue-mid);
+  }
+
+  &.next {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+}
+
+.ts-track {
+  flex: 1;
+  width: 2px;
+  background: var(--border);
+  margin-top: 4px;
+  min-height: 20px;
+}
+
+// Pills column
+.ts-meds {
+  flex: 1;
+  padding: 10px 0 18px;
+}
+
+// ── Medicine pills ────────────────────────────────────────────────────────────
+
+.med-pill {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+
+  &:last-child { margin-bottom: 0; }
+
+  // State A — done (taken)
+  &.done {
+    opacity: 0.65;
+    background: var(--bg);
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  // State B — next (due now)
+  &.next {
+    border-color: var(--amber);
+    border-left: 3px solid var(--amber);
+    background: var(--white);
+    box-shadow: var(--shadow);
+  }
+}
+
+// Icon box
+.mp-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--blue-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.mp-icon-amber { background: var(--amber-lt); }
+}
+
+// Name + dosage
+.mp-info { flex: 1; min-width: 0; }
+
+.mp-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.mp-dose {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+
+.due-now {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+// Check button
+.mp-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+  padding: 0;
+
+  // State: done — solid green
+  &.done {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  // State: next — amber-lt bg + amber border
+  &.next-btn {
+    background: var(--amber-lt);
+    border-color: var(--amber);
+  }
+
+  &:hover:not(.done) { opacity: 0.85; }
+}
+
+// ── All Prescriptions ─────────────────────────────────────────────────────────
+
+.med-card {
+  background: var(--white);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.mc-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--blue-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mc-body      { min-width: 0; }
+.mc-name      { font-size: 14px; font-weight: 600; color: var(--navy); }
+.mc-detail    { font-size: 12px; color: var(--sub); margin-top: 3px; }
+.mc-prescribed{ font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+.mc-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.mc-refill {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 900px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .content { padding: 20px 16px; }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

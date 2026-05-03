@@ -1,0 +1,244 @@
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div>
+    <div class="tb-title">System Overview</div>
+    <div class="tb-sub">All hospitals · Real-time data · {{ today }}</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-chip">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M2 7h12" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      Apr 2026
+    </div>
+    <div class="tb-chip">All Hospitals ↓</div>
+    <div class="tb-notif">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/>
+        <path d="M6.5 13a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
+      </svg>
+      <div class="tb-notif-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTENT ══ -->
+<div class="content">
+
+  <!-- ── Loading skeleton ── -->
+  <ng-container *ngIf="isLoading">
+    <div class="stats-grid mb20">
+      <div class="skel skel-stat" *ngFor="let i of [1,2,3,4,5]"></div>
+    </div>
+    <div class="g3 mb16">
+      <div class="skel skel-chart-wide"></div>
+      <div class="skel skel-chart"></div>
+    </div>
+    <div class="g3 mb16">
+      <div class="skel skel-chart" *ngFor="let i of [1,2,3]"></div>
+    </div>
+    <div class="skel skel-ai"></div>
+  </ng-container>
+
+  <ng-container *ngIf="!isLoading">
+
+    <!-- ── STAT CARDS ── -->
+    <div class="stats-grid mb20">
+      <div *ngFor="let s of stats"
+           class="stat"
+           [class.teal]="s.accent === 'teal'"
+           [class.green]="s.accent === 'green'"
+           [class.red]="s.accent === 'red'"
+           [class.amber]="s.accent === 'amber'"
+           [class.blue]="s.accent === 'blue'">
+
+        <!-- Icon -->
+        <div class="stat-icon" [style.background]="'var(--' + s.accent + '-lt)'">
+          <!-- Hospital -->
+          <svg *ngIf="s.icon === 'hospital'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 13V7l5-5 5 5v6" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5"/>
+            <rect x="6" y="9" width="4" height="4" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5"/>
+          </svg>
+          <!-- Patients / Doctors -->
+          <svg *ngIf="s.icon === 'patients' || s.icon === 'doctors'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="5" r="3" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5"/>
+            <path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5"/>
+          </svg>
+          <!-- ICU -->
+          <svg *ngIf="s.icon === 'icu'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="2" y="3" width="12" height="10" rx="1.5" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5"/>
+            <path d="M6 8h4M8 6v4" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <!-- Revenue -->
+          <svg *ngIf="s.icon === 'revenue'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v12M5 5h4.5a2 2 0 010 4H5m0 0h5a2 2 0 010 4H5" [attr.stroke]="statIconColor(s.accent)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="stat-label">{{ s.label }}</div>
+        <div class="stat-val">{{ s.value }}</div>
+        <div class="stat-sub" [ngStyle]="statSubStyle(s.accent)">{{ s.sub }}</div>
+      </div>
+    </div>
+
+    <!-- ── CHARTS ROW 1: Patient Inflow (span 2) + Disease Doughnut ── -->
+    <div class="g3 mb16">
+
+      <div class="card chart-wide">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Patient Inflow</div>
+            <div class="card-sub">Daily admissions · Last 14 days</div>
+          </div>
+          <a class="card-link">Full analytics →</a>
+        </div>
+        <div class="chart-pad">
+          <canvas baseChart
+                  [data]="inflowChartData"
+                  [options]="inflowChartOptions"
+                  type="line">
+          </canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Disease Distribution</div>
+        </div>
+        <div class="chart-pad">
+          <canvas baseChart
+                  [data]="diseaseChartData"
+                  [options]="diseaseChartOptions"
+                  type="doughnut">
+          </canvas>
+        </div>
+        <div class="disease-legend">
+          <div class="dl-row">
+            <span class="dl-dot" style="background:#0AAFB8"></span>
+            <span class="dl-label">Cardiology</span>
+            <span class="dl-val">28%</span>
+          </div>
+          <div class="dl-row">
+            <span class="dl-dot" style="background:#3B82F6"></span>
+            <span class="dl-label">Orthopaedics</span>
+            <span class="dl-val">19%</span>
+          </div>
+          <div class="dl-row">
+            <span class="dl-dot" style="background:#8B5CF6"></span>
+            <span class="dl-label">Neurology</span>
+            <span class="dl-val">16%</span>
+          </div>
+          <div class="dl-row">
+            <span class="dl-dot" style="background:#10B981"></span>
+            <span class="dl-label">General</span>
+            <span class="dl-val">37%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── CHARTS ROW 2: Bed Occupancy + Revenue + Map ── -->
+    <div class="g3 mb16">
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Bed Occupancy</div>
+            <div class="card-sub">All hospitals · Today</div>
+          </div>
+        </div>
+        <div class="chart-pad">
+          <canvas baseChart
+                  [data]="bedChartData"
+                  [options]="bedChartOptions"
+                  type="bar">
+          </canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Revenue Trend</div>
+            <div class="card-sub">Monthly · 2026</div>
+          </div>
+        </div>
+        <div class="chart-pad">
+          <canvas baseChart
+                  [data]="revenueChartData"
+                  [options]="revenueChartOptions"
+                  type="line">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Hospital Branch Map -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Hospital Branch Map</div>
+            <div class="card-sub">Bed &amp; ICU availability</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="map-container">
+            <div class="map-bg"></div>
+            <div class="map-grid"></div>
+
+            <!-- Pins -->
+            <div *ngFor="let pin of hospitalPins"
+                 class="map-pin"
+                 [style.top]="pin.top"
+                 [style.left]="pin.left">
+              <div class="map-pin-dot"
+                   [style.background]="pinColor(pin.status)"
+                   [style.border-color]="pinColor(pin.status)">
+              </div>
+              <div class="map-pin-label" [style.color]="pinColor(pin.status)">
+                {{ pin.name }} · {{ pin.beds }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="map-legend">
+            <span class="ml-item"><span class="ml-dot" style="background:#10B981"></span>Available</span>
+            <span class="ml-item"><span class="ml-dot" style="background:#F59E0B"></span>Limited</span>
+            <span class="ml-item"><span class="ml-dot" style="background:#EF4444"></span>Critical</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── AI INSIGHTS PANEL ── -->
+    <div class="ai-panel">
+      <div class="ai-header">
+        <div class="ai-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="5.5" stroke="#0AAFB8" stroke-width="1.5"/>
+            <path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="#0AAFB8" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="8" cy="12" r=".75" fill="#0AAFB8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="ai-title">AI System Insights</div>
+          <div class="ai-sub">Generated · Just now · Based on live hospital data</div>
+        </div>
+        <button class="btn btn-ghost" style="margin-left:auto">Refresh</button>
+      </div>
+
+      <div class="ai-insights-grid">
+        <div *ngFor="let ins of aiInsights; let first = first; let last = last"
+             class="ai-insight"
+             [class.ai-insight-border]="!first">
+          <div class="ai-dot" [style.background]="ins.dot"></div>
+          <div class="ai-text" [innerHTML]="ins.html"></div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

@@ -1,0 +1,215 @@
+<div class="mr-page">
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <div class="content">
+
+    <!-- ── LEFT: record list ── -->
+    <div class="list-col">
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4.5" stroke="#8A94A6" stroke-width="1.5"/>
+          <path d="M10 10l3.5 3.5" stroke="#8A94A6" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input class="search-input"
+               type="text"
+               placeholder="Search records…"
+               [formControl]="searchCtrl">
+      </div>
+
+      <!-- List error -->
+      <div class="list-error" *ngIf="listError">{{ listError }}</div>
+
+      <!-- Loading skeletons -->
+      <ng-container *ngIf="listLoading">
+        <div class="skel-item" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skel skel-line-a"></div>
+          <div class="skel skel-line-b"></div>
+        </div>
+      </ng-container>
+
+      <!-- Empty state -->
+      <div class="empty-list" *ngIf="!listLoading && !listError && records.length === 0">
+        <svg width="32" height="32" viewBox="0 0 16 16" fill="none">
+          <rect x="3" y="2" width="10" height="13" rx="1.5" stroke="#CBD5E0" stroke-width="1.5"/>
+          <path d="M5 6h6M5 9h4" stroke="#CBD5E0" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p>No records found</p>
+      </div>
+
+      <!-- Record items -->
+      <div *ngFor="let rec of records; trackBy: trackByRecord"
+           class="record-item"
+           [class.active]="selectedId === rec.id"
+           (click)="selectRecord(rec.id)">
+        <div class="ri-top">
+          <span class="ri-badge" [ngClass]="typeStyle(rec.type).cls">{{ typeStyle(rec.type).label }}</span>
+          <span class="ri-date">{{ rec.date | date:'MMM d, y' }}</span>
+          <span class="ri-alert-dot" *ngIf="rec.hasAlert"></span>
+        </div>
+        <div class="ri-title">{{ rec.title }}</div>
+        <div class="ri-meta">{{ rec.doctorName }} · {{ rec.specialty }}</div>
+        <div class="ri-snippet">{{ rec.snippet }}</div>
+      </div>
+
+    </div><!-- /list-col -->
+
+    <!-- ── RIGHT: detail panel ── -->
+    <div class="detail-col">
+
+      <!-- No selection placeholder -->
+      <div class="no-selection" *ngIf="!selectedId && !detailLoading">
+        <svg width="40" height="40" viewBox="0 0 16 16" fill="none">
+          <rect x="3" y="2" width="10" height="13" rx="1.5" stroke="#CBD5E0" stroke-width="1.5"/>
+          <path d="M5 6h6M5 9h4" stroke="#CBD5E0" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p>Select a record to view details</p>
+      </div>
+
+      <!-- Detail loading -->
+      <ng-container *ngIf="detailLoading">
+        <div class="skel skel-detail-header"></div>
+        <div class="detail-body">
+          <div class="skel skel-section" *ngFor="let i of [1,2,3]"></div>
+        </div>
+      </ng-container>
+
+      <!-- Detail error -->
+      <div class="detail-error" *ngIf="detailError && !detailLoading">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2L14 13H2L8 2z" stroke="#B91C1C" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 7v3" stroke="#B91C1C" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ detailError }}
+      </div>
+
+      <!-- Detail content -->
+      <ng-container *ngIf="selectedRecord && !detailLoading">
+
+        <!-- Header (navy gradient) -->
+        <div class="detail-header">
+          <div class="dh-type-row">
+            <span class="dh-badge" [ngClass]="typeStyle(selectedRecord.type).cls">{{ typeStyle(selectedRecord.type).label }}</span>
+            <span class="dh-date">{{ selectedRecord.date | date:'MMMM d, y' }}</span>
+          </div>
+          <div class="dh-title">{{ selectedRecord.title }}</div>
+          <div class="dh-meta">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="5" r="3" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>
+              <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" stroke="rgba(255,255,255,.6)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            {{ selectedRecord.doctorName }} · {{ selectedRecord.specialty }}
+          </div>
+          <div class="dh-meta">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>
+              <path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="rgba(255,255,255,.6)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            {{ selectedRecord.hospital }}
+          </div>
+        </div>
+
+        <!-- Body sections -->
+        <div class="detail-body">
+
+          <!-- ① Clinical notes -->
+          <div class="detail-section">
+            <div class="ds-heading">Clinical Notes</div>
+            <div class="ds-card">
+              <div class="cn-row">
+                <div class="cn-label">Chief Complaint</div>
+                <div class="cn-val">{{ selectedRecord.chiefComplaint }}</div>
+              </div>
+              <div class="cn-divider"></div>
+              <div class="cn-row">
+                <div class="cn-label">Diagnosis</div>
+                <div class="cn-val cn-val-strong">{{ selectedRecord.diagnosis }}</div>
+              </div>
+              <div class="cn-divider"></div>
+              <div class="cn-row">
+                <div class="cn-label">Doctor's Notes</div>
+                <div class="cn-val">{{ selectedRecord.notes }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ② Vitals (if present) -->
+          <div class="detail-section" *ngIf="selectedRecord.vitals">
+            <div class="ds-heading">Vitals</div>
+            <div class="vitals-grid">
+              <div class="vg-item">
+                <div class="vg-label">Blood Pressure</div>
+                <div class="vg-val">{{ selectedRecord.vitals.bloodPressure }}</div>
+                <div class="vg-unit">mmHg</div>
+              </div>
+              <div class="vg-item">
+                <div class="vg-label">Heart Rate</div>
+                <div class="vg-val">{{ selectedRecord.vitals.heartRate }}</div>
+              </div>
+              <div class="vg-item">
+                <div class="vg-label">Temperature</div>
+                <div class="vg-val">{{ selectedRecord.vitals.temperature }}</div>
+              </div>
+              <div class="vg-item">
+                <div class="vg-label">Weight</div>
+                <div class="vg-val">{{ selectedRecord.vitals.weight }}</div>
+              </div>
+              <div class="vg-item">
+                <div class="vg-label">Height</div>
+                <div class="vg-val">{{ selectedRecord.vitals.height }}</div>
+              </div>
+              <div class="vg-item">
+                <div class="vg-label">BMI</div>
+                <div class="vg-val">{{ selectedRecord.vitals.bmi }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ Prescriptions -->
+          <div class="detail-section" *ngIf="selectedRecord.prescriptions.length > 0">
+            <div class="ds-heading">Prescriptions</div>
+            <div class="rx-list">
+              <div *ngFor="let rx of selectedRecord.prescriptions" class="rx-item">
+                <div class="rx-icon">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <rect x="4" y="2" width="8" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M7 6h2M8 5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M6 10h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="rx-info">
+                  <div class="rx-name">{{ rx.medicationName }}</div>
+                  <div class="rx-detail">{{ rx.dosage }} · {{ rx.frequency }} · {{ rx.duration }}</div>
+                  <div class="rx-note" *ngIf="rx.notes">{{ rx.notes }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ④ Treatment history timeline -->
+          <div class="detail-section" *ngIf="selectedRecord.timeline.length > 0">
+            <div class="ds-heading">Treatment History</div>
+            <div class="timeline">
+              <div *ngFor="let item of selectedRecord.timeline"
+                   class="tl-item"
+                   [class.latest]="item.isLatest">
+                <div class="tl-dot"></div>
+                <div class="tl-connector" *ngIf="!item.isLatest"></div>
+                <div class="tl-content">
+                  <div class="tl-date">{{ item.date | date:'MMM d, y' }}</div>
+                  <div class="tl-title">{{ item.title }}</div>
+                  <div class="tl-desc">{{ item.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /detail-body -->
+      </ng-container>
+
+    </div><!-- /detail-col -->
+
+  </div><!-- /content -->
+
+</div>

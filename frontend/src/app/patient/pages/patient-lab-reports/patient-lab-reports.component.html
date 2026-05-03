@@ -1,0 +1,194 @@
+<div class="lr-page">
+
+  <!-- ══ LOADING ══ -->
+  <ng-container *ngIf="loading">
+    <div class="content">
+      <div class="reports-col">
+        <div class="skeleton sk-alert"></div>
+        <div class="skeleton sk-card" *ngFor="let i of [1,2,3]"></div>
+      </div>
+      <div class="skeleton sk-panel"></div>
+    </div>
+  </ng-container>
+
+  <!-- ══ ERROR ══ -->
+  <div class="error-bar" *ngIf="error && !loading">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M8 2L14 13H2L8 2z" stroke="#B91C1C" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M8 7v3" stroke="#B91C1C" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    {{ error }}
+    <button class="retry-btn" (click)="loadData()">Retry</button>
+  </div>
+
+  <!-- ══ LOADED ══ -->
+  <div class="content" *ngIf="!loading && !error">
+
+    <!-- ── LEFT: report list ── -->
+    <div class="reports-col">
+
+      <!-- Flagged alert banner -->
+      <div class="flagged-alert" *ngIf="flaggedAlerts.length > 0">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+          <path d="M8 2L14 13H2L8 2z" stroke="#B91C1C" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 7v3M8 11.5v.5" stroke="#B91C1C" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <strong class="alert-strong">Attention required:</strong>
+          <span class="alert-text">
+            Your {{ flaggedAlerts[0].testName }} shows {{ flaggedAlerts[0].flaggedMetric }}.
+            Please discuss with {{ flaggedAlerts[0].doctorName }}.
+          </span>
+          <span class="alert-text" *ngIf="flaggedAlerts.length > 1">
+            ({{ flaggedAlerts.length }} reports require attention)
+          </span>
+        </div>
+      </div>
+
+      <!-- Report cards -->
+      <div *ngFor="let report of reports; trackBy: trackByReport"
+           class="report-card"
+           [class.flagged]="report.isFlagged"
+           [class.pending]="report.status === 'Pending'"
+           (click)="toggleReport(report)">
+
+        <!-- Card header -->
+        <div class="rc-header">
+          <div class="rc-icon" [style.background]="report.iconBg">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path d="M6 2v5L3 13h10L10 7V2"
+                    [attr.stroke]="report.iconStroke" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5.5 2h5" [attr.stroke]="report.iconStroke" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <div class="rc-info">
+            <div class="rc-name">{{ report.testName }}</div>
+            <div class="rc-meta">Ordered by {{ report.orderedBy }} · {{ report.reportDate | date:'MMM d, y' }}</div>
+          </div>
+
+          <div class="rc-right">
+            <span class="badge"
+                  [class.b-red]="report.status === 'Abnormal'"
+                  [class.b-green]="report.status === 'Normal'"
+                  [class.b-amber]="report.status === 'Pending'">
+              {{ report.status }}
+            </span>
+            <svg *ngIf="report.status !== 'Pending'"
+                 class="chevron"
+                 width="14" height="14" viewBox="0 0 16 16" fill="none"
+                 [style.transform]="report.isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'">
+              <path d="M4 6l4 4 4-4" stroke="#8A94A6" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card body (expanded only) -->
+        <div class="rc-body" *ngIf="report.isExpanded" (click)="$event.stopPropagation()">
+
+          <div class="result-grid">
+            <div *ngFor="let result of report.results"
+                 class="rg-item"
+                 [style.background]="result.cellBg">
+              <div class="rg-label">{{ result.label }}</div>
+              <div class="rg-val" [style.color]="result.valueColor">{{ result.value }}</div>
+              <div class="rg-range" *ngIf="result.normalRange">{{ result.normalRange }}</div>
+              <div class="rg-flag" *ngIf="result.flag" [style.color]="result.flagColor">{{ result.flag }}</div>
+            </div>
+          </div>
+
+          <div class="rc-actions">
+            <button class="btn btn-primary"
+                    [disabled]="downloading[report.id]"
+                    (click)="downloadReport($event, report)">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v8M5 7l3 3 3-3" stroke="white" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 13h10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              {{ downloading[report.id] ? 'Downloading…' : 'Download PDF' }}
+            </button>
+            <button class="btn btn-ghost" (click)="explainFromCard($event, report)">
+              Ask AI to Explain
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /reports-col -->
+
+    <!-- ── RIGHT: sticky AI panel ── -->
+    <div class="ai-panel">
+
+      <div class="ap-header">
+        <div class="ap-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="5.5" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>
+            <path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1"
+                  stroke="rgba(255,255,255,.7)" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="8" cy="12" r=".75" fill="rgba(255,255,255,.7)"/>
+          </svg>
+        </div>
+        <div>
+          <div class="ap-title">AI Report Explanation</div>
+          <div class="ap-sub">Powered by MediConnect AI</div>
+        </div>
+      </div>
+
+      <div class="ap-body">
+
+        <!-- AI message bubble -->
+        <div class="ai-message">
+          <!-- Loading typing dots -->
+          <ng-container *ngIf="aiLoading">
+            <div class="typing-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="typing-label">Generating explanation…</div>
+          </ng-container>
+          <!-- AI response HTML -->
+          <ng-container *ngIf="!aiLoading && aiMessageHtml">
+            <div [innerHTML]="aiMessageHtml"></div>
+          </ng-container>
+          <!-- Placeholder (initial state) -->
+          <ng-container *ngIf="!aiLoading && !aiMessageHtml">
+            <div class="ai-placeholder">
+              Select a report and click "Ask AI to Explain" to get a plain-language explanation of your results.
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Suggestion chips -->
+        <div class="ai-chips">
+          <button *ngFor="let chip of suggestChips; trackBy: trackByChip"
+                  class="ai-chip"
+                  [disabled]="aiSending"
+                  (click)="askAi(chip)">{{ chip }}</button>
+        </div>
+
+        <!-- Input row -->
+        <div class="ai-input-row">
+          <input class="ai-input"
+                 type="text"
+                 placeholder="Ask about your results…"
+                 [(ngModel)]="aiInputText"
+                 [disabled]="aiSending"
+                 (keydown)="onInputKeydown($event)">
+          <button class="ai-send"
+                  [disabled]="aiSending"
+                  (click)="sendMessage()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M14 8L2 2l3 6-3 6 12-6z" fill="white"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="ai-disclaimer">AI explanations are educational only. Always consult your doctor.</div>
+
+      </div>
+    </div><!-- /ai-panel -->
+
+  </div><!-- /content -->
+</div>

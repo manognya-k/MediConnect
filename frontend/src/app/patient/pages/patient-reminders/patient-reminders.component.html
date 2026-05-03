@@ -1,0 +1,186 @@
+<div class="rm-page">
+  <div class="content">
+
+    <!-- ══ LOADING SKELETONS ══ -->
+    <ng-container *ngIf="loading">
+
+      <!-- Stat skeletons -->
+      <div class="grid-4">
+        <div class="skeleton sk-stat" *ngFor="let i of statSkels"></div>
+      </div>
+
+      <!-- Main grid skeletons -->
+      <div class="grid-2">
+        <!-- Schedule skeleton -->
+        <div>
+          <div class="skeleton sk-title"></div>
+          <div class="sk-slot" *ngFor="let i of slotSkels">
+            <div class="skeleton sk-dot-area"></div>
+            <div class="sk-pills">
+              <div class="skeleton sk-pill"></div>
+              <div class="skeleton sk-pill sk-pill-short"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Prescriptions skeleton -->
+        <div>
+          <div class="skeleton sk-title"></div>
+          <div class="skeleton sk-rx-card" *ngFor="let i of rxSkels"></div>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ══ LOADED ══ -->
+    <ng-container *ngIf="!loading && stats">
+
+      <!-- ── Stat cards ── -->
+      <div class="grid-4">
+
+        <div class="stat">
+          <div class="stat-label">Active medicines</div>
+          <div class="stat-val">{{ stats.activeMedicines }}</div>
+          <div class="stat-sub b-blue">All prescribed</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Taken today</div>
+          <div class="stat-val">{{ stats.takenToday }}</div>
+          <div class="stat-sub b-green">
+            {{ stats.activeMedicines > 0 ? ((stats.takenToday / stats.activeMedicines) * 100 | number:'1.0-0') : 0 }}% done
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Due today</div>
+          <div class="stat-val">{{ stats.dueToday }}</div>
+          <div class="stat-sub b-amber">Remaining</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Adherence (30d)</div>
+          <div class="stat-val">{{ stats.adherencePercent }}%</div>
+          <div class="stat-sub" [class.b-green]="stats.adherencePercent >= 80"
+               [class.b-amber]="stats.adherencePercent >= 60 && stats.adherencePercent < 80"
+               [class.b-red]="stats.adherencePercent < 60">
+            {{ adherenceLabel(stats.adherencePercent) }}
+          </div>
+        </div>
+
+      </div><!-- /grid-4 -->
+
+      <!-- ── Main grid ── -->
+      <div class="grid-2">
+
+        <!-- ── LEFT: Today's Schedule ── -->
+        <div>
+          <div class="timeline-header">
+            <div class="timeline-title">Today's Schedule</div>
+            <div class="timeline-date">{{ today | date:"EEEE, MMMM d" }}</div>
+          </div>
+
+          <div class="time-slots">
+            <div *ngFor="let slot of timeSlots; trackBy: trackBySlot; let i = index; let last = last"
+                 class="time-slot">
+
+              <!-- Time label -->
+              <div class="ts-time" [class.ts-time-next]="slot.status === 'next'">
+                {{ slot.time }}
+              </div>
+
+              <!-- Dot + vertical track -->
+              <div class="ts-line">
+                <div class="ts-dot"
+                     [class.done]="slot.status === 'done'"
+                     [class.next]="slot.status === 'next'">
+                </div>
+                <div class="ts-track" *ngIf="!last"></div>
+              </div>
+
+              <!-- Medicine pills -->
+              <div class="ts-meds">
+                <div *ngFor="let dose of slot.doses; trackBy: trackByDose"
+                     class="med-pill"
+                     [class.done]="dose.status === 'done'"
+                     [class.next]="dose.status === 'next'">
+
+                  <!-- Icon -->
+                  <div class="mp-icon" [class.mp-icon-amber]="dose.status === 'next'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <ellipse cx="8" cy="8" rx="6" ry="3"
+                               [attr.stroke]="dose.status === 'done' ? '#8A94A6' : dose.status === 'next' ? '#B45309' : '#1A5FA8'"
+                               stroke-width="1.5"
+                               transform="rotate(-45 8 8)"/>
+                    </svg>
+                  </div>
+
+                  <!-- Medicine name + dosage -->
+                  <div class="mp-info">
+                    <div class="mp-name">{{ dose.medicineName }}</div>
+                    <div class="mp-dose">
+                      {{ dose.dosage }}<ng-container *ngIf="dose.status === 'next'"> · <span class="due-now">DUE NOW</span></ng-container>
+                    </div>
+                  </div>
+
+                  <!-- Check button -->
+                  <button class="mp-check"
+                          [class.done]="dose.status === 'done'"
+                          [class.next-btn]="dose.status === 'next'"
+                          (click)="toggleDose(slot, dose)">
+                    <!-- Done: white checkmark -->
+                    <ng-container *ngIf="dose.status === 'done'">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M3 8l3 4 7-8" stroke="white" stroke-width="2"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </ng-container>
+                    <!-- Next: amber plus -->
+                    <ng-container *ngIf="dose.status === 'next'">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 4v8M4 8h8" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </ng-container>
+                    <!-- Upcoming: empty -->
+                  </button>
+
+                </div><!-- /med-pill -->
+              </div><!-- /ts-meds -->
+
+            </div><!-- /time-slot -->
+          </div><!-- /time-slots -->
+        </div><!-- /schedule col -->
+
+        <!-- ── RIGHT: All Prescriptions ── -->
+        <div>
+          <div class="timeline-title" style="margin-bottom:14px">All Prescriptions</div>
+
+          <div *ngFor="let rx of prescriptions; trackBy: trackByRx" class="med-card">
+
+            <div class="mc-icon">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                <ellipse cx="8" cy="8" rx="6" ry="3" stroke="#1A5FA8" stroke-width="1.5"
+                         transform="rotate(-45 8 8)"/>
+              </svg>
+            </div>
+
+            <div class="mc-body">
+              <div class="mc-name">{{ rx.medicineName }}</div>
+              <div class="mc-detail">{{ rx.frequency }} · {{ rx.timing }} · {{ rx.indication }}</div>
+              <div class="mc-prescribed">Prescribed by {{ rx.prescribedBy }}</div>
+            </div>
+
+            <div class="mc-right">
+              <span class="badge" [ngClass]="rxStatusClass(rx.status)">{{ rx.status }}</span>
+              <div class="mc-refill">Refill: {{ rx.refillDate | date:'MMM d' }}</div>
+            </div>
+
+          </div><!-- /med-card -->
+
+        </div><!-- /prescriptions col -->
+
+      </div><!-- /grid-2 -->
+
+    </ng-container>
+
+  </div><!-- /content -->
+</div>

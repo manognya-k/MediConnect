@@ -1,0 +1,299 @@
+<div class="tm-page">
+  <div class="content">
+
+    <!-- ══ LOADING SKELETONS ══ -->
+    <ng-container *ngIf="loading">
+      <div class="skeleton sk-hero"></div>
+      <div class="skeleton sk-section-title"></div>
+      <div class="sessions-grid">
+        <div class="skeleton sk-session-card" *ngFor="let i of sessionSkels"></div>
+      </div>
+      <div class="skeleton sk-table-header"></div>
+      <div class="skeleton sk-table-row" *ngFor="let i of rowSkels"></div>
+    </ng-container>
+
+    <!-- ══ LOADED ══ -->
+    <ng-container *ngIf="!loading">
+
+      <!-- ── HERO: Upcoming Video Call ── -->
+
+      <!-- Populated hero -->
+      <div class="call-hero" *ngIf="nextSession">
+        <div>
+          <div class="ch-title">Upcoming Video Consultation</div>
+          <div class="ch-sub">{{ nextSession.doctorName }} · {{ nextSession.doctorRole }} · {{ nextSession.clinic }}</div>
+          <div class="ch-meta">
+            <!-- Countdown chip -->
+            <div class="ch-chip">
+              <div class="live-dot"></div>
+              <span *ngIf="nextSession.minutesUntilStart > 0">Starting in {{ nextSession.minutesUntilStart }} minutes</span>
+              <span *ngIf="nextSession.minutesUntilStart <= 0">Starting now</span>
+            </div>
+            <!-- Date chip -->
+            <div class="ch-chip">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              {{ nextSession.scheduledAt | date:'MMM d' }} · {{ nextSession.scheduledAt | date:'h:mm a' }}
+            </div>
+            <!-- Duration chip -->
+            <div class="ch-chip">~{{ nextSession.durationEstMinutes }} min session</div>
+          </div>
+        </div>
+
+        <div class="ch-right">
+          <div class="video-preview">
+            <div class="vp-av">{{ nextSession.doctorInitials }}</div>
+            <div class="vp-name">{{ nextSession.doctorName }}</div>
+          </div>
+          <button class="join-btn"
+                  [disabled]="joiningSession"
+                  (click)="joinSession()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="4" width="10" height="8" rx="1.5" stroke="#0D2B4E" stroke-width="1.5"/>
+              <path d="M11 7l3-2v6l-3-2" stroke="#0D2B4E" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            {{ joiningSession ? 'Connecting…' : 'Join Session' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty hero -->
+      <div class="no-session-hero" *ngIf="!nextSession">
+        <svg width="48" height="48" viewBox="0 0 16 16" fill="none" class="no-session-icon">
+          <rect x="1" y="4" width="10" height="8" rx="1.5" stroke="#E2E8F0" stroke-width="1.5"/>
+          <path d="M11 7l3-2v6l-3-2" stroke="#E2E8F0" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <div class="no-session-title">No upcoming video consultations</div>
+        <div class="no-session-sub">Book a video call with your doctor below.</div>
+        <button class="btn btn-primary" (click)="openBookModal()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Book Video Call
+        </button>
+      </div>
+
+      <!-- ── Scheduled Sessions ── -->
+      <div class="section-title">Scheduled Sessions</div>
+
+      <!-- Empty state -->
+      <div class="empty-sessions" *ngIf="scheduledSessions.length === 0">
+        <p>No scheduled sessions.</p>
+        <button class="btn btn-primary" (click)="openBookModal()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Book Video Call
+        </button>
+      </div>
+
+      <!-- Sessions grid -->
+      <div class="sessions-grid" *ngIf="scheduledSessions.length > 0">
+        <div *ngFor="let s of scheduledSessions; trackBy: trackBySession"
+             class="session-card">
+
+          <!-- Card top -->
+          <div class="sc-top">
+            <div class="sc-av"
+                 [style.background]="s.avatarBg"
+                 [style.color]="s.avatarColor">
+              {{ s.doctorInitials }}
+            </div>
+            <div class="sc-info-top">
+              <div class="sc-name">{{ s.doctorName }}</div>
+              <div class="sc-spec">{{ s.doctorRole }} · {{ s.clinic }}</div>
+            </div>
+            <span class="badge" [ngClass]="s.timeBadgeClass">{{ s.timeUntilLabel }}</span>
+          </div>
+
+          <!-- Card info grid -->
+          <div class="sc-info">
+            <div class="si-item">
+              <div class="si-label">Date & Time</div>
+              <div class="si-val">{{ s.scheduledAt | date:'MMM d' }} · {{ s.scheduledAt | date:'h:mm a' }}</div>
+            </div>
+            <div class="si-item">
+              <div class="si-label">Session type</div>
+              <div class="si-val">{{ s.sessionType }}</div>
+            </div>
+            <div class="si-item">
+              <div class="si-label">Reason</div>
+              <div class="si-val">{{ s.reason }}</div>
+            </div>
+            <div class="si-item">
+              <div class="si-label">Duration est.</div>
+              <div class="si-val">{{ s.durationEstMinutes }} minutes</div>
+            </div>
+          </div>
+
+          <!-- Card footer -->
+          <div class="sc-footer">
+            <span class="badge" [ngClass]="statusBadgeClass(s.status)">{{ s.status }}</span>
+            <button class="btn btn-ghost btn-sm"
+                    [disabled]="cancellingId === s.sessionId"
+                    (click)="s.status === 'Confirmed' ? openReschedule(s) : cancelSession(s)">
+              {{ s.status === 'Confirmed' ? 'Reschedule' : 'Cancel' }}
+            </button>
+          </div>
+
+        </div><!-- /session-card -->
+      </div><!-- /sessions-grid -->
+
+      <!-- ── Past Sessions ── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Past Sessions</div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="table-empty" *ngIf="pastSessions.length === 0">
+          No past sessions yet.
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap" *ngIf="pastSessions.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Duration</th>
+                <th>Reason</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of pastSessions; trackBy: trackByPast">
+                <td class="td-doctor">{{ p.doctorName }}</td>
+                <td>{{ p.sessionDate | date:'MMM d, y' }} · {{ p.sessionDate | date:'HH:mm' }}</td>
+                <td>{{ p.sessionType }}</td>
+                <td>{{ p.status === 'Completed' ? p.durationMinutes + ' min' : '—' }}</td>
+                <td>{{ p.reason }}</td>
+                <td>
+                  <span class="badge" [ngClass]="pastStatusClass(p.status)">{{ p.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /card -->
+
+    </ng-container><!-- /loaded -->
+
+  </div><!-- /content -->
+</div>
+
+<!-- ══ BOOK VIDEO CALL MODAL ══ -->
+<div class="modal-overlay" *ngIf="showBookModal" (click)="closeBookModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Book Video Call</div>
+      <button class="modal-close" (click)="closeBookModal()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M4 4l8 8M12 4l-8 8" stroke="#4A5568" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <form [formGroup]="bookForm" (ngSubmit)="submitBook()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Doctor <span class="required">*</span></label>
+          <input class="form-input" type="text" placeholder="e.g. Dr. Aisha Patel"
+                 formControlName="doctorName">
+          <div class="form-error" *ngIf="bookForm.get('doctorName')?.touched && bookForm.get('doctorName')?.invalid">
+            Doctor name is required.
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date <span class="required">*</span></label>
+            <input class="form-input" type="date" [min]="minDate()" formControlName="date">
+            <div class="form-error" *ngIf="bookForm.get('date')?.touched && bookForm.get('date')?.invalid">
+              Date is required.
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time <span class="required">*</span></label>
+            <select class="form-input" formControlName="time">
+              <option value="">Select time</option>
+              <option value="09:00">9:00 AM</option>
+              <option value="10:00">10:00 AM</option>
+              <option value="11:00">11:00 AM</option>
+              <option value="14:00">2:00 PM</option>
+              <option value="15:00">3:00 PM</option>
+              <option value="16:00">4:00 PM</option>
+            </select>
+            <div class="form-error" *ngIf="bookForm.get('time')?.touched && bookForm.get('time')?.invalid">
+              Time is required.
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason <span class="required">*</span></label>
+          <input class="form-input" type="text" placeholder="e.g. Follow-up consultation"
+                 formControlName="reason">
+          <div class="form-error" *ngIf="bookForm.get('reason')?.touched && bookForm.get('reason')?.invalid">
+            Reason is required (min 3 characters).
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" (click)="closeBookModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Book Call</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ RESCHEDULE MODAL ══ -->
+<div class="modal-overlay" *ngIf="showRescheduleModal" (click)="closeRescheduleModal()">
+  <div class="modal modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Reschedule Session</div>
+      <button class="modal-close" (click)="closeRescheduleModal()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M4 4l8 8M12 4l-8 8" stroke="#4A5568" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <form [formGroup]="rescheduleForm" (ngSubmit)="submitReschedule()">
+      <div class="modal-body">
+        <div class="form-group" *ngIf="rescheduleTarget">
+          <label class="form-label">Doctor</label>
+          <div class="form-readonly">{{ rescheduleTarget.doctorName }}</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">New Date <span class="required">*</span></label>
+            <input class="form-input" type="date" [min]="minDate()" formControlName="date">
+            <div class="form-error" *ngIf="rescheduleForm.get('date')?.touched && rescheduleForm.get('date')?.invalid">
+              Date is required.
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Time <span class="required">*</span></label>
+            <select class="form-input" formControlName="time">
+              <option value="">Select time</option>
+              <option value="09:00">9:00 AM</option>
+              <option value="10:00">10:00 AM</option>
+              <option value="11:00">11:00 AM</option>
+              <option value="14:00">2:00 PM</option>
+              <option value="15:00">3:00 PM</option>
+              <option value="16:00">4:00 PM</option>
+            </select>
+            <div class="form-error" *ngIf="rescheduleForm.get('time')?.touched && rescheduleForm.get('time')?.invalid">
+              Time is required.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" (click)="closeRescheduleModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Reschedule</button>
+      </div>
+    </form>
+  </div>
+</div>

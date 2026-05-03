@@ -1,0 +1,93 @@
+<div class="admin-shell">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-mark">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="sb-brand">MediConnect</div>
+        <div class="sb-brand-sub">Admin Control</div>
+      </div>
+    </div>
+
+    <div class="sb-admin">
+      <div class="sb-admin-av">{{ adminInitials }}</div>
+      <div>
+        <div class="sb-admin-name">{{ adminName }}</div>
+        <div class="sb-admin-role">{{ adminRole }}</div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="nav-sec">Overview</div>
+      <a class="ni" routerLink="/admin/overview" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg>
+        Overview
+      </a>
+      <a class="ni" routerLink="/admin/hospitals" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 13V7l5-5 5 5v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="6" y="9" width="4" height="4" rx=".5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Hospitals
+      </a>
+
+      <div class="nav-sec">Patients &amp; Care</div>
+      <a class="ni" routerLink="/admin/patients" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Patients
+        <span class="ni-badge">12</span>
+      </a>
+      <a class="ni" routerLink="/admin/appointments" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Appointments
+      </a>
+      <a class="ni" routerLink="/admin/diagnostics" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M6 2v5L3 13h10L10 7V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 2h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Diagnostics
+        <span class="ni-badge amber">3</span>
+      </a>
+
+      <div class="nav-sec">Operations</div>
+      <a class="ni" routerLink="/admin/supply" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l4 6H4l4-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Supply Chain
+        <span class="ni-badge amber">7</span>
+      </a>
+      <a class="ni" routerLink="/admin/revenue" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v12M5 5h4.5a2 2 0 010 4H5m0 0h5a2 2 0 010 4H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Revenue &amp; Billing
+      </a>
+      <a class="ni" routerLink="/admin/analytics" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12V8l3-3 3 3 3-4 3 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Analytics
+      </a>
+      <a class="ni" routerLink="/admin/telemedicine" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 7l3-2v6l-3-2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        Telemedicine
+      </a>
+
+      <div class="nd"></div>
+      <a class="ni" routerLink="/admin/settings" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Settings
+      </a>
+    </nav>
+
+    <div class="sb-foot" (click)="logout()">
+      <div class="sf-icon">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+          <path d="M6 3H3v10h3M11 3l4 5-4 5M15 8H7" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="sf-label">Logout</span>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

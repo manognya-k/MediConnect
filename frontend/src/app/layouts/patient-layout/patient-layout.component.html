@@ -92,8 +92,9 @@
           </svg>
         </button>
         <div>
-          <div class="tb-title">Health Overview</div>
-          <div class="tb-sub">{{ today | date:'EEEE, MMMM d, y' }}</div>
+          <div class="tb-title">{{ pageTitle }}</div>
+          <div class="tb-sub" *ngIf="pageSubtitle">{{ pageSubtitle }}</div>
+          <div class="tb-sub" *ngIf="!pageSubtitle">{{ today | date:'EEEE, MMMM d, y' }}</div>
         </div>
       </div>
       <div class="tb-right">

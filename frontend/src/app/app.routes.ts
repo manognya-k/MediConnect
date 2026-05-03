@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { patientAuthGuard } from './guards/patient-auth.guard';
+import { adminAuthGuard } from './guards/admin-auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -110,6 +111,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',
+        data: { title: 'Health Overview' },
         loadComponent: () =>
           import('./patient/pages/patient-dashboard/patient-dashboard.component').then(
             (m) => m.PatientDashboardComponent
@@ -117,6 +119,7 @@ export const routes: Routes = [
       },
       {
         path: 'appointments',
+        data: { title: 'Appointments', subtitle: 'Manage & book consultations' },
         loadComponent: () =>
           import('./patient/pages/patient-appointments/patient-appointments.component').then(
             (m) => m.PatientAppointmentsComponent
@@ -124,44 +127,77 @@ export const routes: Routes = [
       },
       {
         path: 'records',
+        data: { title: 'Medical Records', subtitle: 'Your health history' },
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-records/patient-records.component').then(
+            (m) => m.PatientRecordsComponent
           )
       },
       {
         path: 'lab-reports',
+        data: { title: 'Lab Reports', subtitle: 'Test results with AI-powered explanations' },
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-lab-reports/patient-lab-reports.component').then(
+            (m) => m.PatientLabReportsComponent
           )
       },
       {
         path: 'telemedicine',
+        data: { title: 'Telemedicine', subtitle: 'Connect with your doctor remotely' },
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-telemedicine/patient-telemedicine.component').then(
+            (m) => m.PatientTelemedicineComponent
           )
       },
       {
         path: 'reminders',
+        data: { title: 'Medicine Reminders', subtitle: 'Track your daily medications' },
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-reminders/patient-reminders.component').then(
+            (m) => m.PatientRemindersComponent
           )
       },
       {
         path: 'ai',
+        data: { title: 'AI Health Assistant', subtitle: 'Your personal health guide' },
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-ai/patient-ai.component').then(
+            (m) => m.PatientAiComponent
           )
       },
       {
         path: 'notifications',
+        data: { title: 'Notifications' },
         loadComponent: () =>
           import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
             (m) => m.PatientPlaceholderComponent
+          )
+      }
+    ]
+  },
+
+  // ── Admin portal ──
+  {
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./admin/pages/admin-login/admin-login.component').then(
+        (m) => m.AdminLoginComponent
+      )
+  },
+  {
+    path: 'admin',
+    canActivate: [adminAuthGuard],
+    loadComponent: () =>
+      import('./admin/layouts/admin-layout/admin-layout.component').then(
+        (m) => m.AdminLayoutComponent
+      ),
+    children: [
+      { path: '', redirectTo: 'overview', pathMatch: 'full' },
+      {
+        path: 'overview',
+        loadComponent: () =>
+          import('./admin/pages/admin-overview/admin-overview.component').then(
+            (m) => m.AdminOverviewComponent
           )
       }
     ]
