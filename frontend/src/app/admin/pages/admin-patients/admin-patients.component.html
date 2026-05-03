@@ -1,0 +1,122 @@
+<div class="topbar">
+  <div>
+    <div class="tb-title">Patient Management</div>
+    <div class="tb-sub">All patients across all hospitals · {{ today }}</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-chip">All Hospitals ↓</div>
+    <button class="btn btn-teal btn-sm">Export</button>
+    <div class="tb-notif">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
+      <div class="tb-notif-dot"></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- Stat cards -->
+  <div class="g4 mb20">
+    <div class="stat blue">
+      <div class="stat-label">Total Patients</div>
+      <div class="stat-val">{{ totalCount | number }}</div>
+      <div class="stat-sub" style="background:var(--blue-lt);color:var(--blue)">All hospitals</div>
+    </div>
+    <div class="stat red">
+      <div class="stat-label">Inpatients</div>
+      <div class="stat-val">{{ patients.length }}</div>
+      <div class="stat-sub" style="background:var(--red-lt);color:var(--red)">Admitted</div>
+    </div>
+    <div class="stat teal">
+      <div class="stat-label">Outpatients Today</div>
+      <div class="stat-val">—</div>
+      <div class="stat-sub" style="background:var(--teal-lt);color:var(--teal)">OPD visits</div>
+    </div>
+    <div class="stat amber">
+      <div class="stat-label">Critical Cases</div>
+      <div class="stat-val">—</div>
+      <div class="stat-sub" style="background:var(--amber-lt);color:var(--amber)">ICU / HDU</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <div class="tab" [class.active]="activeTab==='inpatients'" (click)="setTab('inpatients')">Inpatients ({{ patients.length }})</div>
+    <div class="tab" [class.active]="activeTab==='outpatients'" (click)="setTab('outpatients')">Outpatients</div>
+  </div>
+
+  <!-- Patient table -->
+  <div class="card mb16">
+    <div class="card-header">
+      <div><div class="card-title">Patient List</div></div>
+      <div style="display:flex;gap:8px">
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input class="input" placeholder="Search patient…" style="width:180px" [(ngModel)]="searchTerm" (input)="search()">
+        </div>
+      </div>
+    </div>
+    <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading patients…</div>
+    <table *ngIf="!isLoading">
+      <thead>
+        <tr><th>Patient</th><th>Email</th><th>Blood Group</th><th>Phone</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of filteredPatients" (click)="selectPatient(p)" style="cursor:pointer">
+          <td>{{ p.name }}</td>
+          <td>{{ p.email }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">{{ p.bloodGroup || '—' }}</td>
+          <td>{{ p.phone || '—' }}</td>
+          <td><span class="badge b-green">Active</span></td>
+          <td><button class="btn btn-ghost btn-sm" (click)="selectPatient(p)">View</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>Showing {{ filteredPatients.length }} of {{ totalCount }} patients</span>
+      <div class="pg-btns">
+        <div class="pg-btn">‹</div><div class="pg-btn active">1</div><div class="pg-btn">2</div><div class="pg-btn">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Detail -->
+  <div class="card" *ngIf="selectedPatient">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Patient Detail — {{ selectedPatient.name }}</div>
+        <div class="card-sub">Patient ID: {{ selectedPatient.patientId }}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm">Edit</button>
+        <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple)">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          AI Summarize
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="g4" style="gap:10px">
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Blood Group</div>
+          <div style="font-size:14px;font-weight:600;color:var(--teal)">{{ selectedPatient.bloodGroup || '—' }}</div>
+        </div>
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Email</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.email }}</div>
+        </div>
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Phone</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.phone || '—' }}</div>
+        </div>
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Patient ID</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.patientId }}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;background:var(--purple-lt);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:12px 14px">
+        <div style="font-size:10px;color:var(--purple);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">AI Patient Summary</div>
+        <div style="font-size:12px;color:var(--mid);line-height:1.6">Patient <strong style="color:var(--text)">{{ selectedPatient.name }}</strong> is registered in the MediConnect system. For a detailed AI health summary, connect to the AI assistant module from the patient's doctor portal view.</div>
+      </div>
+    </div>
+  </div>
+</div>

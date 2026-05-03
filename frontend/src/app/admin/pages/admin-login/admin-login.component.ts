@@ -35,7 +35,20 @@ export class AdminLoginComponent {
     this.isLoading = true;
     this.adminAuth.login({ email: this.email.trim(), password: this.password })
       .subscribe({
-        next: () => this.router.navigate(['/admin/overview']),
+        next: () => {
+          this.router.navigate(['/admin/overview'])
+            .then(navigated => {
+              if (!navigated) {
+                this.isLoading = false;
+                this.errorMsg  = 'Navigation blocked. Check console for errors.';
+              }
+            })
+            .catch(err => {
+              console.error('Admin navigation error:', err);
+              this.isLoading = false;
+              this.errorMsg  = 'Navigation error: ' + (err?.message ?? String(err));
+            });
+        },
         error: (err: Error) => {
           this.isLoading = false;
           this.errorMsg  = err.message || 'Login failed. Please try again.';

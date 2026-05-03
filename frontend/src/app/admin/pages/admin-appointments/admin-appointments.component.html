@@ -1,0 +1,141 @@
+<div class="topbar">
+  <div>
+    <div class="tb-title">Appointment Management</div>
+    <div class="tb-sub">Calendar view · All hospitals · {{ today }}</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-chip">All Hospitals ↓</div>
+    <div class="tb-chip">Apr 2026 ↓</div>
+    <button class="btn btn-teal btn-sm">New Appointment</button>
+    <div class="tb-notif">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
+      <div class="tb-notif-dot"></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="g4 mb20">
+    <div class="stat teal">
+      <div class="stat-label">Total Appointments</div>
+      <div class="stat-val">{{ totalToday }}</div>
+      <div class="stat-sub" style="background:var(--teal-lt);color:var(--teal)">All hospitals</div>
+    </div>
+    <div class="stat green">
+      <div class="stat-label">Confirmed</div>
+      <div class="stat-val">{{ confirmed }}</div>
+      <div class="stat-sub" style="background:var(--green-lt);color:var(--green)">Scheduled</div>
+    </div>
+    <div class="stat amber">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val">{{ pending }}</div>
+      <div class="stat-sub" style="background:var(--amber-lt);color:var(--amber)">Awaiting</div>
+    </div>
+    <div class="stat red">
+      <div class="stat-label">Cancelled</div>
+      <div class="stat-val">{{ cancelled }}</div>
+      <div class="stat-sub" style="background:var(--red-lt);color:var(--red)">Today</div>
+    </div>
+  </div>
+
+  <!-- Calendar + Filters layout -->
+  <div class="g2 mb16" style="grid-template-columns:1.4fr 1fr">
+    <!-- Calendar card -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">April 2026</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm">‹</button>
+          <button class="btn btn-ghost btn-sm">›</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+          <div *ngFor="let d of ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"
+               style="font-size:10px;font-weight:600;color:var(--sub);text-align:center;padding:4px;font-family:'IBM Plex Mono',monospace">{{d}}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+          <!-- 2 empty slots for April start on Wed -->
+          <div style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border);opacity:.3"></div>
+          <div style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border);opacity:.3"></div>
+          <div *ngFor="let day of calDays"
+               [style.border-color]="day === 3 ? 'var(--teal)' : ''"
+               style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border)">
+            <div [style.color]="day === 3 ? 'var(--teal)' : ''" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--sub);margin-bottom:3px">{{day}}</div>
+            <div *ngIf="day % 3 === 0" style="background:var(--teal-lt);color:var(--teal);font-size:9px;border-radius:3px;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ (day * 3) + 10 }} appts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters + Today list -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Filters</div></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <select class="input" style="width:100%"><option>All Doctors</option></select>
+          <select class="input" style="width:100%"><option>All Departments</option><option>Cardiology</option><option>Neurology</option></select>
+          <select class="input" style="width:100%"><option>All Hospitals</option></select>
+          <input class="input" type="date" style="width:100%" [value]="'2026-04-03'">
+        </div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-header">
+          <div class="card-title">Today's Appointments</div>
+          <span style="font-size:11px;color:var(--sub)">{{ totalToday }} total</span>
+        </div>
+        <div *ngIf="isLoading" style="padding:20px;text-align:center;color:var(--sub)">Loading…</div>
+        <div style="overflow-y:auto;max-height:220px">
+          <table>
+            <thead><tr><th>Patient</th><th>Doctor</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let a of filteredAppointments.slice(0,6)">
+                <td>{{ a.patientName || a.patient?.name || 'Patient' }}</td>
+                <td>{{ a.doctorName || a.doctor?.user?.name || 'Doctor' }}</td>
+                <td><span class="badge" [ngClass]="getStatusBadge(a.status)">{{ a.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full table -->
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">All Appointments</div></div>
+      <div style="display:flex;gap:8px">
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input class="input" placeholder="Search…" style="width:160px" [(ngModel)]="searchTerm" (input)="search()">
+        </div>
+      </div>
+    </div>
+    <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading appointments…</div>
+    <table *ngIf="!isLoading">
+      <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let a of filteredAppointments">
+          <td>{{ a.patientName || a.patient?.name || '—' }}</td>
+          <td>{{ a.doctorName || a.doctor?.user?.name || '—' }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ a.appointmentDate | date:'MMM d' }}</td>
+          <td><span class="badge" [ngClass]="getTypeBadge(a.appointmentType)">{{ a.appointmentType || 'In-person' }}</span></td>
+          <td><span class="badge" [ngClass]="getStatusBadge(a.status)">{{ a.status }}</span></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-ghost btn-sm">View</button>
+              <button *ngIf="a.status === 'PENDING'" class="btn btn-teal btn-sm">Approve</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>Showing {{ filteredAppointments.length }} of {{ totalToday }}</span>
+      <div class="pg-btns">
+        <div class="pg-btn">‹</div><div class="pg-btn active">1</div><div class="pg-btn">2</div><div class="pg-btn">›</div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AdminAuthService } from '../../admin/services/admin-auth.service';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +20,11 @@ export class LoginComponent {
   loading = false;
   errorMessage = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private adminAuth: AdminAuthService,
+    private router: Router
+  ) {}
 
   setTab(tab: 'PATIENT' | 'DOCTOR' | 'ADMIN') {
     this.activeTab = tab;
@@ -38,6 +43,20 @@ export class LoginComponent {
     this.loading = true;
     this.errorMessage = '';
 
+    if (this.activeTab === 'ADMIN') {
+      this.adminAuth.login({ email: this.email, password: this.password }).subscribe({
+        next: () => {
+          this.loading = false;
+          this.router.navigate(['/admin/overview']);
+        },
+        error: (err: Error) => {
+          this.errorMessage = err.message || 'Invalid admin credentials.';
+          this.loading = false;
+        }
+      });
+      return;
+    }
+
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
         if (response.role !== this.activeTab) {
@@ -52,7 +71,7 @@ export class LoginComponent {
         } else if (response.role === 'DOCTOR') {
           this.router.navigate(['/doctor/dashboard']);
         } else {
-          this.router.navigate(['/admin/dashboard']);
+          this.router.navigate(['/admin/overview']);
         }
       },
       error: (err) => {

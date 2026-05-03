@@ -2,8 +2,8 @@ import {
   Component, OnInit, OnDestroy
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, timer } from 'rxjs';
+import { takeUntil, switchMap } from 'rxjs/operators';
 
 import {
   Chart,
@@ -13,7 +13,7 @@ import {
   Tooltip, Legend, Filler
 } from 'chart.js';
 
-import { BaseChartDirective } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
 
 import { AdminOverviewService } from '../../services/admin-overview.service';
@@ -41,7 +41,7 @@ Chart.defaults.plugins.legend.labels.padding  = 12;
 @Component({
   selector: 'app-admin-overview',
   standalone: true,
-  imports: [CommonModule, DatePipe, BaseChartDirective],
+  imports: [CommonModule, DatePipe, NgChartsModule],
   templateUrl: './admin-overview.component.html',
   styleUrl:    './admin-overview.component.scss'
 })
@@ -121,12 +121,13 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.overviewSvc.getOverview()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
-        this.applyData(data);
-        this.isLoading = false;
-      });
+    timer(0, 30000).pipe(
+      switchMap(() => this.overviewSvc.getOverview()),
+      takeUntil(this.destroy$)
+    ).subscribe(data => {
+      this.applyData(data);
+      this.isLoading = false;
+    });
   }
 
   ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }

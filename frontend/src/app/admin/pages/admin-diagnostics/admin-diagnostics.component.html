@@ -1,0 +1,128 @@
+<div class="topbar">
+  <div>
+    <div class="tb-title">Diagnostics Module</div>
+    <div class="tb-sub">Lab Reports · Radiology · Imaging · {{ today }}</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-chip">All Hospitals ↓</div>
+    <div class="tb-chip">Apr 2026 ↓</div>
+    <div class="tb-notif">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
+      <div class="tb-notif-dot"></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="g4 mb20">
+    <div class="stat teal">
+      <div class="stat-label">Total Reports</div>
+      <div class="stat-val">{{ totalReports }}</div>
+      <div class="stat-sub" style="background:var(--teal-lt);color:var(--teal)">All branches</div>
+    </div>
+    <div class="stat amber">
+      <div class="stat-label">Pending Review</div>
+      <div class="stat-val">{{ pendingCount }}</div>
+      <div class="stat-sub" style="background:var(--amber-lt);color:var(--amber)">Awaiting</div>
+    </div>
+    <div class="stat red">
+      <div class="stat-label">Abnormal Flags</div>
+      <div class="stat-val">{{ abnormalCount }}</div>
+      <div class="stat-sub" style="background:var(--red-lt);color:var(--red)">Needs action</div>
+    </div>
+    <div class="stat blue">
+      <div class="stat-label">Imaging Requests</div>
+      <div class="stat-val">31</div>
+      <div class="stat-sub" style="background:var(--blue-lt);color:var(--blue)">MRI / CT / X-Ray</div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab" [class.active]="activeTab==='labs'" (click)="setTab('labs')">Lab Reports</div>
+    <div class="tab" [class.active]="activeTab==='radio'" (click)="setTab('radio')">Radiology</div>
+    <div class="tab" [class.active]="activeTab==='imaging'" (click)="setTab('imaging')">Imaging</div>
+  </div>
+
+  <ng-container *ngIf="activeTab==='labs'">
+    <div class="card mb16">
+      <div class="card-header">
+        <div><div class="card-title">Lab Reports</div></div>
+        <div style="display:flex;gap:8px">
+          <div class="search-wrap">
+            <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input class="input" placeholder="Search patient / test…" style="width:200px" [(ngModel)]="searchTerm" (input)="search()">
+          </div>
+          <select class="input"><option>All status</option><option>Pending</option><option>Ready</option><option>Abnormal</option></select>
+        </div>
+      </div>
+      <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading reports…</div>
+      <table *ngIf="!isLoading">
+        <thead><tr><th>Patient</th><th>Test Name</th><th>Report Date</th><th>Result</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of filteredReports" (click)="selectReport(r)" style="cursor:pointer">
+            <td>{{ r.patientName || r.patient?.name || '—' }}</td>
+            <td>{{ r.testName || r.reportType || '—' }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.reportDate | date:'MMM d, y' }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px"
+                [style.color]="r.result?.toUpperCase().includes('ABNORMAL') ? 'var(--red)' : 'var(--green)'">
+              {{ r.result || 'Processing…' }}
+            </td>
+            <td><span class="badge" [ngClass]="getResultBadge(r.result)">{{ getResultLabel(r.result) }}</span></td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-ghost btn-sm">View</button>
+                <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple);font-size:10px;padding:3px 8px">AI Explain</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <span>Showing {{ filteredReports.length }} of {{ totalReports }}</span>
+        <div class="pg-btns">
+          <div class="pg-btn">‹</div><div class="pg-btn active">1</div><div class="pg-btn">2</div><div class="pg-btn">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Viewer + AI Panel -->
+    <div class="g2" style="grid-template-columns:1.3fr .7fr" *ngIf="selectedReport">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Report Viewer — {{ selectedReport.patient?.name || 'Patient' }} · {{ selectedReport.testName || selectedReport.reportType || 'Lab Report' }}</div></div>
+        <div class="card-body">
+          <div style="background:var(--surf2);border-radius:8px;padding:12px;font-size:12px;color:var(--mid);border:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--sub);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Report Result</div>
+            <div style="font-size:14px;font-weight:600" [style.color]="selectedReport.result?.toUpperCase().includes('ABNORMAL') ? 'var(--red)' : 'var(--green)'">
+              {{ selectedReport.result || 'Pending' }}
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--mid)">
+              Report Date: {{ selectedReport.reportDate | date:'MMM d, y' }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-header">
+          <div class="ai-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="var(--teal)" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div><div class="ai-title">AI Report Summary</div><div class="ai-sub">Explain Report</div></div>
+        </div>
+        <div *ngFor="let ins of aiInsights">
+          <div class="ai-insight">
+            <div class="ai-dot" [style.background]="ins.dot"></div>
+            <div class="ai-text" [innerHTML]="ins.html"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="activeTab !== 'labs'">
+    <div class="card">
+      <div class="card-body" style="text-align:center;padding:60px;color:var(--sub)">
+        {{ activeTab === 'radio' ? 'Radiology' : 'Imaging' }} module coming soon.
+      </div>
+    </div>
+  </ng-container>
+</div>

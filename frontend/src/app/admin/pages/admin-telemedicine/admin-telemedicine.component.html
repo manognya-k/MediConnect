@@ -1,0 +1,277 @@
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div>
+    <div class="tb-title">Telemedicine</div>
+    <div class="tb-sub">Virtual consultation management</div>
+  </div>
+  <div class="tb-right">
+    <button class="btn btn-teal">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Schedule Session
+    </button>
+  </div>
+</div>
+
+<!-- ══ CONTENT ══ -->
+<div class="content" *ngIf="!loading; else skelTpl">
+
+  <!-- ── STAT CARDS ── -->
+  <div class="stats-grid mb20">
+
+    <div class="stat green">
+      <div class="stat-icon" style="background:var(--green-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="5.5" stroke="#10B981" stroke-width="1.5"/>
+          <path d="M5.5 8l2 2 3-3" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">Doctors Online</div>
+      <div class="stat-val">{{ onlineDoctors.length || 2 }}</div>
+      <div class="stat-sub green-chip">Available Now</div>
+    </div>
+
+    <div class="stat blue">
+      <div class="stat-icon" style="background:var(--blue-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="3" width="11" height="8" rx="1.5" stroke="#3B82F6" stroke-width="1.5"/>
+          <path d="M12 6.5l3-2v7l-3-2" stroke="#3B82F6" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">Active Sessions</div>
+      <div class="stat-val">{{ busyDoctors.length || 2 }}</div>
+      <div class="stat-sub blue-chip">In Progress</div>
+    </div>
+
+    <div class="stat teal">
+      <div class="stat-icon" style="background:var(--teal-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#0AAFB8" stroke-width="1.5"/>
+          <path d="M2 7h12" stroke="#0AAFB8" stroke-width="1.5"/>
+          <path d="M5.5 1v4M10.5 1v4" stroke="#0AAFB8" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">Today Scheduled</div>
+      <div class="stat-val">{{ appointments.length || 12 }}</div>
+      <div class="stat-sub teal-chip">Today</div>
+    </div>
+
+    <div class="stat amber">
+      <div class="stat-icon" style="background:var(--amber-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="5.5" stroke="#F59E0B" stroke-width="1.5"/>
+          <path d="M8 5v3.5l2 2" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">This Week</div>
+      <div class="stat-val">47</div>
+      <div class="stat-sub amber-chip">Sessions</div>
+    </div>
+
+  </div>
+
+  <!-- ── DOCTOR AVAILABILITY GRID ── -->
+  <div class="card mb20">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Doctor Availability</div>
+        <div class="card-sub">Real-time status</div>
+      </div>
+      <div class="avail-legend">
+        <span class="avail-dot online"></span><span>Online ({{ onlineDoctors.length || 2 }})</span>
+        <span class="avail-dot busy"></span><span>In Session ({{ busyDoctors.length || 2 }})</span>
+        <span class="avail-dot offline"></span><span>Offline ({{ offlineDoctors.length || 2 }})</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="avail-grid" *ngIf="doctors.length > 0; else noDocsTpl">
+        <div *ngFor="let doc of doctors; trackBy: trackById"
+             [class]="'avail-card ' + getDoctorStatusClass(doc.status)">
+          <div class="avail-avatar">{{ (doc.name || 'Dr').charAt(3) || 'D' }}</div>
+          <div class="avail-info">
+            <div class="avail-name">{{ doc.name }}</div>
+            <div class="avail-spec">{{ doc.specialization }}</div>
+            <div class="avail-hosp">{{ doc.hospital }}</div>
+          </div>
+          <div class="avail-status-wrap">
+            <span class="avail-status-dot" [class]="getDoctorStatusClass(doc.status)"></span>
+            <span class="avail-status-label" [class]="getDoctorStatusClass(doc.status)">{{ getDoctorStatusLabel(doc.status) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noDocsTpl>
+        <!-- Fallback demo cards when backend returns empty -->
+        <div class="avail-grid">
+          <div class="avail-card online">
+            <div class="avail-avatar">A</div>
+            <div class="avail-info">
+              <div class="avail-name">Dr. Ananya Sharma</div>
+              <div class="avail-spec">Cardiology</div>
+              <div class="avail-hosp">Mumbai Branch</div>
+            </div>
+            <div class="avail-status-wrap">
+              <span class="avail-status-dot online"></span>
+              <span class="avail-status-label online">Online</span>
+            </div>
+          </div>
+          <div class="avail-card busy">
+            <div class="avail-avatar">S</div>
+            <div class="avail-info">
+              <div class="avail-name">Dr. Suresh Patel</div>
+              <div class="avail-spec">General Medicine</div>
+              <div class="avail-hosp">Delhi Branch</div>
+            </div>
+            <div class="avail-status-wrap">
+              <span class="avail-status-dot busy"></span>
+              <span class="avail-status-label busy">In Session</span>
+            </div>
+          </div>
+          <div class="avail-card offline">
+            <div class="avail-avatar">K</div>
+            <div class="avail-info">
+              <div class="avail-name">Dr. Kavya Reddy</div>
+              <div class="avail-spec">Neurology</div>
+              <div class="avail-hosp">Chennai Branch</div>
+            </div>
+            <div class="avail-status-wrap">
+              <span class="avail-status-dot offline"></span>
+              <span class="avail-status-label offline">Offline</span>
+            </div>
+          </div>
+          <div class="avail-card online">
+            <div class="avail-avatar">A</div>
+            <div class="avail-info">
+              <div class="avail-name">Dr. Arjun Nair</div>
+              <div class="avail-spec">Orthopedics</div>
+              <div class="avail-hosp">Hyderabad Branch</div>
+            </div>
+            <div class="avail-status-wrap">
+              <span class="avail-status-dot online"></span>
+              <span class="avail-status-label online">Online</span>
+            </div>
+          </div>
+          <div class="avail-card busy">
+            <div class="avail-avatar">D</div>
+            <div class="avail-info">
+              <div class="avail-name">Dr. Deepika Singh</div>
+              <div class="avail-spec">Cardiology</div>
+              <div class="avail-hosp">Bangalore Branch</div>
+            </div>
+            <div class="avail-status-wrap">
+              <span class="avail-status-dot busy"></span>
+              <span class="avail-status-label busy">In Session</span>
+            </div>
+          </div>
+          <div class="avail-card offline">
+            <div class="avail-avatar">R</div>
+            <div class="avail-info">
+              <div class="avail-name">Dr. Raj Mehta</div>
+              <div class="avail-spec">Pediatrics</div>
+              <div class="avail-hosp">Kolkata Branch</div>
+            </div>
+            <div class="avail-status-wrap">
+              <span class="avail-status-dot offline"></span>
+              <span class="avail-status-label offline">Offline</span>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- ── G2: Today's Video Appointments + Session Records ── -->
+  <div class="g2">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Today's Video Appointments</div>
+          <div class="card-sub">{{ appointments.length }} scheduled</div>
+        </div>
+        <div class="search-wrap">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" class="search-icon">
+            <circle cx="7" cy="7" r="4.5" stroke="#475569" stroke-width="1.5"/>
+            <path d="M10.5 10.5l3 3" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input [(ngModel)]="searchTerm" placeholder="Search..." class="search-input">
+        </div>
+      </div>
+      <div class="card-body p0">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Doctor</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngIf="filteredAppointments.length > 0; else noApptTpl">
+              <tr *ngFor="let appt of filteredAppointments | slice:0:8; trackBy: trackById">
+                <td>{{ appt.patientName || appt.patient?.user?.name || 'Patient' }}</td>
+                <td>{{ appt.doctorName  || appt.doctor?.user?.name  || 'Doctor'  }}</td>
+                <td class="mono">{{ appt.appointmentTime || appt.timeSlot || '—' }}</td>
+                <td><span [class]="'badge ' + getApptBadge(appt.status)">{{ appt.status }}</span></td>
+                <td><button class="btn btn-ghost btn-xs">Join</button></td>
+              </tr>
+            </ng-container>
+            <ng-template #noApptTpl>
+              <tr><td colspan="5" class="empty-row">No video appointments scheduled</td></tr>
+            </ng-template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Session Records</div>
+          <div class="card-sub">Recent completed sessions</div>
+        </div>
+      </div>
+      <div class="card-body p0">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Doctor</th>
+              <th>Patient</th>
+              <th>Duration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of sessionRecords; trackBy: trackBySessionId">
+              <td class="mono">{{ s.id }}</td>
+              <td>{{ s.doctor }}</td>
+              <td>{{ s.patient }}</td>
+              <td class="mono">{{ s.duration }}</td>
+              <td><span [class]="'badge ' + getSessionBadge(s.status)">{{ s.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══ SKELETON ══ -->
+<ng-template #skelTpl>
+  <div class="content">
+    <div class="stats-grid mb20">
+      <div class="skel skel-stat" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+    <div class="skel mb20" style="height:280px"></div>
+    <div class="g2">
+      <div class="skel" style="height:300px"></div>
+      <div class="skel" style="height:300px"></div>
+    </div>
+  </div>
+</ng-template>

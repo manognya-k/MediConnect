@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { BaseChartDirective } from 'ng2-charts';
+import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables, ChartData, ChartOptions } from 'chart.js';
 import { LayoutService } from '../../services/layout.service';
 import { AnalyticsService } from '../../services/analytics.service';
@@ -20,7 +20,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, NgChartsModule],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.scss'
 })

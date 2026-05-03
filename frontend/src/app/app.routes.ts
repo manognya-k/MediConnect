@@ -199,7 +199,56 @@ export const routes: Routes = [
           import('./admin/pages/admin-overview/admin-overview.component').then(
             (m) => m.AdminOverviewComponent
           )
-      }
+      },
+      {
+        path: 'hospitals',
+        loadComponent: () =>
+          import('./admin/pages/admin-hospitals/admin-hospitals.component').then(
+            (m) => m.AdminHospitalsComponent
+          )
+      },
+      {
+        path: 'patients',
+        loadComponent: () =>
+          import('./admin/pages/admin-patients/admin-patients.component').then(
+            (m) => m.AdminPatientsComponent
+          )
+      },
+      {
+        path: 'appointments',
+        loadComponent: () =>
+          import('./admin/pages/admin-appointments/admin-appointments.component').then(
+            (m) => m.AdminAppointmentsComponent
+          )
+      },
+      {
+        path: 'diagnostics',
+        loadComponent: () =>
+          import('./admin/pages/admin-diagnostics/admin-diagnostics.component').then(
+            (m) => m.AdminDiagnosticsComponent
+          )
+      },
+      {
+        path: 'supply',
+        loadComponent: () =>
+          import('./admin/pages/admin-supply/admin-supply.component').then(
+            (m) => m.AdminSupplyComponent
+          )
+      },
+      {
+        path: 'revenue',
+        loadComponent: () =>
+          import('./admin/pages/admin-revenue/admin-revenue.component').then(
+            (m) => m.AdminRevenueComponent
+          )
+      },
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./admin/pages/admin-analytics/admin-analytics.component').then(
+            (m) => m.AdminAnalyticsComponent
+          )
+      },
     ]
   },
 

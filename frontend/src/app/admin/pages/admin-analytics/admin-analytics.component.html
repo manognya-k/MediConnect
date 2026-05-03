@@ -1,0 +1,199 @@
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div>
+    <div class="tb-title">Analytics &amp; Insights</div>
+    <div class="tb-sub">Clinical performance · All hospitals · Live data</div>
+  </div>
+  <div class="tb-right">
+    <select class="filter-select" [(ngModel)]="selectedHospital">
+      <option *ngFor="let h of hospitals" [value]="h">{{ h }}</option>
+    </select>
+    <select class="filter-select" [(ngModel)]="selectedDept">
+      <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+    </select>
+    <select class="filter-select" [(ngModel)]="selectedRange">
+      <option *ngFor="let r of ranges" [value]="r.val">{{ r.label }}</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ CONTENT ══ -->
+<div class="content" *ngIf="!loading; else skelTpl">
+
+  <!-- ── STAT CARDS ── -->
+  <div class="stats-grid mb20">
+
+    <div class="stat teal">
+      <div class="stat-icon" style="background:var(--teal-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="5" r="3" stroke="#0AAFB8" stroke-width="1.5"/>
+          <path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke="#0AAFB8" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="stat-label">Patient Flow</div>
+      <div class="stat-val">{{ patientFlow | number }}</div>
+      <div class="stat-sub teal-chip">↑ Total Patients</div>
+    </div>
+
+    <div class="stat red">
+      <div class="stat-icon" style="background:var(--red-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#EF4444" stroke-width="1.5"/>
+          <path d="M6 8h4M8 6v4" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">Bed Occupancy</div>
+      <div class="stat-val">{{ occupancyPct }}</div>
+      <div class="stat-sub red-chip">⚠ Monitor</div>
+    </div>
+
+    <div class="stat green">
+      <div class="stat-icon" style="background:var(--green-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8.5l3.5 3.5L13 4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">Treatment Success</div>
+      <div class="stat-val">94.2%</div>
+      <div class="stat-sub green-chip">↑ +1.3%</div>
+    </div>
+
+    <div class="stat amber">
+      <div class="stat-icon" style="background:var(--amber-lt)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M5 5h4.5a2 2 0 010 4H5m0 0h5a2 2 0 010 4H5" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">Mortality Rate</div>
+      <div class="stat-val">1.8%</div>
+      <div class="stat-sub amber-chip">↓ Improving</div>
+    </div>
+
+  </div>
+
+  <!-- ── PATIENT FLOW HEATMAP ── -->
+  <div class="card mb20">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Patient Flow Heatmap</div>
+        <div class="card-sub">Admission density by day &amp; hour</div>
+      </div>
+      <div class="heatmap-legend">
+        <span class="hl-label">Low</span>
+        <span class="hl-swatch" style="background:rgba(10,175,184,0.1)"></span>
+        <span class="hl-swatch" style="background:rgba(10,175,184,0.3)"></span>
+        <span class="hl-swatch" style="background:rgba(10,175,184,0.5)"></span>
+        <span class="hl-swatch" style="background:rgba(10,175,184,0.75)"></span>
+        <span class="hl-swatch" style="background:rgba(10,175,184,1)"></span>
+        <span class="hl-label">High</span>
+      </div>
+    </div>
+
+    <div class="heatmap-wrap">
+      <div class="heatmap-hours">
+        <div class="hh-spacer"></div>
+        <div class="hh-label" *ngFor="let h of heatmapHours">{{ h }}</div>
+      </div>
+      <div class="heatmap-row" *ngFor="let row of heatmapData; let di=index">
+        <div class="hm-day">{{ heatmapDays[di] }}</div>
+        <div class="heat-cell"
+             *ngFor="let val of row; let hi=index"
+             [style.background]="getHeatIntensity(val)"
+             [style.color]="getHeatTextColor(val)">{{ val }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHARTS ROW 1: Bed Occupancy + Treatment Success ── -->
+  <div class="g2 mb20">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Bed Occupancy Trend</div>
+          <div class="card-sub">Monthly · April 2026</div>
+        </div>
+      </div>
+      <div class="chart-pad">
+        <canvas baseChart
+                [data]="bedOccupancyData"
+                [options]="lineOptions"
+                type="line">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Treatment Success Rate</div>
+          <div class="card-sub">By department · Last 30 days</div>
+        </div>
+      </div>
+      <div class="chart-pad">
+        <canvas baseChart
+                [data]="treatmentSuccessData"
+                [options]="barOptions"
+                type="bar">
+        </canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── CHARTS ROW 2: Mortality Rate + Avg Length of Stay ── -->
+  <div class="g2">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Mortality Rate</div>
+          <div class="card-sub">Monthly trend · Nov 2025 – Apr 2026</div>
+        </div>
+      </div>
+      <div class="chart-pad">
+        <canvas baseChart
+                [data]="mortalityRateData"
+                [options]="lineOptions"
+                type="line">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Avg Length of Stay</div>
+          <div class="card-sub">By department · Days</div>
+        </div>
+      </div>
+      <div class="chart-pad">
+        <canvas baseChart
+                [data]="avgLosData"
+                [options]="barOptions"
+                type="bar">
+        </canvas>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══ SKELETON ══ -->
+<ng-template #skelTpl>
+  <div class="content">
+    <div class="stats-grid mb20">
+      <div class="skel skel-stat" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+    <div class="skel mb20" style="height:220px"></div>
+    <div class="g2 mb20">
+      <div class="skel" style="height:230px"></div>
+      <div class="skel" style="height:230px"></div>
+    </div>
+    <div class="g2">
+      <div class="skel" style="height:230px"></div>
+      <div class="skel" style="height:230px"></div>
+    </div>
+  </div>
+</ng-template>

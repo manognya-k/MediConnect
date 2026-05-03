@@ -1,5 +1,5 @@
 # Claude Code internal working directories
-.claude/worktrees/
+.claude/
 
 # IDE
 .idea/
