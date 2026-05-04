@@ -6,9 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Standalone Seed Application — runs separately from the main MediConnect app.
  *
- * HOW TO RUN (from IntelliJ):
- *   Right-click this file → Run 'DataSeederApplication.main()'
- *
  * What happens:
  *   1. Spring Boot starts (NO web server)
  *   2. DataSeederRunner executes: clears all tables, inserts dummy data
