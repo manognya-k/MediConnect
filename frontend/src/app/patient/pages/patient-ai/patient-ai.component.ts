@@ -1,10 +1,10 @@
 import {
   Component, OnInit, OnDestroy,
-  ViewChild, ElementRef, AfterViewChecked
+  ViewChild, ElementRef, AfterViewChecked, SecurityContext
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -22,20 +22,46 @@ const MODE_OPTIONS: ModeOption[] = [
   { id: 'booking',  label: 'Book Appointment',   subLabel: 'AI-assisted booking'       },
 ];
 
-const DEFAULT_CHIPS = [
-  'What are statins?',
-  'How to lower LDL with diet?',
-  'I have chest pain',
-  'Book cardiology appointment',
-  'Is my HbA1c due?'
-];
+const CHIPS_BY_MODE: Record<string, string[]> = {
+  general: [
+    'Explain my lipid panel results',
+    'What does elevated LDL mean?',
+    'How to lower blood pressure naturally',
+    'Side effects of Amlodipine',
+    'When should I see a doctor urgently?',
+  ],
+  symptom: [
+    'I have chest tightness',
+    'I feel dizzy when I stand up',
+    'I have a persistent headache',
+    'My legs are swelling',
+    'I have shortness of breath',
+  ],
+  report: [
+    'Explain my Lipid Panel results',
+    'What does LDL 185 mg/dL mean?',
+    'Is my HbA1c result normal?',
+    'What do my ECG results mean?',
+    'Explain my triglycerides reading',
+  ],
+  booking: [
+    'I need a cardiology appointment',
+    'Who should I see for diabetes?',
+    'How urgent is my condition?',
+    'What specialist do I need?',
+    'When is my next follow-up due?',
+  ],
+};
 
 const QUICK_QUESTIONS = [
-  'What does my blood pressure mean?',
+  'What does my blood pressure reading mean?',
   'How can I manage my diabetes better?',
   'What foods should I avoid with high cholesterol?',
   'When should I see a doctor urgently?',
-  'Explain my Amlodipine prescription'
+  'Explain my Amlodipine prescription',
+  'How to reduce LDL cholesterol with diet?',
+  'What are the symptoms of high blood pressure?',
+  'Is it safe to exercise with hypertension?',
 ];
 
 @Component({
@@ -61,8 +87,11 @@ export class PatientAiComponent implements OnInit, OnDestroy, AfterViewChecked {
   // UI state
   activeMode:    AiMode   = 'general';
   modeOptions             = MODE_OPTIONS;
-  chips                   = DEFAULT_CHIPS;
   quickQuestions          = QUICK_QUESTIONS;
+
+  get currentChips(): string[] {
+    return CHIPS_BY_MODE[this.activeMode] ?? CHIPS_BY_MODE['general'];
+  }
   chipsVisible            = true;
   isLoading               = false;
   isTyping                = false;
@@ -75,6 +104,7 @@ export class PatientAiComponent implements OnInit, OnDestroy, AfterViewChecked {
   constructor(
     private aiSvc:     PatientAiService,
     private route:     ActivatedRoute,
+    public  router:    Router,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -136,7 +166,7 @@ export class PatientAiComponent implements OnInit, OnDestroy, AfterViewChecked {
       timestamp: new Date()
     };
     this.messages.push(welcomeMsg);
-    this.safeWelcomeHtml = this.sanitizer.bypassSecurityTrustHtml(html);
+    this.safeWelcomeHtml = this.sanitizer.sanitize(SecurityContext.HTML,html);
     this.shouldScroll = true;
   }
 
@@ -256,7 +286,7 @@ export class PatientAiComponent implements OnInit, OnDestroy, AfterViewChecked {
   // ── Sanitize AI message HTML ──────────────────────────────────────────────
 
   safeHtml(content: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(content);
+    return this.sanitizer.sanitize(SecurityContext.HTML,content);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

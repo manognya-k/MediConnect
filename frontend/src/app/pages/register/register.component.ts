@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './register.component.html',
-  styleUrl: './register.component.css'
+  styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
   activeTab: 'PATIENT' | 'DOCTOR' | 'ADMIN' = 'PATIENT';
@@ -102,7 +102,13 @@ export class RegisterComponent {
       next: (response) => {
         this.authService.saveUser(response);
         this.loading = false;
-        this.router.navigate(['/login']);
+        if (response.role === 'PATIENT') {
+          this.router.navigate(['/patient/dashboard']);
+        } else if (response.role === 'DOCTOR') {
+          this.router.navigate(['/doctor/dashboard']);
+        } else {
+          this.router.navigate(['/admin/overview']);
+        }
       },
       error: (err) => {
         this.errorMessage = err.error || 'Registration failed. Please try again.';

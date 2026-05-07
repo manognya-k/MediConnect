@@ -4,13 +4,13 @@
     <div class="tb-sub">Inventory &amp; procurement tracking</div>
   </div>
   <div class="tb-right">
-    <button class="btn btn-ghost">
+    <button class="btn btn-ghost" (click)="openNewOrder()">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
       New Order
     </button>
-    <button class="btn btn-teal">Export</button>
+    <button class="btn btn-teal" (click)="exportInventory()">Export CSV</button>
   </div>
 </div>
 
@@ -204,3 +204,67 @@
     <div class="skel" style="height:300px;border-radius:var(--radius)"></div>
   </div>
 </ng-template>
+
+<!-- ── New Order Modal ────────────────────────────────────────────────────────── -->
+<div *ngIf="showNewOrder"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeNewOrder()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">New Purchase Order</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">Request inventory replenishment</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeNewOrder()">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Item Name *</label>
+        <input class="input" [(ngModel)]="newOrder.itemName" placeholder="e.g. Paracetamol 500mg" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Category</label>
+          <select class="input" [(ngModel)]="newOrder.category" style="width:100%">
+            <option value="">Select category</option>
+            <option>Cardiac</option>
+            <option>Diabetes</option>
+            <option>Analgesic</option>
+            <option>Antibiotics</option>
+            <option>Others</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Quantity *</label>
+          <input class="input" type="number" [(ngModel)]="newOrder.quantity" min="1" style="width:100%">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Reorder Level</label>
+          <input class="input" type="number" [(ngModel)]="newOrder.reorderLevel" min="0" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Hospital</label>
+          <select class="input" [(ngModel)]="newOrder.hospitalId" style="width:100%">
+            <option [ngValue]="null">— Select hospital —</option>
+            <option *ngFor="let h of allHospitals" [ngValue]="h.hospitalId">{{ h.hospitalName }}</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Notes</label>
+        <textarea class="input" [(ngModel)]="newOrder.notes" rows="2" style="width:100%;resize:vertical" placeholder="Additional instructions…"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      <button class="btn btn-ghost" (click)="closeNewOrder()">Cancel</button>
+      <button class="btn btn-teal" (click)="submitNewOrder()" [disabled]="newOrderSubmitting">
+        {{ newOrderSubmitting ? 'Placing Order…' : 'Place Order' }}
+      </button>
+    </div>
+  </div>
+</div>

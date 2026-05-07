@@ -1,7 +1,9 @@
 package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.Patient;
+import com.cts.mfrp.repository.PatientRepository;
 import com.cts.mfrp.service.PatientService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientController {
     private final PatientService patientService;
+    private final PatientRepository patientRepository;
 
     @GetMapping
     public ResponseEntity<List<Patient>> getAllPatients() {
@@ -23,13 +26,20 @@ public class PatientController {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<Patient> getPatientByUserId(@PathVariable Integer userId) {
+        return patientRepository.findByUserUserId(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
-    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient) {
+    public ResponseEntity<Patient> createPatient(@Valid @RequestBody Patient patient) {
         return ResponseEntity.ok(patientService.savePatient(patient));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable Integer id, @RequestBody Patient patient) {
+    public ResponseEntity<Patient> updatePatient(@PathVariable Integer id, @Valid @RequestBody Patient patient) {
         patient.setPatientId(id);
         return ResponseEntity.ok(patientService.savePatient(patient));
     }
@@ -37,6 +47,6 @@ public class PatientController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePatient(@PathVariable Integer id) {
         patientService.deletePatient(id);
-        return ResponseEntity.noContent().build(); // FIXED: was ok()
+        return ResponseEntity.noContent().build();
     }
 }

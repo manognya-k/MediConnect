@@ -50,6 +50,10 @@
       </a>
 
       <div class="nav-sec">Operations</div>
+      <a class="ni" routerLink="/admin/telemedicine" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 6l4-2v6l-4-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Telemedicine
+      </a>
       <a class="ni" routerLink="/admin/supply" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l4 6H4l4-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Supply Chain
@@ -74,6 +78,40 @@
       <span class="sf-label">Logout</span>
     </div>
   </aside>
+
+  <!-- ══ NOTIFICATION PANEL ══ -->
+  <div *ngIf="notifSvc.panelOpen$ | async"
+    style="position:fixed;inset:0;z-index:350;background:rgba(0,0,0,0.2)"
+    (click)="notifSvc.closePanel()">
+  </div>
+  <div class="notif-panel" [class.open]="notifSvc.panelOpen$ | async">
+    <div class="notif-panel-header">
+      <div>
+        <div class="notif-panel-title">Notifications</div>
+        <div class="notif-panel-sub">{{ (notifSvc.unreadCount$ | async) ?? 0 }} unread</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="notif-mark-all" (click)="notifSvc.markAllRead()">Mark all read</button>
+        <button class="notif-close" (click)="notifSvc.closePanel()">✕</button>
+      </div>
+    </div>
+    <div class="notif-panel-body">
+      <ng-container *ngIf="(notifSvc.notifications$ | async) as notifs">
+        <div *ngIf="notifs.length === 0" class="notif-empty">
+          <div class="notif-empty-icon">🔔</div>
+          <div>No new notifications</div>
+        </div>
+        <div *ngFor="let n of notifs" class="notif-item" (click)="notifSvc.markAsRead(n); $event.stopPropagation()">
+          <div class="notif-dot"></div>
+          <div class="notif-content">
+            <div class="notif-type">{{ n.notificationType || 'System' }}</div>
+            <div class="notif-msg">{{ n.message }}</div>
+            <div class="notif-time">{{ n.createdAt | date:'MMM d, h:mm a' }}</div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
 
   <!-- ══ MAIN ══ -->
   <div class="main">

@@ -98,7 +98,7 @@
 
     <!-- Suggestion chips -->
     <div class="chips-row" *ngIf="chipsVisible">
-      <button *ngFor="let chip of chips"
+      <button *ngFor="let chip of currentChips"
               class="chip"
               [disabled]="isLoading"
               (click)="onChipClick(chip)">
@@ -158,7 +158,7 @@
         <div class="tc-sub">Plain-language explanation of your results</div>
       </div>
 
-      <div class="tool-card" (click)="activateTool('booking', 'I need help booking an appointment')">
+      <div class="tool-card" (click)="router.navigate(['/patient/appointments'])">
         <div class="tc-icon tc-icon-blue">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#1A5FA8" stroke-width="1.5"/>
@@ -166,7 +166,7 @@
           </svg>
         </div>
         <div class="tc-title">Book Appointment</div>
-        <div class="tc-sub">AI helps you choose doctor &amp; time</div>
+        <div class="tc-sub">Go to appointments page</div>
       </div>
     </div>
 

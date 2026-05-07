@@ -2,6 +2,7 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.Appointment;
 import com.cts.mfrp.service.AppointmentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,12 +35,12 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public ResponseEntity<Appointment> createAppointment(@RequestBody Appointment appointment) {
+    public ResponseEntity<Appointment> createAppointment(@Valid @RequestBody Appointment appointment) {
         return ResponseEntity.ok(appointmentService.saveAppointment(appointment));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Appointment> updateAppointment(@PathVariable Integer id, @RequestBody Appointment appointment) {
+    public ResponseEntity<Appointment> updateAppointment(@PathVariable Integer id, @Valid @RequestBody Appointment appointment) {
         appointment.setAppointmentId(id);
         return ResponseEntity.ok(appointmentService.saveAppointment(appointment));
     }

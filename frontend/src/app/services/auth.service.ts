@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface LoginRequest {
   email: string;
@@ -25,11 +26,12 @@ export interface AuthResponse {
   name: string;
   email: string;
   role: string;
+  token?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/api/auth';
+  private apiUrl = `${environment.apiBase}/auth`;
 
   constructor(private http: HttpClient) {}
 
@@ -48,6 +50,10 @@ export class AuthService {
   getUser(): AuthResponse | null {
     const user = localStorage.getItem('currentUser');
     return user ? JSON.parse(user) : null;
+  }
+
+  getToken(): string | null {
+    return this.getUser()?.token ?? null;
   }
 
   logout(): void {

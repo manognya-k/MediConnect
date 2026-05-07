@@ -3,36 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  Filler
-} from 'chart.js';
+import { ensureChartRegistered } from '../../../shared/chart-setup';
 
 import { Subject, timer } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 import { AdminRevenueService } from '../../services/admin-revenue.service';
+import { ToastService } from '../../../services/toast.service';
 
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  Filler
-);
+ensureChartRegistered();
 
 @Component({
   selector: 'app-admin-revenue',
@@ -146,7 +124,7 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
     }
   ];
 
-  constructor(private service: AdminRevenueService) {}
+  constructor(private service: AdminRevenueService, private toast: ToastService) {}
 
   ngOnInit(): void {
     timer(0, 30000).pipe(
@@ -184,5 +162,42 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  downloadReport() {
+    const reportLines = [
+      'MediConnect Revenue Report',
+      `Generated: ${new Date().toLocaleString()}`,
+      '',
+      'BILLING SUMMARY',
+      '---',
+      ...this.bills.map(b => `${b.id} | ${b.patient} | ${b.department} | ${b.amount} | ${b.date} | ${b.status.toUpperCase()}`),
+      '',
+      'INSURANCE CLAIMS',
+      '---',
+      ...this.claims.map(c => `${c.id} | ${c.patient} | ${c.insurer} | ${c.amount} | ${c.status.toUpperCase()}`),
+    ];
+    const blob = new Blob([reportLines.join('\n')], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `revenue-report-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.toast.show('Revenue report downloaded.', 'success');
+  }
+
+  exportRevenue() {
+    const csv = ['Bill ID,Patient,Department,Amount,Date,Status']
+      .concat(this.bills.map(b => `"${b.id}","${b.patient}","${b.department}","${b.amount}","${b.date}","${b.status}"`))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `billing-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.toast.show('Billing data exported as CSV.', 'success');
   }
 }

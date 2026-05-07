@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AdminAuthService } from '../../services/admin-auth.service';
+import { AdminNotificationService } from '../../services/admin-notification.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -16,8 +17,9 @@ export class AdminLayoutComponent implements OnInit {
   adminInitials = '';
 
   constructor(
-    private adminAuth: AdminAuthService,
-    private router:    Router
+    private adminAuth:    AdminAuthService,
+    private router:       Router,
+    public  notifSvc:     AdminNotificationService
   ) {}
 
   ngOnInit() {
@@ -34,7 +36,6 @@ export class AdminLayoutComponent implements OnInit {
 
   logout(): void {
     this.adminAuth.logout();
-    this.router.navigate(['/admin/login']);
   }
 
   get today(): string {

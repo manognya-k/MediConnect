@@ -6,8 +6,7 @@ export const authGuard = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn()) {
-    return true;
-  }
+  const user = authService.getUser();
+  if (user && user.role === 'DOCTOR') return true;
   return router.parseUrl('/login');
 };

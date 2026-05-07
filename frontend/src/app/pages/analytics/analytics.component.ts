@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
-import { Chart, registerables, ChartData, ChartOptions } from 'chart.js';
+import { ChartData, ChartOptions } from 'chart.js';
+import { ensureChartRegistered } from '../../shared/chart-setup';
 import { LayoutService } from '../../services/layout.service';
 import { AnalyticsService } from '../../services/analytics.service';
 import { ToastService } from '../../services/toast.service';
@@ -15,7 +16,7 @@ import {
   TopDiagnosis, NewPatientsPoint, AppointmentsOverTimePoint
 } from '../../models/analytics.model';
 
-Chart.register(...registerables);
+ensureChartRegistered();
 
 @Component({
   selector: 'app-analytics',

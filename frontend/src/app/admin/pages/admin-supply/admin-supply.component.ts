@@ -3,34 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  Filler
-} from 'chart.js';
+import { ensureChartRegistered } from '../../../shared/chart-setup';
 
 import { Subject, timer } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 import { AdminSupplyService } from '../../services/admin-supply.service';
+import { ToastService } from '../../../services/toast.service';
 
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  Filler
-);
+ensureChartRegistered();
 
 @Component({
   selector: 'app-admin-supply',
@@ -47,6 +27,12 @@ export class AdminSupplyComponent implements OnInit, OnDestroy {
   activeTab = 'all';
   selectedItem: any = null;
   private destroy$ = new Subject<void>();
+
+  // New Order modal
+  showNewOrder = false;
+  newOrder = { itemName: '', category: '', quantity: 1, reorderLevel: 10, hospitalId: null as number | null, notes: '' };
+  newOrderSubmitting = false;
+  allHospitals: any[] = [];
 
   lineData: ChartData<'line'> = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as string[],
@@ -157,7 +143,7 @@ export class AdminSupplyComponent implements OnInit, OnDestroy {
     }
   ];
 
-  constructor(private service: AdminSupplyService) {}
+  constructor(private service: AdminSupplyService, private toast: ToastService) {}
 
   ngOnInit(): void {
     timer(0, 30000).pipe(
@@ -232,5 +218,73 @@ export class AdminSupplyComponent implements OnInit, OnDestroy {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  // ── New Order ─────────────────────────────────────────────────────────────────
+
+  openNewOrder() {
+    this.newOrder = { itemName: '', category: '', quantity: 1, reorderLevel: 10, hospitalId: null, notes: '' };
+    this.showNewOrder = true;
+    if (!this.allHospitals.length) {
+      this.service.getHospitals().pipe(takeUntil(this.destroy$)).subscribe(h => this.allHospitals = h);
+    }
+  }
+
+  closeNewOrder() { this.showNewOrder = false; }
+
+  submitNewOrder() {
+    if (!this.newOrder.itemName?.trim()) {
+      this.toast.show('Item name is required.', 'error');
+      return;
+    }
+    if (!this.newOrder.quantity || this.newOrder.quantity < 1) {
+      this.toast.show('Quantity must be at least 1.', 'error');
+      return;
+    }
+    this.newOrderSubmitting = true;
+    const body: any = {
+      itemName:     this.newOrder.itemName.trim(),
+      category:     this.newOrder.category || 'Others',
+      quantity:     this.newOrder.quantity,
+      reorderLevel: this.newOrder.reorderLevel || 10,
+    };
+    if (this.newOrder.hospitalId) {
+      body.hospital = { hospitalId: +this.newOrder.hospitalId };
+    }
+    const itemLabel = `${this.newOrder.quantity}× ${this.newOrder.itemName}`;
+    this.service.createInventory(body).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.newOrderSubmitting = false;
+        this.closeNewOrder();
+        this.toast.show(`Order placed for ${itemLabel}.`, 'success');
+        this.service.getSupplyData().pipe(takeUntil(this.destroy$)).subscribe(({ inventory, alerts }) => {
+          this.inventory = inventory;
+          this.alerts = alerts;
+        });
+      },
+      error: () => {
+        this.newOrderSubmitting = false;
+        this.toast.show('Failed to place order. Please try again.', 'error');
+      }
+    });
+  }
+
+  // ── Export ────────────────────────────────────────────────────────────────────
+
+  exportInventory() {
+    const csv = ['Item,Category,Quantity,Reorder Level,Hospital,Status']
+      .concat(this.inventory.map(item =>
+        `"${item.itemName || item.name || ''}","${item.category || ''}","${item.quantity}","${item.reorderLevel || ''}","${item.hospitalName || item.hospital?.hospitalName || ''}","${this.getStockLabel(item)}"`
+      )).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `inventory-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.toast.show('Inventory exported as CSV.', 'success');
   }
 }

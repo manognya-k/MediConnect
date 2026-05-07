@@ -1,7 +1,25 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { PatientRecordSummary, PatientRecordDetail } from '../models/patient-record.model';
+import { PatientAuthService } from './patient-auth.service';
+import { environment } from '../../../environments/environment';
+
+const BASE = environment.apiBase;
+
+function mapBackendRecord(r: any, index: number): PatientRecordSummary {
+  return {
+    id: String(r.recordId ?? index),
+    title: r.diagnosis ?? r.title ?? 'Medical Record',
+    type: r.recordType ?? 'Consultation',
+    date: r.recordDate ? new Date(r.recordDate) : new Date(),
+    doctorName: r.doctor?.user?.name ? `Dr. ${r.doctor.user.name}` : 'Doctor',
+    specialty: r.doctor?.specialization ?? '',
+    snippet: r.notes?.substring(0, 60) ?? '',
+    hasAlert: false,
+  };
+}
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -330,26 +348,42 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
 
 @Injectable({ providedIn: 'root' })
 export class PatientRecordsService {
+  private cachedRecords: PatientRecordSummary[] | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: PatientAuthService) {}
 
-  /** Returns filtered list of record summaries.
-   *  TODO: wire to GET /api/patient/medical-records?search=... */
   getRecordList(search = ''): Observable<PatientRecordSummary[]> {
-    const q = search.trim().toLowerCase();
-    const results = q
-      ? MOCK_SUMMARIES.filter(r =>
-          r.title.toLowerCase().includes(q) ||
-          r.doctorName.toLowerCase().includes(q) ||
-          r.specialty.toLowerCase().includes(q) ||
-          r.snippet.toLowerCase().includes(q)
-        )
-      : MOCK_SUMMARIES;
-    return of(results);
+    const stored = this.auth.getStoredUser();
+    const userId = stored?.userId ?? 0;
+    const source$ = this.cachedRecords
+      ? of(this.cachedRecords)
+      : this.http.get<any>(`${BASE}/patients/by-user/${userId}`).pipe(
+          catchError(() => of(null)),
+          switchMap(patient => {
+            if (!patient?.patientId) return of(MOCK_SUMMARIES);
+            return this.http.get<any[]>(`${BASE}/medical-records/patient/${patient.patientId}`).pipe(
+              map(records => records.length > 0 ? records.map(mapBackendRecord) : MOCK_SUMMARIES),
+              catchError(() => of(MOCK_SUMMARIES))
+            );
+          })
+        );
+
+    return source$.pipe(
+      map(records => {
+        this.cachedRecords = records;
+        const q = search.trim().toLowerCase();
+        return q
+          ? records.filter(r =>
+              r.title.toLowerCase().includes(q) ||
+              r.doctorName.toLowerCase().includes(q) ||
+              r.specialty.toLowerCase().includes(q) ||
+              r.snippet.toLowerCase().includes(q)
+            )
+          : records;
+      })
+    );
   }
 
-  /** Returns full detail for a single record.
-   *  TODO: wire to GET /api/patient/medical-records/:id */
   getRecordDetail(id: string): Observable<PatientRecordDetail | null> {
     return of(MOCK_DETAILS[id] ?? null);
   }

@@ -10,7 +10,7 @@ import { AdminAuthService } from '../../admin/services/admin-auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  styleUrl: './login.component.scss'
 })
 export class LoginComponent {
   activeTab: 'PATIENT' | 'DOCTOR' | 'ADMIN' = 'PATIENT';

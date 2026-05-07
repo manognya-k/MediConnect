@@ -2,6 +2,7 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.Bed;
 import com.cts.mfrp.service.BedService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,12 +35,12 @@ public class BedController {
     }
 
     @PostMapping
-    public ResponseEntity<Bed> createBed(@RequestBody Bed bed) {
+    public ResponseEntity<Bed> createBed(@Valid @RequestBody Bed bed) {
         return ResponseEntity.ok(bedService.saveBed(bed));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Bed> updateBed(@PathVariable Integer id, @RequestBody Bed bed) {
+    public ResponseEntity<Bed> updateBed(@PathVariable Integer id, @Valid @RequestBody Bed bed) {
         bed.setBedId(id);
         return ResponseEntity.ok(bedService.saveBed(bed));
     }

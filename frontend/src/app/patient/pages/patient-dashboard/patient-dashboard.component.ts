@@ -4,7 +4,8 @@ import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeValue } from '@angular/platform-browser';
+import { SecurityContext } from '@angular/core';
 import { PatientDashboardService } from '../../services/patient-dashboard.service';
 import { PatientStateService } from '../../services/patient-state.service';
 import {
@@ -41,7 +42,7 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private svc:    PatientDashboardService,
     private state:  PatientStateService,
-    private router: Router,
+    public  router: Router,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -82,7 +83,7 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
   }
 
   safe(html: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(html);
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
   }
 
   medicineTimeClass(status: string): string {

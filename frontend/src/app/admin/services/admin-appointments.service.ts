@@ -19,4 +19,25 @@ export class AdminAppointmentsService {
   getAllData() {
     return forkJoin({ appointments: this.getAppointments(), stats: this.getStats() });
   }
+
+  approve(id: number, original: any): Observable<any> {
+    const body = { ...original, status: 'CONFIRMED' };
+    return this.http.put(`${this.base}/appointments/${id}`, body);
+  }
+
+  create(body: any): Observable<any> {
+    return this.http.post(`${this.base}/appointments`, body);
+  }
+
+  getDoctors(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/doctors`).pipe(catchError(() => of([])));
+  }
+
+  getHospitals(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/hospitals`).pipe(catchError(() => of([])));
+  }
+
+  getPatients(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/patients`).pipe(catchError(() => of([])));
+  }
 }

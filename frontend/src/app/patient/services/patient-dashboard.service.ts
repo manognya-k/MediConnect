@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import {
   PatientUser, PatientHealthScore, PatientDashboardStats,
   PatientAppointment, PatientVitals, TodayMedicine,
@@ -9,7 +10,7 @@ import {
 } from '../models/patient-dashboard.model';
 import { PatientAuthService } from './patient-auth.service';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -64,16 +65,18 @@ export class PatientDashboardService {
     const stored = this.auth.getStoredUser();
     const userId = stored?.userId ?? 0;
 
-    return forkJoin({
-      patients:      this.http.get<any[]>(`${BASE}/patients`),
-      appointments:  this.http.get<any[]>(`${BASE}/appointments`),
-      labReports:    this.http.get<any[]>(`${BASE}/lab-reports`),
-      notifications: this.http.get<any[]>(`${BASE}/notifications/user/${userId}`).pipe(catchError(() => of([]))),
-    }).pipe(
-      map(({ patients, appointments, labReports, notifications }) => {
-
-        // ── Resolve patient record ──
-        const raw = patients.find((p: any) => p.user?.userId === userId);
+    return this.http.get<any>(`${BASE}/patients/by-user/${userId}`).pipe(
+      catchError(() => of(null)),
+      switchMap(raw => {
+        const patientId = raw?.patientId ?? 0;
+        return forkJoin({
+          patientRaw:    of(raw),
+          appointments:  patientId ? this.http.get<any[]>(`${BASE}/appointments/patient/${patientId}`).pipe(catchError(() => of([]))) : of([]),
+          labReports:    patientId ? this.http.get<any[]>(`${BASE}/lab-reports/patient/${patientId}`).pipe(catchError(() => of([]))) : of([]),
+          notifications: this.http.get<any[]>(`${BASE}/notifications/user/${userId}`).pipe(catchError(() => of([]))),
+        });
+      }),
+      map(({ patientRaw: raw, appointments, labReports, notifications }) => {
         const patientId = raw?.patientId ?? 0;
 
         const patient: PatientUser = {
@@ -86,9 +89,9 @@ export class PatientDashboardService {
           initials:    getInitials(stored?.name ?? 'P'),
         };
 
-        // ── Filter this patient's data ──
-        const myAppts = appointments.filter((a: any) => a.patient?.patientId === patientId);
-        const myLabs  = labReports.filter((l: any) => l.patient?.patientId === patientId);
+        // appointments and labReports are already filtered by patientId via scoped API calls
+        const myAppts = appointments;
+        const myLabs  = labReports;
 
         const today    = new Date(); today.setHours(0,0,0,0);
         const upcoming = myAppts
@@ -97,7 +100,7 @@ export class PatientDashboardService {
 
         const pendingLabs = myLabs.filter((l: any) => !l.results || l.results === '');
 
-        const unread = notifications.filter((n: any) => !n.read);
+        const unread = notifications.filter((n: any) => !n.isRead);
 
         // ── Stats ──
         const nextAppt = upcoming[0];

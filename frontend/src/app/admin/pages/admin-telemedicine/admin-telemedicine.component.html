@@ -5,7 +5,7 @@
     <div class="tb-sub">Virtual consultation management</div>
   </div>
   <div class="tb-right">
-    <button class="btn btn-teal">
+    <button class="btn btn-teal" (click)="openSchedule()">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
         <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
@@ -216,7 +216,7 @@
                 <td>{{ appt.doctorName  || appt.doctor?.user?.name  || 'Doctor'  }}</td>
                 <td class="mono">{{ appt.appointmentTime || appt.timeSlot || '—' }}</td>
                 <td><span [class]="'badge ' + getApptBadge(appt.status)">{{ appt.status }}</span></td>
-                <td><button class="btn btn-ghost btn-xs">Join</button></td>
+                <td><button class="btn btn-teal btn-xs" (click)="joinSession(appt)">Join</button></td>
               </tr>
             </ng-container>
             <ng-template #noApptTpl>
@@ -260,6 +260,61 @@
 
   </div>
 
+</div>
+
+<!-- ── Schedule Session Modal ─────────────────────────────────────────────────── -->
+<div *ngIf="showSchedule"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeSchedule()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">Schedule Video Session</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">Set up a telemedicine consultation</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeSchedule()">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Doctor *</label>
+        <input class="input" [(ngModel)]="scheduleData.doctorName" placeholder="Doctor name" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Patient *</label>
+        <input class="input" [(ngModel)]="scheduleData.patientName" placeholder="Patient name" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Date *</label>
+          <input class="input" type="date" [(ngModel)]="scheduleData.date" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Time *</label>
+          <input class="input" type="time" [(ngModel)]="scheduleData.time" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Session Type</label>
+        <select class="input" [(ngModel)]="scheduleData.type" style="width:100%">
+          <option value="VIDEO">Video Call</option>
+          <option value="AUDIO">Audio Call</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Notes</label>
+        <textarea class="input" [(ngModel)]="scheduleData.notes" rows="2" style="width:100%;resize:vertical" placeholder="Session notes or instructions…"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      <button class="btn btn-ghost" (click)="closeSchedule()">Cancel</button>
+      <button class="btn btn-teal" (click)="submitSchedule()" [disabled]="scheduleSubmitting">
+        {{ scheduleSubmitting ? 'Scheduling…' : 'Schedule Session' }}
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ SKELETON ══ -->

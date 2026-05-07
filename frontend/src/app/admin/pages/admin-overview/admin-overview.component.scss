@@ -1,14 +1,14 @@
 // ── CSS tokens (dark admin theme) ────────────────────────────────────────────
 :host {
-  --bg:       #0B0F1A;
-  --surface:  #111827;
-  --surf2:    #1A2235;
-  --surf3:    #222D42;
-  --border:   rgba(255,255,255,.07);
-  --border2:  rgba(255,255,255,.12);
+  --bg: #F4F6F9;
+  --surface: #ffffff;
+  --surf2: #F0F2F5;
+  --surf3: #E8EAF0;
+  --border: #E2E4E9;
+  --border2: #D1D5DB;
   --teal:     #0AAFB8;
-  --teal-lt:  rgba(10,175,184,.15);
-  --teal-mid: rgba(10,175,184,.25);
+  --teal-lt: rgba(10,175,184,.12);
+  --teal-mid: rgba(10,175,184,.22);
   --green:    #10B981;
   --green-lt: rgba(16,185,129,.15);
   --amber:    #F59E0B;
@@ -17,9 +17,9 @@
   --red-lt:   rgba(239,68,68,.15);
   --blue:     #3B82F6;
   --blue-lt:  rgba(59,130,246,.15);
-  --text:     #F1F5F9;
-  --mid:      #94A3B8;
-  --sub:      #475569;
+  --text: #1A1A2E;
+  --mid: #64748B;
+  --sub: #94A3B8;
   --shadow:   0 4px 24px rgba(0,0,0,.4);
   --radius:   12px;
 
@@ -105,6 +105,23 @@
   background: var(--red);
   border-radius: 50%;
   border: 1.5px solid var(--surface);
+}
+
+.tb-notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #EF4444;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 1px 4px;
+  min-width: 14px;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  border: 1.5px solid var(--surface);
+  pointer-events: none;
 }
 
 // ── Content area ──────────────────────────────────────────────────────────────

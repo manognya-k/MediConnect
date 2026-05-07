@@ -6,10 +6,15 @@
   <div class="tb-right">
     <div class="tb-chip">All Hospitals ↓</div>
     <div class="tb-chip">Apr 2026 ↓</div>
-    <button class="btn btn-teal btn-sm">New Appointment</button>
-    <div class="tb-notif">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
-      <div class="tb-notif-dot"></div>
+    <button class="btn btn-teal btn-sm" (click)="openNewAppt()">+ New Appointment</button>
+    <div class="tb-notif" (click)="notifSvc.togglePanel()" style="cursor:pointer;position:relative">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/>
+        <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
+      </svg>
+      <ng-container *ngIf="notifSvc.unreadCount$ | async as cnt">
+        <span *ngIf="cnt > 0" class="tb-notif-badge">{{ cnt > 99 ? '99+' : cnt }}</span>
+      </ng-container>
     </div>
   </div>
 </div>
@@ -90,8 +95,8 @@
             <thead><tr><th>Patient</th><th>Doctor</th><th>Status</th></tr></thead>
             <tbody>
               <tr *ngFor="let a of filteredAppointments.slice(0,6)">
-                <td>{{ a.patientName || a.patient?.name || 'Patient' }}</td>
-                <td>{{ a.doctorName || a.doctor?.user?.name || 'Doctor' }}</td>
+                <td>{{ patientName(a) }}</td>
+                <td>{{ doctorName(a) }}</td>
                 <td><span class="badge" [ngClass]="getStatusBadge(a.status)">{{ a.status }}</span></td>
               </tr>
             </tbody>
@@ -114,18 +119,23 @@
     </div>
     <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading appointments…</div>
     <table *ngIf="!isLoading">
-      <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Patient</th><th>Code</th><th>Doctor</th><th>Date</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
         <tr *ngFor="let a of filteredAppointments">
-          <td>{{ a.patientName || a.patient?.name || '—' }}</td>
-          <td>{{ a.doctorName || a.doctor?.user?.name || '—' }}</td>
+          <td>{{ patientName(a) }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--teal)">{{ patientCode(a) }}</td>
+          <td>{{ doctorName(a) }}</td>
           <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ a.appointmentDate | date:'MMM d' }}</td>
           <td><span class="badge" [ngClass]="getTypeBadge(a.appointmentType)">{{ a.appointmentType || 'In-person' }}</span></td>
           <td><span class="badge" [ngClass]="getStatusBadge(a.status)">{{ a.status }}</span></td>
           <td>
             <div style="display:flex;gap:4px">
-              <button class="btn btn-ghost btn-sm">View</button>
-              <button *ngIf="a.status === 'PENDING'" class="btn btn-teal btn-sm">Approve</button>
+              <button class="btn btn-ghost btn-sm" (click)="viewAppointment(a); $event.stopPropagation()">View</button>
+              <button *ngIf="a.status === 'PENDING'" class="btn btn-teal btn-sm"
+                (click)="approveAppointment(a); $event.stopPropagation()"
+                [disabled]="approvingId === a.appointmentId">
+                {{ approvingId === a.appointmentId ? '…' : 'Approve' }}
+              </button>
             </div>
           </td>
         </tr>
@@ -137,5 +147,133 @@
         <div class="pg-btn">‹</div><div class="pg-btn active">1</div><div class="pg-btn">2</div><div class="pg-btn">›</div>
       </div>
     </div>
+  </div>
+
+  <!-- Appointment Detail Panel -->
+  <div class="card" *ngIf="viewingAppt" style="margin-top:16px">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Appointment Detail</div>
+        <div class="card-sub">ID #{{ viewingAppt.appointmentId }}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge" [ngClass]="getStatusBadge(viewingAppt.status)">{{ viewingAppt.status }}</span>
+        <button *ngIf="viewingAppt.status === 'PENDING'" class="btn btn-teal btn-sm"
+          (click)="approveAppointment(viewingAppt)"
+          [disabled]="approvingId === viewingAppt.appointmentId">
+          {{ approvingId === viewingAppt.appointmentId ? 'Approving…' : 'Approve' }}
+        </button>
+        <button class="btn btn-ghost btn-sm" (click)="closeView()">✕ Close</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="g4" style="gap:10px">
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Patient</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">{{ patientName(viewingAppt) }}</div>
+          <div style="font-size:11px;color:var(--teal);font-family:'IBM Plex Mono',monospace">{{ patientCode(viewingAppt) }}</div>
+        </div>
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Doctor</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">{{ viewingAppt.doctorName || viewingAppt.doctor?.user?.name || '—' }}</div>
+          <div style="font-size:11px;color:var(--teal)">{{ viewingAppt.doctor?.specialization || '' }}</div>
+        </div>
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Date &amp; Time</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace">{{ viewingAppt.appointmentDate | date:'MMM d, y' }}</div>
+          <div style="font-size:11px;color:var(--mid);font-family:'IBM Plex Mono',monospace">{{ viewingAppt.appointmentTime }}</div>
+        </div>
+        <div style="background:var(--surf2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Type</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">{{ viewingAppt.appointmentType || 'In-person' }}</div>
+          <div style="font-size:11px;color:var(--mid)">{{ viewingAppt.hospital?.hospitalName || '' }}</div>
+        </div>
+      </div>
+      <div *ngIf="viewingAppt.notes" style="margin-top:10px;background:var(--teal-lt);border:1px solid rgba(10,175,184,.2);border-radius:8px;padding:10px 14px">
+        <div style="font-size:10px;color:var(--teal);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Notes</div>
+        <div style="font-size:12px;color:var(--mid)">{{ viewingAppt.notes }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Appointment Modal ────────────────────────────────────────────────── -->
+<div *ngIf="showNewAppt"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeNewAppt()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">New Appointment</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">Schedule a new patient appointment</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeNewAppt()">✕</button>
+    </div>
+
+    <form [formGroup]="newApptForm" (ngSubmit)="submitNewAppt()" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Patient *</label>
+        <select class="input" formControlName="patientId" style="width:100%">
+          <option [ngValue]="null" disabled>Select patient…</option>
+          <option *ngFor="let p of allPatients" [value]="p.patientId">
+            {{ formatPatientCode(p.patientId) }} — {{ p.user?.name || 'Patient' }}
+          </option>
+        </select>
+        <div *ngIf="hasError(newApptForm,'patientId','required')" style="font-size:10px;color:#EF4444;margin-top:3px">Patient is required</div>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Doctor *</label>
+        <select class="input" formControlName="doctorId" style="width:100%">
+          <option [ngValue]="null" disabled>Select doctor…</option>
+          <option *ngFor="let d of allDoctors" [value]="d.doctorId">
+            {{ d.user?.name || 'Doctor' }} — {{ d.specialization || '' }}
+          </option>
+        </select>
+        <div *ngIf="hasError(newApptForm,'doctorId','required')" style="font-size:10px;color:#EF4444;margin-top:3px">Doctor is required</div>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Hospital</label>
+        <select class="input" formControlName="hospitalId" style="width:100%">
+          <option [ngValue]="null">No specific hospital</option>
+          <option *ngFor="let h of allHospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Date *</label>
+          <input class="input" type="date" formControlName="date" style="width:100%">
+          <div *ngIf="hasError(newApptForm,'date','required')" style="font-size:10px;color:#EF4444;margin-top:3px">Date is required</div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Time *</label>
+          <input class="input" type="time" formControlName="time" style="width:100%">
+          <div *ngIf="hasError(newApptForm,'time','required')" style="font-size:10px;color:#EF4444;margin-top:3px">Time is required</div>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Type *</label>
+        <select class="input" formControlName="type" style="width:100%">
+          <option value="IN_PERSON">In-person</option>
+          <option value="VIDEO">Video</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Notes</label>
+        <textarea class="input" formControlName="notes" rows="2" style="width:100%;resize:vertical" placeholder="Reason for visit…"></textarea>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:6px">
+        <button type="button" class="btn btn-ghost" (click)="closeNewAppt()">Cancel</button>
+        <button type="submit" class="btn btn-teal" [disabled]="newApptSubmitting">
+          {{ newApptSubmitting ? 'Creating…' : 'Create Appointment' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

@@ -1,6 +1,7 @@
 package com.cts.mfrp.controller;
 
 import com.cts.mfrp.dto.AiChatRequestDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +13,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
+@RequiredArgsConstructor
 public class AiAssistantController {
+
+    private final RestTemplate restTemplate;
 
     @Value("${anthropic.api.key:}")
     private String anthropicApiKey;
@@ -39,8 +43,6 @@ public class AiAssistantController {
         }
 
         try {
-            RestTemplate restTemplate = new RestTemplate();
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("x-api-key", anthropicApiKey);

@@ -1,15 +1,16 @@
 import {
   Component, OnInit, OnDestroy, AfterViewChecked,
-  ViewChild, ElementRef
+  ViewChild, ElementRef, SecurityContext
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LayoutService } from '../../services/layout.service';
 import { AiAssistantService } from '../../services/ai-assistant.service';
 import { AuthService } from '../../services/auth.service';
-import { ChatMessage, ConversationHistory, SuggestionChip } from '../../models/chat.model';
+import { ChatMessage, ConversationHistory } from '../../models/chat.model';
 
 @Component({
   selector: 'app-ai-assistant',
@@ -34,18 +35,33 @@ export class AiAssistantComponent implements OnInit, OnDestroy, AfterViewChecked
   userName = '';
   userInitials = '';
 
-  readonly chips: SuggestionChip[] = [
-    { label: 'Summarise today\'s appointments' },
-    { label: 'Interpret lipid panel results' },
-    { label: 'Hypertension treatment guidelines' },
-    { label: 'Drug interaction check' },
-    { label: 'Cardiology referral criteria' },
+  readonly chips: string[] = [
+    "Summarise today's appointments",
+    'Interpret elevated LDL cholesterol results',
+    'Hypertension Stage 2 treatment guidelines',
+    'Drug interaction: Amlodipine + Metformin',
+    'Cardiology referral criteria',
+    'ICD-10 code for Type 2 Diabetes with CKD',
+    'Post-surgery follow-up protocol',
+    'Troponin I elevation — differential diagnosis',
+  ];
+
+  readonly quickQuestions: string[] = [
+    'What is the normal range for HbA1c?',
+    'Guidelines for starting statin therapy',
+    'When to refer a patient to ICU?',
+    'Recommended BP targets for diabetic patients',
+    'How to interpret a BNP result?',
+    'Common side effects of Lisinopril',
+    'ECG interpretation: left bundle branch block',
+    'Dosing of Metformin in CKD patients',
   ];
 
   constructor(
     public layout: LayoutService,
     private aiService: AiAssistantService,
-    private auth: AuthService
+    private auth: AuthService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -53,10 +69,21 @@ export class AiAssistantComponent implements OnInit, OnDestroy, AfterViewChecked
     this.userName = user?.name ?? 'Doctor';
     this.userInitials = this.deriveInitials(this.userName);
 
+    const lastName = this.userName.split(' ').pop() || this.userName;
+
+    const welcomeHtml =
+      `Hello <strong>Dr. ${lastName}</strong>! I'm your MediConnect clinical AI assistant.<br><br>` +
+      `I can help you with:<br><br>` +
+      `🔬 <strong>Clinical Queries</strong> — guidelines, protocols, and evidence-based recommendations<br>` +
+      `🧪 <strong>Lab Interpretation</strong> — explain results in clinical context<br>` +
+      `💊 <strong>Medication Support</strong> — dosing, interactions, contraindications<br>` +
+      `📋 <strong>ICD-10 Coding</strong> — find the right diagnostic codes<br><br>` +
+      `What can I help you with today?`;
+
     this.messages.push({
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: `Hello ${this.userName}! I'm your MediConnect AI assistant. I can help you with clinical queries, patient summaries, medication information, lab result interpretation, and more.\n\nWhat can I help you with today?`,
+      content: welcomeHtml,
       timestamp: new Date(),
     });
     this.shouldScroll = true;
@@ -76,9 +103,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy, AfterViewChecked
 
   private deriveInitials(name: string): string {
     const words = name.split(/\s+/).filter(w => w.length > 0);
-    const letters = words
-      .filter(w => /[A-Z]/.test(w[0]))
-      .map(w => w[0]);
+    const letters = words.filter(w => /[A-Z]/.test(w[0])).map(w => w[0]);
     if (letters.length >= 2) return letters.slice(0, 2).join('');
     return name.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase();
   }
@@ -90,10 +115,18 @@ export class AiAssistantComponent implements OnInit, OnDestroy, AfterViewChecked
     } catch {}
   }
 
-  sendChip(chip: SuggestionChip) {
-    this.inputText = chip.label;
+  onChipClick(chip: string): void {
+    this.inputText = chip;
     this.chipsVisible = false;
     this.sendMessage();
+  }
+
+  onQuickQuestionClick(question: string): void {
+    this.inputText = question;
+    setTimeout(() => {
+      const ta = document.querySelector<HTMLElement>('textarea.chat-input');
+      ta?.focus();
+    }, 0);
   }
 
   sendMessage() {
@@ -163,8 +196,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy, AfterViewChecked
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  formatContent(text: string): string {
-    return text.replace(/\n/g, '<br>');
+  safeHtml(content: string): SafeHtml {
+    const formatted = content.replace(/\n/g, '<br>');
+    return this.sanitizer.sanitize(SecurityContext.HTML, formatted) ?? '';
   }
 
   trackByMessageId(_: number, msg: ChatMessage): string {

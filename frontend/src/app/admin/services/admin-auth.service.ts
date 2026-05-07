@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface AdminLoginRequest {
   email: string;
@@ -22,37 +25,26 @@ export interface AdminLoginResponse {
 const ADMIN_TOKEN_KEY = 'mediconnect_admin_token';
 const ADMIN_USER_KEY  = 'mediconnect_admin_user';
 
-// Mock admin credentials — replace this method body with a real HTTP call
-// once the backend endpoint POST /api/admin/auth/login is ready.
-const MOCK_EMAIL    = 'admin@mediconnect.com';
-const MOCK_PASSWORD = 'Admin@123';
-
 @Injectable({ providedIn: 'root' })
 export class AdminAuthService {
 
-  // HttpClient kept for future backend wiring
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   login(request: AdminLoginRequest): Observable<AdminLoginResponse> {
-    // ── TODO: swap this block for the real HTTP call when backend is ready ──
-    // return this.http.post<AdminLoginResponse>(
-    //   'http://localhost:8081/api/admin/auth/login', request
-    // ).pipe(tap(res => this.persist(res)));
-    // ────────────────────────────────────────────────────────────────────────
-
-    const email = request.email.trim().toLowerCase();
-    const pass  = request.password;
-
-    if (email === MOCK_EMAIL && pass === MOCK_PASSWORD) {
-      const mock: AdminLoginResponse = {
-        token: 'mock-admin-jwt-token',
-        admin: { id: 1, name: 'Super Admin', email: MOCK_EMAIL, role: 'SUPER_ADMIN' }
-      };
-      this.persist(mock);
-      return of(mock);
-    }
-
-    return throwError(() => new Error('Invalid email or password.'));
+    return this.http.post<any>(`${environment.apiBase}/auth/login`, request).pipe(
+      map(res => {
+        if (res.role !== 'ADMIN') {
+          throw new Error('This account does not have admin access.');
+        }
+        const loginRes: AdminLoginResponse = {
+          token: res.token,
+          admin: { id: res.userId, name: res.name, email: res.email, role: res.role }
+        };
+        this.persist(loginRes);
+        return loginRes;
+      }),
+      catchError(err => throwError(() => new Error(err.error?.message ?? err.message ?? 'Invalid email or password.')))
+    );
   }
 
   private persist(res: AdminLoginResponse): void {
@@ -63,6 +55,7 @@ export class AdminAuthService {
   logout(): void {
     localStorage.removeItem(ADMIN_TOKEN_KEY);
     localStorage.removeItem(ADMIN_USER_KEY);
+    this.router.navigate(['/login']);
   }
 
   getToken(): string | null {

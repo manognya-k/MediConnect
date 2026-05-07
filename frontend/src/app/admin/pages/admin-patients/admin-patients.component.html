@@ -1,3 +1,86 @@
+<!-- ── Edit Patient Modal ─────────────────────────────────────────────────────── -->
+<div *ngIf="showEdit"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeEditPatient()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">Edit Patient</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">Update patient information</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeEditPatient()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Full Name *</label>
+        <input class="input" [(ngModel)]="editData.name" placeholder="Patient name" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Email</label>
+        <input class="input" type="email" [(ngModel)]="editData.email" placeholder="Email address" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Phone</label>
+          <input class="input" [(ngModel)]="editData.phone" placeholder="Phone number" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Blood Group</label>
+          <select class="input" [(ngModel)]="editData.bloodGroup" style="width:100%">
+            <option value="">Unknown</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option>
+            <option>O+</option><option>O-</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      <button class="btn btn-ghost" (click)="closeEditPatient()">Cancel</button>
+      <button class="btn btn-teal" (click)="submitEditPatient()" [disabled]="editSubmitting">
+        {{ editSubmitting ? 'Saving…' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI Summary Modal ────────────────────────────────────────────────────────── -->
+<div *ngIf="showAiSummary"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeAiSummary()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(139,92,246,.12);display:flex;align-items:center;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#8B5CF6" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1A1A2E">AI Patient Summary</div>
+          <div style="font-size:11px;color:#94A3B8">{{ selectedPatient?.name }}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeAiSummary()">✕</button>
+    </div>
+
+    <div *ngIf="aiSummaryLoading" style="text-align:center;padding:32px 0">
+      <div style="font-size:12px;color:#94A3B8">Generating AI summary…</div>
+    </div>
+
+    <div *ngIf="!aiSummaryLoading && aiSummaryText"
+      style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.18);border-radius:10px;padding:16px 18px">
+      <div style="font-size:10px;color:#8B5CF6;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">Summary</div>
+      <div style="font-size:13px;color:#374151;line-height:1.65">{{ aiSummaryText }}</div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:18px">
+      <button class="btn btn-ghost" (click)="closeAiSummary()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="topbar">
   <div>
     <div class="tb-title">Patient Management</div>
@@ -5,10 +88,15 @@
   </div>
   <div class="tb-right">
     <div class="tb-chip">All Hospitals ↓</div>
-    <button class="btn btn-teal btn-sm">Export</button>
-    <div class="tb-notif">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
-      <div class="tb-notif-dot"></div>
+    <button class="btn btn-teal btn-sm" (click)="exportPatients()">Export CSV</button>
+    <div class="tb-notif" (click)="notifSvc.togglePanel()" style="cursor:pointer;position:relative">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/>
+        <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
+      </svg>
+      <ng-container *ngIf="notifSvc.unreadCount$ | async as cnt">
+        <span *ngIf="cnt > 0" class="tb-notif-badge">{{ cnt > 99 ? '99+' : cnt }}</span>
+      </ng-container>
     </div>
   </div>
 </div>
@@ -87,8 +175,8 @@
         <div class="card-sub">Patient ID: {{ selectedPatient.patientId }}</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm">Edit</button>
-        <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple)">
+        <button class="btn btn-ghost btn-sm" (click)="openEditPatient()">Edit</button>
+        <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple)" (click)="openAiSummary()">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           AI Summarize
         </button>

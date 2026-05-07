@@ -14,6 +14,18 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 
 function pad2(n: number): string { return String(n).padStart(2, '0'); }
 
+/** Convert "10:00 AM" / "2:30 PM" → "10:00:00" / "14:30:00" for LocalTime */
+function to24h(t: string): string {
+  const parts  = t.trim().split(' ');
+  const period = parts[1] ?? 'AM';
+  const [hStr, mStr] = (parts[0] ?? '0:00').split(':');
+  let h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  return `${pad2(h)}:${pad2(m)}:00`;
+}
+
 function formatTime(t: string): string {
   if (!t) return '';
   const [h, m] = t.split(':').map(Number);
@@ -67,6 +79,10 @@ export class PatientAppointmentsService {
     return this.getPatientId().pipe(
       switchMap(patientId => this.http.get<any[]>(`${BASE}/appointments/patient/${patientId}`)),
       map(raw => {
+        // Build rawMap so cancel/reschedule PUTs can send the full entity back to the server
+        const rawMap: Record<string, any> = {};
+        raw.forEach((a: any) => { rawMap[String(a.appointmentId)] = a; });
+
         const today = new Date(); today.setHours(0,0,0,0);
         const upcoming = raw.filter(a => {
           const d = new Date(a.appointmentDate);
@@ -83,6 +99,7 @@ export class PatientAppointmentsService {
           allUpcoming:  upcoming.map(a => mapToCard(a, 'upcoming')),
           allPast:      past.map(a => mapToCard(a, 'past')),
           allCancelled: cancelled.map(a => mapToCard(a, 'cancelled')),
+          rawMap,
         };
       }),
       catchError(() => {
@@ -99,19 +116,22 @@ export class PatientAppointmentsService {
         return of({
           counts: { upcoming: mockUpcoming.length, past: mockPast.length, cancelled: 0 },
           allUpcoming: mockUpcoming, allPast: mockPast, allCancelled: [] as PatientAppointmentCard[],
+          rawMap: {} as Record<string, any>,
         });
       }),
       map(data => ({
         cards:  data.allUpcoming,  // default: upcoming tab
         counts: data.counts,
         _all:   { upcoming: data.allUpcoming, past: data.allPast, cancelled: data.allCancelled },
+        _rawMap: data.rawMap,
       }))
     );
   }
 
   /** Reschedule: PUT /api/appointments/{id} */
   reschedule(id: string, newDate: string, newTime: string, original: any): Observable<any> {
-    const body = { ...original, appointmentDate: newDate, appointmentTime: newTime };
+    // Convert "3:00 PM" → "15:00:00" for Spring Boot LocalTime
+    const body = { ...original, appointmentDate: newDate, appointmentTime: to24h(newTime) };
     return this.http.put(`${BASE}/appointments/${id}`, body);
   }
 
@@ -121,19 +141,23 @@ export class PatientAppointmentsService {
     return this.http.put(`${BASE}/appointments/${id}`, body);
   }
 
-  /** Book: POST /api/appointments */
-  book(req: BookAppointmentRequest, patientId: number): Observable<any> {
-    const body = {
-      patient:         { patientId },
-      doctor:          { doctorId: req.doctorId },
-      hospital:        req.hospitalId ? { hospitalId: req.hospitalId } : null,
-      appointmentDate: req.date,
-      appointmentTime: req.time,
-      appointmentType: req.type === 'Video' ? 'VIDEO' : 'IN_PERSON',
-      status:          'PENDING',
-      notes:           req.reason,
-    };
-    return this.http.post(`${BASE}/appointments`, body);
+  /** Book: POST /api/appointments — resolves patientId automatically */
+  book(req: BookAppointmentRequest): Observable<any> {
+    return this.getPatientId().pipe(
+      switchMap(patientId => {
+        const body = {
+          patient:         { patientId },
+          doctor:          { doctorId: req.doctorId },
+          hospital:        req.hospitalId ? { hospitalId: req.hospitalId } : null,
+          appointmentDate: req.date,
+          appointmentTime: to24h(req.time),
+          appointmentType: req.type === 'Video' ? 'VIDEO' : 'IN_PERSON',
+          status:          'PENDING',
+          notes:           req.reason,
+        };
+        return this.http.post(`${BASE}/appointments`, body);
+      })
+    );
   }
 
   /** Fetch all doctors for Book modal */

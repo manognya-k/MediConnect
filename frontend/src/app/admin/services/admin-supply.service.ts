@@ -21,4 +21,12 @@ export class AdminSupplyService {
   getSupplyData() {
     return forkJoin({ inventory: this.getInventory(), alerts: this.getInventoryAlerts() });
   }
+
+  createInventory(body: any): Observable<any> {
+    return this.http.post(`${this.base}/inventory`, body);
+  }
+
+  getHospitals(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/hospitals`).pipe(catchError(() => of([])));
+  }
 }

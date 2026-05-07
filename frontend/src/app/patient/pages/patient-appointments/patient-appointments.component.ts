@@ -91,6 +91,8 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
         this.tabCounts = res.counts;
         this.allCards  = res._all;
         this.cards     = res._all[this.activeTab] ?? [];
+        // Populate rawMap so cancel/reschedule PUTs send the full entity
+        if (res._rawMap) this.rawMap = res._rawMap;
         this.loading   = false;
       },
       error: () => {
@@ -260,13 +262,19 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
     this.bookSlots    = [];
     this.showBook     = true;
     if (!this.allDoctors.length) {
-      this.svc.getDoctors().pipe(takeUntil(this.destroy$)).subscribe(d => this.allDoctors = d);
+      this.svc.getDoctors().pipe(takeUntil(this.destroy$)).subscribe(d => {
+        this.allDoctors = d;
+        // Pre-fill doctor for rebook only after the doctor list has loaded
+        if (prefill) this.applyBookPrefill(prefill);
+      });
+    } else if (prefill) {
+      this.applyBookPrefill(prefill);
     }
-    if (prefill) {
-      // Pre-fill doctor if rebooking
-      const doc = this.allDoctors.find(d => d.user?.name === prefill.doctorName);
-      if (doc) this.bookForm.patchValue({ doctorId: doc.doctorId, reason: prefill.reason });
-    }
+  }
+
+  private applyBookPrefill(prefill: PatientAppointmentCard): void {
+    const doc = this.allDoctors.find(d => d.user?.name === prefill.doctorName);
+    if (doc) this.bookForm.patchValue({ doctorId: doc.doctorId, reason: prefill.reason });
   }
 
   loadBookSlots() {
@@ -283,11 +291,9 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
     if (this.bookForm.invalid) { this.bookForm.markAllAsTouched(); return; }
     this.bookSubmitting = true;
     const v = this.bookForm.value;
-    const patient = this.state.getPatient();
-    const patientId = patient ? +patient.id : 0;
     this.svc.book({
       doctorId: +v.doctorId, date: v.date, time: v.time, type: v.type, reason: v.reason
-    }, patientId).pipe(takeUntil(this.destroy$)).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.bookSubmitting = false;
         this.closeBook();

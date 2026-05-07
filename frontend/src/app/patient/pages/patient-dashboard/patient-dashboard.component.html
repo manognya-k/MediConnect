@@ -241,7 +241,7 @@
         <div class="ai-chips">
           <button class="ai-chip" (click)="goToAi('Explain my lab report')">Explain my lab report</button>
           <button class="ai-chip" (click)="goToAi('Symptom checker')">Symptom checker</button>
-          <button class="ai-chip" (click)="goToAi('Book appointment')">Book appointment</button>
+          <button class="ai-chip" (click)="router.navigate(['/patient/appointments'])">Book appointment</button>
         </div>
         <button class="ai-cta" (click)="goToAi()">Open AI Assistant →</button>
       </div>

@@ -13,12 +13,14 @@
       Apr 2026
     </div>
     <div class="tb-chip">All Hospitals ↓</div>
-    <div class="tb-notif">
+    <div class="tb-notif" (click)="notifSvc.togglePanel()" style="cursor:pointer;position:relative">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
         <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/>
-        <path d="M6.5 13a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
+        <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
       </svg>
-      <div class="tb-notif-dot"></div>
+      <ng-container *ngIf="notifSvc.unreadCount$ | async as cnt">
+        <span *ngIf="cnt > 0" class="tb-notif-badge">{{ cnt > 99 ? '99+' : cnt }}</span>
+      </ng-container>
     </div>
   </div>
 </div>

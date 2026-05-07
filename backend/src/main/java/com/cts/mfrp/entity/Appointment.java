@@ -30,4 +30,5 @@ public class Appointment {
     private String status;
     private String appointmentType;
     private String sessionUrl;
+    private String notes;
 }

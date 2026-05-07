@@ -4,7 +4,7 @@
     <div class="tb-sub">Financial performance &amp; billing management</div>
   </div>
   <div class="tb-right">
-    <button class="btn btn-ghost">
+    <button class="btn btn-ghost" (click)="downloadReport()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/>
@@ -12,13 +12,13 @@
       </svg>
       Download Report
     </button>
-    <button class="btn btn-teal">
+    <button class="btn btn-teal" (click)="exportRevenue()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
         <polyline points="17 8 12 3 7 8"/>
         <line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
-      Export
+      Export CSV
     </button>
   </div>
 </div>

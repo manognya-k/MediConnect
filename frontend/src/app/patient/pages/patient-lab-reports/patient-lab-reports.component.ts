@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SecurityContext } from '@angular/core';
 import { PatientLabReportsService } from '../../services/patient-lab-reports.service';
 import { PatientStateService } from '../../services/patient-state.service';
 import { ToastService } from '../../../services/toast.service';
@@ -107,7 +108,7 @@ export class PatientLabReportsComponent implements OnInit, OnDestroy {
     this.svc.explainReport(reportId).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ explanation }) => {
         this.aiLoading     = false;
-        this.aiMessageHtml = this.sanitizer.bypassSecurityTrustHtml(explanation);
+        this.aiMessageHtml = this.safe(explanation);
         this.conversationHistory.push({ role: 'assistant', content: explanation });
 
         const report = this.reports.find(r => r.id === reportId);
@@ -160,7 +161,7 @@ export class PatientLabReportsComponent implements OnInit, OnDestroy {
     this.svc.sendAiMessage(this.conversationHistory).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ reply }) => {
         this.conversationHistory.push({ role: 'assistant', content: reply });
-        this.aiMessageHtml = this.sanitizer.bypassSecurityTrustHtml(reply);
+        this.aiMessageHtml = this.safe(reply);
         this.aiLoading  = false;
         this.aiSending  = false;
       },
@@ -199,7 +200,7 @@ export class PatientLabReportsComponent implements OnInit, OnDestroy {
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
   safe(html: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(html);
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
   }
 
   trackByReport(_: number, r: PatientLabReport): string { return r.id; }

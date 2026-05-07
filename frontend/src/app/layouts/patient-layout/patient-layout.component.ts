@@ -56,7 +56,7 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
 
   logout() {
     this.auth.logout();
-    this.router.navigate(['/patient/login']);
+    this.router.navigate(['/login']);
   }
 
   toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }

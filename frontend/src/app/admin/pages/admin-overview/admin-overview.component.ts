@@ -5,38 +5,18 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Subject, timer } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
 
-import {
-  Chart,
-  LineController, BarController, DoughnutController,
-  LineElement, BarElement, ArcElement,
-  PointElement, CategoryScale, LinearScale,
-  Tooltip, Legend, Filler
-} from 'chart.js';
-
 import { NgChartsModule } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
+import { ensureChartRegistered } from '../../../shared/chart-setup';
 
 import { AdminOverviewService } from '../../services/admin-overview.service';
 import { AdminAuthService }     from '../../services/admin-auth.service';
+import { AdminNotificationService } from '../../services/admin-notification.service';
 import {
   AdminOverviewData, StatCard, HospitalPin, AiInsight
 } from '../../models/admin-overview.model';
 
-// Register Chart.js modules once
-Chart.register(
-  LineController, BarController, DoughnutController,
-  LineElement, BarElement, ArcElement,
-  PointElement, CategoryScale, LinearScale,
-  Tooltip, Legend, Filler
-);
-
-// Apply dark-theme global defaults
-Chart.defaults.color           = '#94A3B8';
-Chart.defaults.font.family     = "'DM Sans'";
-Chart.defaults.font.size       = 10;
-Chart.defaults.borderColor     = 'rgba(255,255,255,.05)';
-Chart.defaults.plugins.legend.labels.boxWidth = 8;
-Chart.defaults.plugins.legend.labels.padding  = 12;
+ensureChartRegistered();
 
 @Component({
   selector: 'app-admin-overview',
@@ -117,7 +97,8 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
 
   constructor(
     private overviewSvc: AdminOverviewService,
-    private adminAuth:   AdminAuthService
+    private adminAuth:   AdminAuthService,
+    public notifSvc: AdminNotificationService
   ) {}
 
   ngOnInit() {

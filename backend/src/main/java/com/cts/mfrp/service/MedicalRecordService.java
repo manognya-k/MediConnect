@@ -3,7 +3,9 @@ package com.cts.mfrp.service;
 import com.cts.mfrp.entity.MedicalRecord;
 import com.cts.mfrp.repository.MedicalRecordRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
@@ -16,7 +18,8 @@ public class MedicalRecordService {
     }
 
     public MedicalRecord getRecordById(Integer id) {
-        return medicalRecordRepository.findById(id).orElse(null);
+        return medicalRecordRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Medical record not found"));
     }
 
     public List<MedicalRecord> getRecordsByPatient(Integer patientId) {
@@ -32,6 +35,9 @@ public class MedicalRecordService {
     }
 
     public void deleteRecord(Integer id) {
+        if (!medicalRecordRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Medical record not found");
+        }
         medicalRecordRepository.deleteById(id);
     }
 }

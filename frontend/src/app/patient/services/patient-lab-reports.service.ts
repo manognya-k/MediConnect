@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import {
   PatientLabReport, FlaggedAlert, LabResultItem, ResultFlag, AiMessage
 } from '../models/patient-lab-report.model';
+import { PatientAuthService } from './patient-auth.service';
+import { environment } from '../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 function flagColors(flag: ResultFlag): { valueColor: string; cellBg: string; flagColor: string } {
   switch (flag) {
@@ -101,14 +103,39 @@ const MOCK_EXPLANATION =
 
 // ── Service ────────────────────────────────────────────────────────────────────
 
+function mapBackendReport(r: any, index: number): PatientLabReport {
+  const status: string = r.results?.trim() ? 'Normal' : 'Pending';
+  return {
+    id: String(r.reportId ?? index),
+    testName: r.testType ?? r.testName ?? 'Lab Report',
+    orderedBy: r.doctor?.user?.name ? `Dr. ${r.doctor.user.name}` : 'Doctor',
+    reportDate: r.reportDate ?? '',
+    status,
+    isFlagged: false,
+    isExpanded: false,
+    iconBg: status === 'Pending' ? '#FEF3CD' : '#E6F5EF',
+    iconStroke: status === 'Pending' ? '#B45309' : '#0F7B50',
+    results: [],
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class PatientLabReportsService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: PatientAuthService) {}
 
-  /** Load all lab reports (TODO: GET /api/lab-reports filtered by patient) */
   getLabReports(): Observable<PatientLabReport[]> {
-    // TODO: wire to GET /api/lab-reports?patientId=... or /api/patient/lab-reports
-    return of(MOCK_REPORTS);
+    const stored = this.auth.getStoredUser();
+    const userId = stored?.userId ?? 0;
+    return this.http.get<any>(`${BASE}/patients/by-user/${userId}`).pipe(
+      catchError(() => of(null)),
+      switchMap(patient => {
+        if (!patient?.patientId) return of(MOCK_REPORTS);
+        return this.http.get<any[]>(`${BASE}/lab-reports/patient/${patient.patientId}`).pipe(
+          map(reports => reports.length > 0 ? reports.map(mapBackendReport) : MOCK_REPORTS),
+          catchError(() => of(MOCK_REPORTS))
+        );
+      })
+    );
   }
 
   /** Load flagged alert banners (TODO: GET /api/patient/lab-reports/flagged) */

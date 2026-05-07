@@ -5,13 +5,13 @@
     <div class="tb-sub">Clinical performance · All hospitals · Live data</div>
   </div>
   <div class="tb-right">
-    <select class="filter-select" [(ngModel)]="selectedHospital">
+    <select class="filter-select" [(ngModel)]="selectedHospital" (ngModelChange)="onFilterChange()">
       <option *ngFor="let h of hospitals" [value]="h">{{ h }}</option>
     </select>
-    <select class="filter-select" [(ngModel)]="selectedDept">
+    <select class="filter-select" [(ngModel)]="selectedDept" (ngModelChange)="onFilterChange()">
       <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
     </select>
-    <select class="filter-select" [(ngModel)]="selectedRange">
+    <select class="filter-select" [(ngModel)]="selectedRange" (ngModelChange)="onFilterChange()">
       <option *ngFor="let r of ranges" [value]="r.val">{{ r.label }}</option>
     </select>
   </div>

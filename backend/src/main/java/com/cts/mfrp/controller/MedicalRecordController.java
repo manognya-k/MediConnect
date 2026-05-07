@@ -2,6 +2,7 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.MedicalRecord;
 import com.cts.mfrp.service.MedicalRecordService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,12 +30,12 @@ public class MedicalRecordController {
     }
 
     @PostMapping
-    public ResponseEntity<MedicalRecord> createRecord(@RequestBody MedicalRecord record) {
+    public ResponseEntity<MedicalRecord> createRecord(@Valid @RequestBody MedicalRecord record) {
         return ResponseEntity.ok(medicalRecordService.saveRecord(record));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MedicalRecord> updateRecord(@PathVariable Integer id, @RequestBody MedicalRecord record) {
+    public ResponseEntity<MedicalRecord> updateRecord(@PathVariable Integer id, @Valid @RequestBody MedicalRecord record) {
         record.setRecordId(id);
         return ResponseEntity.ok(medicalRecordService.saveRecord(record));
     }

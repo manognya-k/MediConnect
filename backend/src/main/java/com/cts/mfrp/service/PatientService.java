@@ -3,7 +3,10 @@ package com.cts.mfrp.service;
 import com.cts.mfrp.entity.Patient;
 import com.cts.mfrp.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @Service
@@ -16,7 +19,8 @@ public class PatientService {
     }
 
     public Patient getPatientById(Integer id) {
-        return patientRepository.findById(id).orElse(null);
+        return patientRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
     }
 
     public Patient savePatient(Patient patient) {
@@ -24,6 +28,9 @@ public class PatientService {
     }
 
     public void deletePatient(Integer id) {
+        if (!patientRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found");
+        }
         patientRepository.deleteById(id);
     }
 }

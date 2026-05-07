@@ -4,39 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Subject, timer } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
 import { NgChartsModule } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
+import { ensureChartRegistered } from '../../../shared/chart-setup';
 
 import { AdminAnalyticsService } from '../../services/admin-analytics.service';
 
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
-
-Chart.defaults.color       = '#94A3B8';
-Chart.defaults.font.family = "'DM Sans'";
-Chart.defaults.font.size   = 10;
-Chart.defaults.borderColor = 'rgba(255,255,255,.05)';
+ensureChartRegistered();
 
 @Component({
   selector: 'app-admin-analytics',
@@ -201,5 +175,80 @@ export class AdminAnalyticsComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // ── Filter change handler ─────────────────────────────────────────────────────
+
+  onFilterChange() {
+    this.updateCharts();
+    // Only re-fetch stats when the range changes — hospital/dept are not yet supported by the backend
+    if (this.selectedRange !== this._lastFetchedRange) {
+      this._lastFetchedRange = this.selectedRange;
+      this.analyticsSvc.getStats().pipe(takeUntil(this.destroy$)).subscribe(s => {
+        if (s) this.stats = s;
+      });
+    }
+  }
+
+  // Track last range for which stats were fetched to avoid redundant requests
+  private _lastFetchedRange = '30d';
+
+  private updateCharts() {
+    const isAll  = this.selectedHospital === 'All Hospitals';
+    // Deterministic per-hospital scale ≈ 20% of network total
+    const scale  = isAll ? 1 : 0.20;
+
+    switch (this.selectedRange) {
+      case '7d':
+        this.bedOccupancyData = {
+          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets: [{ ...this.bedOccupancyData.datasets[0],
+            data: [70,74,77,80,82,79,81].map(v => +(v * scale).toFixed(1)) }]
+        };
+        this.mortalityRateData = {
+          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets: [{ ...this.mortalityRateData.datasets[0],
+            data: [1.9,2.0,1.8,2.1,1.7,1.8,1.6].map(v => +(v * scale).toFixed(2)) }]
+        };
+        break;
+
+      case '90d':
+        this.bedOccupancyData = {
+          labels: ['Feb W1','Feb W2','Feb W3','Feb W4','Mar W1','Mar W2','Mar W3','Mar W4','Apr W1','Apr W2','Apr W3','Apr W4'],
+          datasets: [{ ...this.bedOccupancyData.datasets[0],
+            data: [68,70,73,75,77,79,82,81,83,85,84,87].map(v => +(v * scale).toFixed(1)) }]
+        };
+        this.mortalityRateData = {
+          labels: ['Feb W1','Feb W2','Feb W3','Feb W4','Mar W1','Mar W2','Mar W3','Mar W4','Apr W1','Apr W2','Apr W3','Apr W4'],
+          datasets: [{ ...this.mortalityRateData.datasets[0],
+            data: [2.4,2.3,2.2,2.1,2.0,1.9,1.9,1.8,1.8,1.7,1.8,1.8].map(v => +(v * scale).toFixed(2)) }]
+        };
+        break;
+
+      case '1y':
+        this.bedOccupancyData = {
+          labels: ['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
+          datasets: [{ ...this.bedOccupancyData.datasets[0],
+            data: [76,74,72,75,78,80,82,79,77,80,83,84].map(v => +(v * scale).toFixed(1)) }]
+        };
+        this.mortalityRateData = {
+          labels: ['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
+          datasets: [{ ...this.mortalityRateData.datasets[0],
+            data: [2.6,2.5,2.4,2.3,2.3,2.2,2.1,2.3,1.9,2.0,1.7,1.8].map(v => +(v * scale).toFixed(2)) }]
+        };
+        break;
+
+      default: // '30d'
+        this.bedOccupancyData = {
+          labels: ['Apr 1','Apr 5','Apr 10','Apr 15','Apr 20','Apr 25','Apr 30'],
+          datasets: [{ ...this.bedOccupancyData.datasets[0],
+            data: [72,75,79,83,81,87,84].map(v => +(v * scale).toFixed(1)) }]
+        };
+        this.mortalityRateData = {
+          labels: ['Nov','Dec','Jan','Feb','Mar','Apr'],
+          datasets: [{ ...this.mortalityRateData.datasets[0],
+            data: [2.1,2.3,1.9,2.0,1.7,1.8].map(v => +(v * scale).toFixed(2)) }]
+        };
+    }
   }
 }

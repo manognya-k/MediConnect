@@ -2,6 +2,7 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.Hospital;
 import com.cts.mfrp.service.HospitalService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +25,12 @@ public class HospitalController {
     }
 
     @PostMapping
-    public ResponseEntity<Hospital> createHospital(@RequestBody Hospital hospital) {
+    public ResponseEntity<Hospital> createHospital(@Valid @RequestBody Hospital hospital) {
         return ResponseEntity.ok(hospitalService.saveHospital(hospital));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Hospital> updateHospital(@PathVariable Integer id, @RequestBody Hospital hospital) {
+    public ResponseEntity<Hospital> updateHospital(@PathVariable Integer id, @Valid @RequestBody Hospital hospital) {
         hospital.setHospitalId(id);
         return ResponseEntity.ok(hospitalService.saveHospital(hospital));
     }

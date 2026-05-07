@@ -149,7 +149,7 @@ export class AppointmentService {
       time: this.formatTime(a.appointmentTime),
       date: a.appointmentDate,
       type,
-      reason: a.sessionUrl && !a.sessionUrl.startsWith('http') ? a.sessionUrl : '—', // TODO: backend has no reason field
+      reason: a.notes || '—',
       status,
       joinUrl: a.sessionUrl || undefined,
       raw: a

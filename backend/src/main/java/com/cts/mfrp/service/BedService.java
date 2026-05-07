@@ -3,7 +3,9 @@ package com.cts.mfrp.service;
 import com.cts.mfrp.entity.Bed;
 import com.cts.mfrp.repository.BedRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
@@ -16,7 +18,8 @@ public class BedService {
     }
 
     public Bed getBedById(Integer id) {
-        return bedRepository.findById(id).orElse(null);
+        return bedRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bed not found"));
     }
 
     public List<Bed> getBedsByHospital(Integer hospitalId) {
@@ -32,6 +35,9 @@ public class BedService {
     }
 
     public void deleteBed(Integer id) {
+        if (!bedRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bed not found");
+        }
         bedRepository.deleteById(id);
     }
 }

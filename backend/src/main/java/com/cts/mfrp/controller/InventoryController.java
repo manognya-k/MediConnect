@@ -2,6 +2,7 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.Inventory;
 import com.cts.mfrp.service.InventoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +25,12 @@ public class InventoryController {
     }
 
     @PostMapping
-    public ResponseEntity<Inventory> createInventory(@RequestBody Inventory inventory) {
+    public ResponseEntity<Inventory> createInventory(@Valid @RequestBody Inventory inventory) {
         return ResponseEntity.ok(inventoryService.saveInventory(inventory));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Inventory> updateInventory(@PathVariable Integer id, @RequestBody Inventory inventory) {
+    public ResponseEntity<Inventory> updateInventory(@PathVariable Integer id, @Valid @RequestBody Inventory inventory) {
         inventory.setItemId(id);
         return ResponseEntity.ok(inventoryService.saveInventory(inventory));
     }

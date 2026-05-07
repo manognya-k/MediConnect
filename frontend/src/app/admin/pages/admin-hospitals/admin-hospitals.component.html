@@ -5,11 +5,116 @@
     <div class="tb-sub">{{ hospitals.length }} hospitals · Live data · {{ today }}</div>
   </div>
   <div class="tb-right">
-    <div class="tb-chip">All Hospitals ↓</div>
-    <div class="tb-chip">Apr 2026 ↓</div>
-    <div class="tb-notif">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
-      <div class="tb-notif-dot"></div>
+    <button class="btn btn-teal" (click)="openAddHospital()">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Add Hospital
+    </button>
+    <div class="tb-notif" (click)="notifSvc.togglePanel()" style="cursor:pointer;position:relative">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/>
+        <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
+      </svg>
+      <ng-container *ngIf="notifSvc.unreadCount$ | async as cnt">
+        <span *ngIf="cnt > 0" class="tb-notif-badge">{{ cnt > 99 ? '99+' : cnt }}</span>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit Hospital Modal ───────────────────────────────────────────────────── -->
+<div *ngIf="showEdit"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeEditHospital()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">Edit Hospital</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">Update hospital information</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeEditHospital()">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Hospital Name *</label>
+        <input class="input" [(ngModel)]="editData.hospitalName" placeholder="Hospital name" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">City</label>
+        <input class="input" [(ngModel)]="editData.city" placeholder="City" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Total Beds</label>
+          <input class="input" type="number" [(ngModel)]="editData.totalBeds" min="0" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Available Beds</label>
+          <input class="input" type="number" [(ngModel)]="editData.availableBeds" min="0" style="width:100%">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      <button class="btn btn-ghost" (click)="closeEditHospital()">Cancel</button>
+      <button class="btn btn-teal" (click)="submitEditHospital()" [disabled]="editSubmitting">
+        {{ editSubmitting ? 'Saving…' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add Hospital Modal ────────────────────────────────────────────────────── -->
+<div *ngIf="showAddHospital"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeAddHospital()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">Add New Hospital</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">Register a new hospital in the network</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeAddHospital()">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Hospital Name *</label>
+        <input class="input" [(ngModel)]="addData.hospitalName" placeholder="e.g. Apollo Hospitals" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">City</label>
+          <input class="input" [(ngModel)]="addData.city" placeholder="e.g. Chennai" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Phone</label>
+          <input class="input" [(ngModel)]="addData.phone" placeholder="e.g. +91-44-28293333" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Address</label>
+        <input class="input" [(ngModel)]="addData.address" placeholder="Street address" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Total Beds</label>
+          <input class="input" type="number" [(ngModel)]="addData.totalBeds" min="0" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Available Beds</label>
+          <input class="input" type="number" [(ngModel)]="addData.availableBeds" min="0" style="width:100%">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      <button class="btn btn-ghost" (click)="closeAddHospital()">Cancel</button>
+      <button class="btn btn-teal" (click)="submitAddHospital()" [disabled]="addSubmitting">
+        {{ addSubmitting ? 'Adding…' : 'Add Hospital' }}
+      </button>
     </div>
   </div>
 </div>
@@ -73,8 +178,8 @@
           <td><span class="badge" [ngClass]="getStatusBadge(h)">{{ getStatusLabel(h) }}</span></td>
           <td>
             <div style="display:flex;gap:5px">
-              <button class="btn btn-ghost btn-sm">Edit</button>
-              <button class="btn btn-ghost btn-sm" (click)="selectHospital(h)">Details</button>
+              <button class="btn btn-ghost btn-sm" (click)="openEditHospital(h, $event)">Edit</button>
+              <button class="btn btn-ghost btn-sm" (click)="selectHospital(h); $event.stopPropagation()">Details</button>
             </div>
           </td>
         </tr>

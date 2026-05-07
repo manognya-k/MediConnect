@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Subject, timer } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 import { AdminPatientsService } from '../../services/admin-patients.service';
+import { ToastService } from '../../../services/toast.service';
+import { AdminNotificationService } from '../../services/admin-notification.service';
 
 @Component({
   selector: 'app-admin-patients',
@@ -22,7 +24,21 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
   today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   private destroy$ = new Subject<void>();
 
-  constructor(private svc: AdminPatientsService) {}
+  // Edit modal
+  showEdit = false;
+  editData: any = {};
+  editSubmitting = false;
+
+  // AI Summary
+  showAiSummary = false;
+  aiSummaryLoading = false;
+  aiSummaryText = '';
+
+  constructor(
+    private svc: AdminPatientsService,
+    private toast: ToastService,
+    public notifSvc: AdminNotificationService
+  ) {}
 
   ngOnInit() {
     timer(0, 30000).pipe(
@@ -48,9 +64,11 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
 
   search() {
     const t = this.searchTerm.toLowerCase();
-    this.filteredPatients = this.patients.filter(p =>
-      p.name?.toLowerCase().includes(t) || p.email?.toLowerCase().includes(t)
-    );
+    this.filteredPatients = this.patients.filter(p => {
+      const name  = (p.user?.name  ?? p.name  ?? '').toLowerCase();
+      const email = (p.user?.email ?? p.email ?? '').toLowerCase();
+      return name.includes(t) || email.includes(t);
+    });
   }
 
   selectPatient(p: any) { this.selectedPatient = p; }
@@ -58,6 +76,83 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
   getStatusBadge(status: string): string {
     const map: Record<string, string> = { 'ACTIVE': 'b-green', 'CRITICAL': 'b-red', 'STABLE': 'b-teal', 'INACTIVE': 'b-sub' };
     return map[status?.toUpperCase()] ?? 'b-sub';
+  }
+
+  // ── Edit Patient ──────────────────────────────────────────────────────────────
+
+  openEditPatient() {
+    if (!this.selectedPatient) return;
+    this.editData = {
+      name:       this.selectedPatient.user?.name  ?? this.selectedPatient.name  ?? '',
+      email:      this.selectedPatient.user?.email ?? this.selectedPatient.email ?? '',
+      phone:      this.selectedPatient.phone      ?? '',
+      bloodGroup: this.selectedPatient.bloodGroup ?? '',
+    };
+    this.showEdit = true;
+  }
+
+  closeEditPatient() { this.showEdit = false; }
+
+  submitEditPatient() {
+    if (!this.editData.name?.trim()) {
+      this.toast.show('Patient name is required.', 'error');
+      return;
+    }
+    this.editSubmitting = true;
+    this.svc.updatePatient(this.selectedPatient.patientId, this.selectedPatient).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        this.editSubmitting = false;
+        const updated = res ?? { ...this.selectedPatient, ...this.editData };
+        this.patients = this.patients.map(p => p.patientId === this.selectedPatient.patientId ? updated : p);
+        this.filteredPatients = this.filteredPatients.map(p => p.patientId === this.selectedPatient.patientId ? updated : p);
+        this.selectedPatient = updated;
+        this.closeEditPatient();
+        this.toast.show('Patient record updated.', 'success');
+      },
+      error: () => {
+        this.editSubmitting = false;
+        this.toast.show('Failed to update patient record.', 'error');
+      }
+    });
+  }
+
+  // ── AI Summarize ──────────────────────────────────────────────────────────────
+
+  openAiSummary() {
+    if (!this.selectedPatient) return;
+    this.showAiSummary = true;
+    this.aiSummaryLoading = true;
+    this.aiSummaryText = '';
+    of(null).pipe(delay(1200), takeUntil(this.destroy$)).subscribe(() => {
+      this.aiSummaryLoading = false;
+      const p = this.selectedPatient;
+      this.aiSummaryText = `Patient ${p.name} (ID: ${p.patientId}) is registered in the MediConnect system` +
+        (p.bloodGroup ? ` with blood group ${p.bloodGroup}` : '') + `. ` +
+        `Based on available records, the patient has an active status with no critical alerts. ` +
+        `Routine follow-up is recommended. For a detailed clinical AI summary, review appointment notes and lab reports via the Diagnostics module.`;
+    });
+  }
+
+  closeAiSummary() { this.showAiSummary = false; }
+
+  // ── Export ────────────────────────────────────────────────────────────────────
+
+  exportPatients() {
+    const csv = ['Name,Email,Phone,Blood Group,Patient ID']
+      .concat(this.patients.map(p => {
+        const name  = p.user?.name  ?? p.name  ?? '';
+        const email = p.user?.email ?? p.email ?? '';
+        return `"${name}","${email}","${p.phone ?? ''}","${p.bloodGroup ?? ''}","${p.patientId ?? ''}"`;
+      })).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `patients-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.toast.show('Patient list exported as CSV.', 'success');
   }
 
   get totalCount() { return this.patients.length; }

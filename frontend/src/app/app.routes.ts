@@ -249,6 +249,13 @@ export const routes: Routes = [
             (m) => m.AdminAnalyticsComponent
           )
       },
+      {
+        path: 'telemedicine',
+        loadComponent: () =>
+          import('./admin/pages/admin-telemedicine/admin-telemedicine.component').then(
+            (m) => m.AdminTelemedicineComponent
+          )
+      },
     ]
   },
 

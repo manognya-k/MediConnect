@@ -2,6 +2,7 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.LabReport;
 import com.cts.mfrp.service.LabReportService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,12 +30,12 @@ public class LabReportController {
     }
     
     @PostMapping
-    public ResponseEntity<LabReport> createReport(@RequestBody LabReport report) {
+    public ResponseEntity<LabReport> createReport(@Valid @RequestBody LabReport report) {
         return ResponseEntity.ok(labReportService.saveReport(report));
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<LabReport> updateReport(@PathVariable Integer id, @RequestBody LabReport report) {
+    public ResponseEntity<LabReport> updateReport(@PathVariable Integer id, @Valid @RequestBody LabReport report) {
         report.setReportId(id);
         return ResponseEntity.ok(labReportService.saveReport(report));
     }

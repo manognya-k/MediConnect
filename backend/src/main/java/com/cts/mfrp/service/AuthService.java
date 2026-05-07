@@ -1,5 +1,6 @@
 package com.cts.mfrp.service;
 
+import com.cts.mfrp.config.JwtUtil;
 import com.cts.mfrp.dto.LoginRequest;
 import com.cts.mfrp.dto.LoginResponse;
 import com.cts.mfrp.dto.RegisterRequest;
@@ -8,6 +9,7 @@ import com.cts.mfrp.entity.User;
 import com.cts.mfrp.repository.PatientRepository;
 import com.cts.mfrp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,6 +20,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public LoginResponse login(LoginRequest request) {
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
@@ -25,10 +29,11 @@ public class AuthService {
             throw new RuntimeException("Invalid email or password");
         }
         User user = userOpt.get();
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid email or password");
         }
-        return new LoginResponse(user.getUserId(), user.getName(), user.getEmail(), user.getRole());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        return new LoginResponse(user.getUserId(), user.getName(), user.getEmail(), user.getRole(), token);
     }
 
     public LoginResponse register(RegisterRequest request) {
@@ -39,7 +44,7 @@ public class AuthService {
         User user = new User();
         user.setName(request.getFirstName() + " " + request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
         user.setRole(request.getRole().toUpperCase());
         user.setDateOfBirth(request.getDateOfBirth());
@@ -57,6 +62,7 @@ public class AuthService {
             patientRepository.save(patient);
         }
 
-        return new LoginResponse(savedUser.getUserId(), savedUser.getName(), savedUser.getEmail(), savedUser.getRole());
+        String token = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole());
+        return new LoginResponse(savedUser.getUserId(), savedUser.getName(), savedUser.getEmail(), savedUser.getRole(), token);
     }
 }

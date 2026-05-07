@@ -6,9 +6,14 @@
   <div class="tb-right">
     <div class="tb-chip">All Hospitals ↓</div>
     <div class="tb-chip">Apr 2026 ↓</div>
-    <div class="tb-notif">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/></svg>
-      <div class="tb-notif-dot"></div>
+    <div class="tb-notif" (click)="notifSvc.togglePanel()" style="cursor:pointer;position:relative">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#94A3B8" stroke-width="1.5"/>
+        <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#94A3B8" stroke-width="1.5"/>
+      </svg>
+      <ng-container *ngIf="notifSvc.unreadCount$ | async as cnt">
+        <span *ngIf="cnt > 0" class="tb-notif-badge">{{ cnt > 99 ? '99+' : cnt }}</span>
+      </ng-container>
     </div>
   </div>
 </div>
@@ -52,7 +57,12 @@
             <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             <input class="input" placeholder="Search patient / test…" style="width:200px" [(ngModel)]="searchTerm" (input)="search()">
           </div>
-          <select class="input"><option>All status</option><option>Pending</option><option>Ready</option><option>Abnormal</option></select>
+          <select class="input" [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+            <option value="">All status</option>
+            <option value="PENDING">Pending</option>
+            <option value="READY">Ready</option>
+            <option value="ABNORMAL">Abnormal</option>
+          </select>
         </div>
       </div>
       <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading reports…</div>
@@ -60,7 +70,10 @@
         <thead><tr><th>Patient</th><th>Test Name</th><th>Report Date</th><th>Result</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let r of filteredReports" (click)="selectReport(r)" style="cursor:pointer">
-            <td>{{ r.patientName || r.patient?.name || '—' }}</td>
+            <td>
+              {{ patientName(r) }}
+              <div style="font-size:10px;color:var(--teal);font-family:'IBM Plex Mono',monospace">{{ patientCode(r) }}</div>
+            </td>
             <td>{{ r.testName || r.reportType || '—' }}</td>
             <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.reportDate | date:'MMM d, y' }}</td>
             <td style="font-family:'IBM Plex Mono',monospace;font-size:11px"
@@ -70,8 +83,9 @@
             <td><span class="badge" [ngClass]="getResultBadge(r.result)">{{ getResultLabel(r.result) }}</span></td>
             <td>
               <div style="display:flex;gap:4px">
-                <button class="btn btn-ghost btn-sm">View</button>
-                <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple);font-size:10px;padding:3px 8px">AI Explain</button>
+                <button class="btn btn-ghost btn-sm" (click)="viewReport(r); $event.stopPropagation()">View</button>
+                <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple);font-size:10px;padding:3px 8px"
+                  (click)="openAiExplain(r, $event)">AI Explain</button>
               </div>
             </td>
           </tr>
@@ -86,9 +100,9 @@
     </div>
 
     <!-- Report Viewer + AI Panel -->
-    <div class="g2" style="grid-template-columns:1.3fr .7fr" *ngIf="selectedReport">
+    <div class="g2 report-viewer" style="grid-template-columns:1.3fr .7fr" *ngIf="selectedReport">
       <div class="card">
-        <div class="card-header"><div class="card-title">Report Viewer — {{ selectedReport.patient?.name || 'Patient' }} · {{ selectedReport.testName || selectedReport.reportType || 'Lab Report' }}</div></div>
+        <div class="card-header"><div class="card-title">Report Viewer — {{ patientName(selectedReport) }} · {{ selectedReport.testName || selectedReport.reportType || 'Lab Report' }}</div></div>
         <div class="card-body">
           <div style="background:var(--surf2);border-radius:8px;padding:12px;font-size:12px;color:var(--mid);border:1px solid var(--border)">
             <div style="font-size:10px;color:var(--sub);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Report Result</div>
@@ -125,4 +139,52 @@
       </div>
     </div>
   </ng-container>
+</div>
+
+<!-- ── AI Explain Modal ─────────────────────────────────────────────────────── -->
+<div *ngIf="showAiExplain"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeAiExplain()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div style="width:28px;height:28px;border-radius:7px;background:rgba(139,92,246,.12);display:flex;align-items:center;justify-content:center">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#8B5CF6" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#1A1A2E">AI Report Explanation</span>
+        </div>
+        <div style="font-size:11px;color:#94A3B8">
+          Patient: {{ patientName(aiExplainReport) }} ·
+          Test: {{ aiExplainReport?.testName || aiExplainReport?.reportType || '—' }}
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeAiExplain()">✕</button>
+    </div>
+
+    <div *ngIf="aiExplainLoading" style="text-align:center;padding:32px 0">
+      <div style="font-size:12px;color:#94A3B8">Analysing report with AI…</div>
+    </div>
+
+    <div *ngIf="!aiExplainLoading && aiExplainText">
+      <div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.18);border-radius:10px;padding:16px 18px;margin-bottom:14px">
+        <div style="font-size:10px;color:#8B5CF6;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">AI Clinical Summary</div>
+        <div style="font-size:13px;color:#374151;line-height:1.65">{{ aiExplainText }}</div>
+      </div>
+      <div style="background:#F0F2F5;border-radius:8px;padding:12px 14px;font-size:11px;color:#94A3B8">
+        <strong style="color:#64748B">Result:</strong>
+        <span [style.color]="aiExplainReport?.result?.toUpperCase().includes('ABNORMAL') ? '#EF4444' : '#10B981'"
+              style="font-family:'IBM Plex Mono',monospace;margin-left:6px">
+          {{ aiExplainReport?.result || 'Pending' }}
+        </span>
+        <span style="margin-left:12px">·</span>
+        <span style="margin-left:8px">Date: {{ aiExplainReport?.reportDate | date:'MMM d, y' }}</span>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:18px">
+      <button class="btn btn-ghost" (click)="closeAiExplain()">Close</button>
+    </div>
+  </div>
 </div>

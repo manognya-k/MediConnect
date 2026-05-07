@@ -23,6 +23,7 @@ export interface BackendAppointment {
   status: string;            // "CONFIRMED" | "PENDING" | "CANCELLED"
   appointmentType: string;   // "VIDEO" | "IN_PERSON"
   sessionUrl?: string;
+  notes?: string;
 }
 
 export interface Appointment {

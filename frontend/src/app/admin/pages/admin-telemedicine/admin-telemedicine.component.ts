@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { AdminTelemedicineService } from '../../services/admin-telemedicine.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-admin-telemedicine',
@@ -11,7 +14,7 @@ import { AdminTelemedicineService } from '../../services/admin-telemedicine.serv
   templateUrl: './admin-telemedicine.component.html',
   styleUrl: './admin-telemedicine.component.scss'
 })
-export class AdminTelemedicineComponent implements OnInit {
+export class AdminTelemedicineComponent implements OnInit, OnDestroy {
 
   loading = true;
   appointments: any[] = [];
@@ -25,6 +28,11 @@ export class AdminTelemedicineComponent implements OnInit {
     { id: 'VS-1038', doctor: 'Dr. Arjun Nair',     patient: 'Sunita Gupta',   dept: 'Orthopedics',  duration: '—',      date: 'Apr 29, 3:00 PM',  status: 'missed'    },
     { id: 'VS-1037', doctor: 'Dr. Deepika Singh',  patient: 'Vikram Sharma',  dept: 'Cardiology',   duration: '22 min', date: 'Apr 28, 11:00 AM', status: 'completed' },
   ];
+
+  // Schedule Session modal
+  showSchedule = false;
+  scheduleData = { doctorName: '', patientName: '', date: '', time: '', type: 'VIDEO', notes: '' };
+  scheduleSubmitting = false;
 
   // ── Doctor status getters ──────────────────────────────────────────────────
 
@@ -98,13 +106,70 @@ export class AdminTelemedicineComponent implements OnInit {
     return item?.id ?? _index;
   }
 
-  constructor(private telemedicineSvc: AdminTelemedicineService) {}
+  private destroy$ = new Subject<void>();
+
+  // ── Schedule Session ──────────────────────────────────────────────────────
+
+  openSchedule() {
+    this.scheduleData = { doctorName: '', patientName: '', date: '', time: '', type: 'VIDEO', notes: '' };
+    this.showSchedule = true;
+  }
+
+  closeSchedule() { this.showSchedule = false; }
+
+  submitSchedule() {
+    if (!this.scheduleData.doctorName?.trim() || !this.scheduleData.patientName?.trim() ||
+        !this.scheduleData.date || !this.scheduleData.time) {
+      this.toast.show('Please fill all required fields.', 'error');
+      return;
+    }
+    this.scheduleSubmitting = true;
+    const payload = {
+      appointmentDate: this.scheduleData.date,
+      appointmentTime: this.scheduleData.time,
+      appointmentType: this.scheduleData.type,
+      notes: this.scheduleData.notes,
+      status: 'PENDING',
+    };
+    this.telemedicineSvc.scheduleAppointment(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.scheduleSubmitting = false;
+        this.closeSchedule();
+        this.toast.show('Video session scheduled successfully.', 'success');
+      },
+      error: () => {
+        this.scheduleSubmitting = false;
+        this.toast.show('Failed to schedule session. Please try again.', 'error');
+      }
+    });
+  }
+
+  // ── Join Session ──────────────────────────────────────────────────────────
+
+  joinSession(appt: any) {
+    const url = appt.sessionUrl || appt.joinUrl;
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      this.toast.show('Video link not available. Check patient email for the session link.', 'error');
+    }
+  }
+
+  constructor(
+    private telemedicineSvc: AdminTelemedicineService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
-    this.telemedicineSvc.getData().subscribe(({ appointments, doctors }) => {
+    this.telemedicineSvc.getData().pipe(takeUntil(this.destroy$)).subscribe(({ appointments, doctors }) => {
       this.appointments = appointments ?? [];
       this.doctors      = doctors      ?? [];
       this.loading      = false;
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -20,4 +20,12 @@ export class AdminHospitalsService {
       catchError(() => of([]))
     );
   }
+
+  updateHospital(id: number, body: any): Observable<any> {
+    return this.http.put(`${this.base}/hospitals/${id}`, body);
+  }
+
+  createHospital(body: any): Observable<any> {
+    return this.http.post(`${this.base}/hospitals`, body);
+  }
 }
