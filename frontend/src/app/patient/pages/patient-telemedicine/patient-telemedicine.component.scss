@@ -517,6 +517,47 @@ tr:hover td      { background: var(--bg); }
   color: var(--red);
 }
 
+.field-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--mid, #4A5568);
+  padding: 8px 0;
+}
+
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border, #E2E8F0);
+  border-top-color: var(--blue, #1A5FA8);
+  animation: tm-spin .8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes tm-spin { to { transform: rotate(360deg); } }
+
+.field-err-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--red, #B91C1C);
+  padding: 6px 0;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--blue, #1A5FA8);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
 // ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 1000px) {

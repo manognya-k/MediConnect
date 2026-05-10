@@ -10,17 +10,30 @@ export class AdminTelemedicineService {
   constructor(private http: HttpClient) {}
 
   getVideoAppointments(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/appointments`).pipe(
+    return this.http.get<any[]>(`${this.base}/admin/video-appointments`).pipe(
       catchError(() => of([]))
     );
   }
   getDoctorAvailability(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/doctors`).pipe(catchError(() => of([])));
+    return this.http.get<any[]>(`${this.base}/admin/doctor-availability`).pipe(catchError(() => of([])));
   }
   getData() {
     return forkJoin({ appointments: this.getVideoAppointments(), doctors: this.getDoctorAvailability() });
   }
   scheduleAppointment(data: any): Observable<any> {
     return this.http.post<any>(`${this.base}/appointments`, data);
+  }
+
+  getPatients(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/patients`).pipe(catchError(() => of([])));
+  }
+
+  getVideoSessions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/telemedicine/sessions`).pipe(catchError(() => of([])));
+  }
+
+  completeSession(appointmentId: number, durationMinutes?: number): Observable<any> {
+    return this.http.post(`${this.base}/telemedicine/sessions/complete`,
+      { appointmentId, durationMinutes });
   }
 }

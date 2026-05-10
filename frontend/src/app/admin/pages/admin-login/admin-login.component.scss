@@ -151,6 +151,18 @@
   max-width: 380px;
 }
 
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--mid);
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color .15s;
+  &:hover { color: var(--teal); }
+}
+
 .form-logo {
   margin-bottom: 28px;
 }
@@ -305,4 +317,11 @@
   font-family: 'IBM Plex Mono', monospace;
   color: var(--mid);
   font-size: 10.5px;
+}
+
+.hint-link {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 500;
+  &:hover { text-decoration: underline; }
 }

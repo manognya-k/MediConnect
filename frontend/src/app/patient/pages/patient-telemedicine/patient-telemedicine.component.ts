@@ -6,6 +6,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { PatientTelemedicineService, computeTimeBadge } from '../../services/patient-telemedicine.service';
 import { NextSession, ScheduledSession, PastSession } from '../../models/patient-telemedicine.model';
+import { PatientAppointmentsService } from '../../services/patient-appointments.service';
 import { ToastService } from '../../../services/toast.service';
 
 // Avatar colour pairs for deterministic assignment
@@ -44,6 +45,11 @@ export class PatientTelemedicineComponent implements OnInit, OnDestroy {
   // Cancelling
   cancellingId: string | null = null;
 
+  // Doctor list for book modal
+  allDoctors:     any[]    = [];
+  doctorsLoading  = false;
+  doctorsError    = false;
+
   // Forms
   bookForm:        FormGroup;
   rescheduleForm:  FormGroup;
@@ -53,15 +59,16 @@ export class PatientTelemedicineComponent implements OnInit, OnDestroy {
   readonly rowSkels     = [1, 2, 3];
 
   constructor(
-    private svc:   PatientTelemedicineService,
-    private toast: ToastService,
-    private fb:    FormBuilder
+    private svc:      PatientTelemedicineService,
+    private apptSvc:  PatientAppointmentsService,
+    private toast:    ToastService,
+    private fb:       FormBuilder
   ) {
     this.bookForm = this.fb.group({
-      doctorName: ['', Validators.required],
-      date:       ['', Validators.required],
-      time:       ['', Validators.required],
-      reason:     ['', [Validators.required, Validators.minLength(3)]]
+      doctorId: [null, Validators.required],
+      date:     ['', Validators.required],
+      time:     ['', Validators.required],
+      reason:   ['', [Validators.required, Validators.minLength(3)]]
     });
 
     this.rescheduleForm = this.fb.group({
@@ -120,18 +127,9 @@ export class PatientTelemedicineComponent implements OnInit, OnDestroy {
 
   joinSession(): void {
     if (!this.nextSession || this.joiningSession) return;
-    this.joiningSession = true;
-
-    this.svc.getJoinUrl(this.nextSession.sessionId).subscribe({
-      next: ({ url }) => {
-        window.open(url, '_blank');
-        this.joiningSession = false;
-      },
-      error: () => {
-        this.toast.show('Could not connect. Please try again.', 'error');
-        this.joiningSession = false;
-      }
-    });
+    const url = this.nextSession.joinUrl?.trim() ||
+      `https://meet.jit.si/mediconnect-${this.nextSession.sessionId}`;
+    window.open(url, '_blank', 'noopener');
   }
 
   // ── Cancel session ────────────────────────────────────────────────────────
@@ -160,13 +158,28 @@ export class PatientTelemedicineComponent implements OnInit, OnDestroy {
   openBookModal(): void {
     this.bookForm.reset();
     this.showBookModal = true;
+    if (!this.allDoctors.length) {
+      this.loadDoctors();
+    }
   }
+
+  private loadDoctors(): void {
+    this.doctorsLoading = true;
+    this.doctorsError   = false;
+    this.apptSvc.getDoctors().pipe(takeUntil(this.destroy$)).subscribe({
+      next: d => { this.allDoctors = d; this.doctorsLoading = false; },
+      error: () => { this.doctorsLoading = false; this.doctorsError = true; },
+    });
+  }
+
+  retryLoadDoctors(): void { this.loadDoctors(); }
 
   closeBookModal(): void { this.showBookModal = false; }
 
   submitBook(): void {
     if (this.bookForm.invalid) { this.bookForm.markAllAsTouched(); return; }
-    this.svc.bookSession(this.bookForm.value).subscribe({
+    const v = this.bookForm.value;
+    this.svc.bookSession({ doctorId: +v.doctorId, date: v.date, time: v.time, reason: v.reason }).subscribe({
       next: () => {
         this.showBookModal = false;
         this.toast.show('Video call booked successfully.', 'success');

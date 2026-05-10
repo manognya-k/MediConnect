@@ -10,6 +10,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { PatientAiService } from '../../services/patient-ai.service';
+import { PatientAuthService } from '../../services/patient-auth.service';
 import {
   AiMode, AiMessage, ConversationTurn,
   PatientAiContext, ModeOption, ContextItem
@@ -103,6 +104,7 @@ export class PatientAiComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   constructor(
     private aiSvc:     PatientAiService,
+    private patientAuth: PatientAuthService,
     private route:     ActivatedRoute,
     public  router:    Router,
     private sanitizer: DomSanitizer
@@ -286,7 +288,40 @@ export class PatientAiComponent implements OnInit, OnDestroy, AfterViewChecked {
   // ── Sanitize AI message HTML ──────────────────────────────────────────────
 
   safeHtml(content: string): SafeHtml {
-    return this.sanitizer.sanitize(SecurityContext.HTML,content);
+    const html = this.markdownToHtml(content);
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+  }
+
+  private markdownToHtml(md: string): string {
+    return md
+      .replace(/^### (.+)$/gm, '<h4 class="md-h4">$1</h4>')
+      .replace(/^## (.+)$/gm,  '<h3 class="md-h3">$1</h3>')
+      .replace(/^# (.+)$/gm,   '<h2 class="md-h2">$1</h2>')
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,         '<em>$1</em>')
+      .replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li>${l.replace(/^[-*] /, '').trim()}</li>`)
+          .join('');
+        return `<ul class="md-ul">${items}</ul>`;
+      })
+      .replace(/((?:^\d+\. .+\n?)+)/gm, (block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li>${l.replace(/^\d+\. /, '').trim()}</li>`)
+          .join('');
+        return `<ol class="md-ol">${items}</ol>`;
+      })
+      .replace(/`([^`]+)`/g, '<code class="md-code">$1</code>')
+      .replace(/^---$/gm, '<hr class="md-hr">')
+      .replace(/\n(?!<(?:ul|ol|h[2-4]|hr|li))/g, '<br>');
+  }
+
+  goToAppointments(): void {
+    const userId = this.patientAuth.getStoredUser()?.userId;
+    if (userId) {
+      this.router.navigate(['/patient', userId, 'appointments']);
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

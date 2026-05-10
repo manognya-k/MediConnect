@@ -29,147 +29,191 @@ export class AdminAnalyticsComponent implements OnInit, OnDestroy {
   selectedDept     = 'All Departments';
   selectedRange    = '30d';
 
-  hospitals  = ['All Hospitals', 'Mumbai Branch', 'Delhi Branch', 'Chennai Branch', 'Hyderabad Branch', 'Kolkata Branch', 'Bangalore Branch'];
-  departments = ['All Departments', 'Cardiology', 'Orthopedics', 'Neurology', 'General', 'Emergency', 'Oncology'];
-  ranges     = [{ val: '7d', label: 'Last 7 Days' }, { val: '30d', label: 'Last 30 Days' }, { val: '90d', label: 'Last 90 Days' }, { val: '1y', label: 'Last Year' }];
-
-  // ── Stat card getters ────────────────────────────────────────────────────────
-
-  get patientFlow(): string | number {
-    return this.stats.totalPatients ?? 8432;
-  }
-
-  get occupancyPct(): string {
-    if (this.stats.totalBeds && this.stats.occupiedBeds) {
-      return ((this.stats.occupiedBeds / this.stats.totalBeds) * 100).toFixed(1) + '%';
-    }
-    return this.stats.bedOccupancy ?? '84%';
-  }
-
-  // ── Heatmap ──────────────────────────────────────────────────────────────────
-
-  heatmapDays  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  heatmapHours = ['6AM','8AM','10AM','12PM','2PM','4PM','6PM','8PM','10PM','12AM','2AM','4AM'];
-  heatmapData: number[][] = [
-    [12,28,45,62,58,71,85,90,67,34,15,8],
-    [10,24,42,68,72,78,92,88,71,38,18,7],
-    [14,32,51,74,69,82,95,91,73,40,20,9],
-    [11,27,48,65,63,75,88,85,68,35,16,8],
-    [16,35,55,78,74,86,98,94,76,42,22,10],
-    [8,18,30,42,45,52,60,58,44,22,10,5],
-    [6,14,25,35,38,44,50,48,36,18,8,4]
+  hospitals:   string[] = ['All Hospitals'];
+  departments: string[] = ['All Departments'];
+  ranges = [
+    { val: '7d',  label: 'Last 7 Days',  days: 7   },
+    { val: '30d', label: 'Last 30 Days', days: 30  },
+    { val: '90d', label: 'Last 90 Days', days: 90  },
+    { val: '1y',  label: 'Last Year',    days: 365 }
   ];
 
-  getHeatIntensity(val: number): string {
-    if (val < 20) return 'rgba(10,175,184,0.1)';
-    if (val < 40) return 'rgba(10,175,184,0.3)';
-    if (val < 60) return 'rgba(10,175,184,0.5)';
-    if (val < 80) return 'rgba(10,175,184,0.75)';
+  private hospitalMap = new Map<string, number>();
+
+  // ── Computed stat values from real data ───────────────────────────────────────
+  treatmentSuccessPct  = '—';
+  cancellationRatePct  = '—';
+
+  get patientFlow(): number { return this.stats.totalPatients ?? 0; }
+
+  get occupancyPct(): string {
+    if (this.stats.totalBeds && this.stats.occupiedBeds != null)
+      return ((this.stats.occupiedBeds / this.stats.totalBeds) * 100).toFixed(1) + '%';
+    return this.stats.icuOccupancyPct != null ? `${this.stats.icuOccupancyPct}%` : '—';
+  }
+
+  // ── Heatmap (real appointment day × time-slot distribution) ──────────────────
+
+  heatmapDays  = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  heatmapHours = ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM', '10PM', '12AM', '2AM', '4AM'];
+  heatmapData: number[][] = Array.from({ length: 7 }, () => Array(12).fill(0));
+
+  getHeatIntensity(val: number, max: number): string {
+    if (!max || val === 0) return 'rgba(10,175,184,0.06)';
+    const ratio = val / max;
+    if (ratio < 0.2)  return 'rgba(10,175,184,0.15)';
+    if (ratio < 0.4)  return 'rgba(10,175,184,0.35)';
+    if (ratio < 0.6)  return 'rgba(10,175,184,0.55)';
+    if (ratio < 0.8)  return 'rgba(10,175,184,0.75)';
     return 'rgba(10,175,184,1)';
   }
 
-  getHeatTextColor(val: number): string {
-    return val < 40 ? '#94A3B8' : '#F1F5F9';
+  getHeatTextColor(val: number, max: number): string {
+    if (!max || val === 0) return '#CBD5E1';
+    return val / max < 0.4 ? '#94A3B8' : '#F1F5F9';
   }
 
-  // ── Chart: Bed Occupancy (line) ───────────────────────────────────────────────
+  get heatmapMax(): number {
+    return Math.max(1, ...this.heatmapData.map(row => Math.max(...row)));
+  }
 
-  bedOccupancyData: ChartData<'line'> = {
-    labels: ['Apr 1','Apr 5','Apr 10','Apr 15','Apr 20','Apr 25','Apr 30'],
-    datasets: [{
-      label: 'Occupancy %',
-      data: [72,75,79,83,81,87,84],
-      borderColor: '#EF4444',
-      backgroundColor: 'rgba(239,68,68,0.1)',
-      tension: 0.4,
-      fill: true,
-      pointRadius: 3,
-      borderWidth: 2
-    }]
-  };
+  // ── Charts ────────────────────────────────────────────────────────────────────
 
-  // ── Chart: Treatment Success Rate (bar) ───────────────────────────────────────
+  bedOccupancyData: ChartData<'line'> = { labels: [], datasets: [{ label: 'Occupancy %', data: [], borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, pointRadius: 4, borderWidth: 2 }] };
 
-  treatmentSuccessData: ChartData<'bar'> = {
-    labels: ['Cardiology','Orthopedics','Neurology','General','Emergency','Oncology'],
-    datasets: [{
-      label: 'Success Rate %',
-      data: [96,94,91,97,88,82],
-      backgroundColor: '#0AAFB8',
-      borderRadius: 6
-    }]
-  };
+  treatmentSuccessData: ChartData<'bar'> = { labels: [], datasets: [{ label: 'Completion Rate %', data: [], backgroundColor: '#0AAFB8', borderRadius: 6 }] };
 
-  // ── Chart: Mortality Rate (line) ──────────────────────────────────────────────
+  cancellationTrendData: ChartData<'line'> = { labels: [], datasets: [{ label: 'Cancellation Rate %', data: [], borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.4, fill: true, pointRadius: 3, borderWidth: 2 }] };
 
-  mortalityRateData: ChartData<'line'> = {
-    labels: ['Nov','Dec','Jan','Feb','Mar','Apr'],
-    datasets: [{
-      label: 'Mortality Rate %',
-      data: [2.1,2.3,1.9,2.0,1.7,1.8],
-      borderColor: '#F59E0B',
-      backgroundColor: 'rgba(245,158,11,0.1)',
-      tension: 0.4,
-      fill: true,
-      pointRadius: 3,
-      borderWidth: 2
-    }]
-  };
-
-  // ── Chart: Avg Length of Stay (bar) ──────────────────────────────────────────
-
-  avgLosData: ChartData<'bar'> = {
-    labels: ['ICU','Cardiology','Neurology','Orthopedics','General'],
-    datasets: [{
-      label: 'Days',
-      data: [8.2,5.4,6.1,4.8,3.2],
-      backgroundColor: '#8B5CF6',
-      borderRadius: 6
-    }]
-  };
+  apptByDeptData: ChartData<'bar'> = { labels: [], datasets: [{ label: 'Total Appointments', data: [], backgroundColor: '#8B5CF6', borderRadius: 6 }] };
 
   // ── Chart options ─────────────────────────────────────────────────────────────
 
   lineOptions: ChartConfiguration<'line'>['options'] = {
     responsive: true,
     maintainAspectRatio: true,
-    plugins: {
-      legend: { display: true, position: 'top' }
-    },
+    plugins: { legend: { display: true, position: 'top' } },
     scales: {
-      y: {
-        grid: { color: 'rgba(255,255,255,0.05)' },
-        beginAtZero: false
-      },
-      x: { grid: { color: 'rgba(255,255,255,0.05)' } }
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+      x: { grid: { display: false } }
     }
   };
 
   barOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
     maintainAspectRatio: true,
-    plugins: {
-      legend: { display: true, position: 'top' }
-    },
+    plugins: { legend: { display: true, position: 'top' } },
     scales: {
-      y: { grid: { color: 'rgba(255,255,255,0.05)' } },
-      x: { grid: { color: 'rgba(255,255,255,0.05)' } }
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+      x: { grid: { display: false } }
     }
   };
 
   constructor(private analyticsSvc: AdminAnalyticsService) {}
 
+  private buildFilters(): { hospitalId?: number; department?: string; rangeDays?: number } {
+    const filters: { hospitalId?: number; department?: string; rangeDays?: number } = {};
+    if (this.selectedHospital !== 'All Hospitals') {
+      const id = this.hospitalMap.get(this.selectedHospital);
+      if (id) filters.hospitalId = id;
+    }
+    if (this.selectedDept !== 'All Departments') {
+      filters.department = this.selectedDept;
+    }
+    const range = this.ranges.find(r => r.val === this.selectedRange);
+    if (range) filters.rangeDays = range.days;
+    return filters;
+  }
+
+  private loadAnalytics(): void {
+    this.analyticsSvc.getAnalytics(this.buildFilters()).subscribe({
+      next: (analytics) => {
+        if (analytics && typeof analytics === 'object') this.applyAnalytics(analytics);
+      }
+    });
+  }
+
+  onFilterChange(): void { this.loadAnalytics(); }
+
   ngOnInit(): void {
     timer(0, 30000).pipe(
-      switchMap(() => this.analyticsSvc.getAllData()),
+      switchMap(() => this.analyticsSvc.getAllData(this.buildFilters())),
       takeUntil(this.destroy$)
     ).subscribe({
-      next: ({ stats }) => {
+      next: ({ stats, bedOccupancy, hospitals, analytics }) => {
         this.stats   = stats ?? {};
         this.loading = false;
+
+        // Hospitals filter dropdown + build id map for filter params
+        this.hospitalMap.clear();
+        (hospitals as any[]).forEach((h: any) => {
+          const name = h.hospitalName || h.name || '';
+          if (name && h.hospitalId) this.hospitalMap.set(name, h.hospitalId);
+        });
+        const names = Array.from(this.hospitalMap.keys());
+        this.hospitals = ['All Hospitals', ...names];
+
+        // Bed occupancy trend per hospital
+        if ((bedOccupancy as any[])?.length) {
+          this.bedOccupancyData = {
+            labels: (bedOccupancy as any[]).map((h: any) => h.city || h.hospitalName || ''),
+            datasets: [{ label: 'Occupancy %', data: (bedOccupancy as any[]).map((h: any) => h.occupancyPct || 0), borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, pointRadius: 4, borderWidth: 2 }]
+          };
+        }
+
+        if (analytics && typeof analytics === 'object') {
+          this.applyAnalytics(analytics);
+        }
       },
       error: () => { this.loading = false; }
     });
+  }
+
+  private applyAnalytics(a: any): void {
+    // ── Treatment completion rate by department ─────────────────────────────
+    const completed: Record<string, number> = a.completedByDepartment ?? {};
+    const total:     Record<string, number> = a.totalByDepartment     ?? {};
+    const depts = Object.keys(total);
+
+    // Populate departments filter
+    this.departments = ['All Departments', ...depts];
+
+    if (depts.length) {
+      const rates = depts.map(d => total[d] > 0 ? Math.round((completed[d] || 0) / total[d] * 100) : 0);
+      this.treatmentSuccessData = {
+        labels: depts,
+        datasets: [{ label: 'Completion Rate %', data: rates, backgroundColor: '#0AAFB8', borderRadius: 6 }]
+      };
+      const avgRate = rates.length ? Math.round(rates.reduce((s, v) => s + v, 0) / rates.length) : 0;
+      this.treatmentSuccessPct = avgRate + '%';
+    }
+
+    // ── Cancellation rate trend (last 6 months) ─────────────────────────────
+    const cancRate: Record<string, number> = a.cancellationRate ?? {};
+    const months = Object.keys(cancRate);
+    if (months.length) {
+      const rates = months.map(m => cancRate[m] ?? 0);
+      this.cancellationTrendData = {
+        labels: months,
+        datasets: [{ label: 'Cancellation Rate %', data: rates, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.4, fill: true, pointRadius: 3, borderWidth: 2 }]
+      };
+      const latest = rates[rates.length - 1] ?? 0;
+      this.cancellationRatePct = latest.toFixed(1) + '%';
+    }
+
+    // ── Appointments by department (volume) ─────────────────────────────────
+    if (depts.length) {
+      this.apptByDeptData = {
+        labels: depts,
+        datasets: [{ label: 'Total Appointments', data: depts.map(d => total[d] ?? 0), backgroundColor: '#8B5CF6', borderRadius: 6 }]
+      };
+    }
+
+    // ── Heatmap from real appointment day × time-slot data ──────────────────
+    const hm: number[][] = a.heatmap ?? [];
+    if (hm.length === 7 && hm[0]?.length === 12) {
+      this.heatmapData = hm;
+    }
   }
 
   ngOnDestroy() {
@@ -177,78 +221,5 @@ export class AdminAnalyticsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── Filter change handler ─────────────────────────────────────────────────────
-
-  onFilterChange() {
-    this.updateCharts();
-    // Only re-fetch stats when the range changes — hospital/dept are not yet supported by the backend
-    if (this.selectedRange !== this._lastFetchedRange) {
-      this._lastFetchedRange = this.selectedRange;
-      this.analyticsSvc.getStats().pipe(takeUntil(this.destroy$)).subscribe(s => {
-        if (s) this.stats = s;
-      });
-    }
-  }
-
-  // Track last range for which stats were fetched to avoid redundant requests
-  private _lastFetchedRange = '30d';
-
-  private updateCharts() {
-    const isAll  = this.selectedHospital === 'All Hospitals';
-    // Deterministic per-hospital scale ≈ 20% of network total
-    const scale  = isAll ? 1 : 0.20;
-
-    switch (this.selectedRange) {
-      case '7d':
-        this.bedOccupancyData = {
-          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-          datasets: [{ ...this.bedOccupancyData.datasets[0],
-            data: [70,74,77,80,82,79,81].map(v => +(v * scale).toFixed(1)) }]
-        };
-        this.mortalityRateData = {
-          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-          datasets: [{ ...this.mortalityRateData.datasets[0],
-            data: [1.9,2.0,1.8,2.1,1.7,1.8,1.6].map(v => +(v * scale).toFixed(2)) }]
-        };
-        break;
-
-      case '90d':
-        this.bedOccupancyData = {
-          labels: ['Feb W1','Feb W2','Feb W3','Feb W4','Mar W1','Mar W2','Mar W3','Mar W4','Apr W1','Apr W2','Apr W3','Apr W4'],
-          datasets: [{ ...this.bedOccupancyData.datasets[0],
-            data: [68,70,73,75,77,79,82,81,83,85,84,87].map(v => +(v * scale).toFixed(1)) }]
-        };
-        this.mortalityRateData = {
-          labels: ['Feb W1','Feb W2','Feb W3','Feb W4','Mar W1','Mar W2','Mar W3','Mar W4','Apr W1','Apr W2','Apr W3','Apr W4'],
-          datasets: [{ ...this.mortalityRateData.datasets[0],
-            data: [2.4,2.3,2.2,2.1,2.0,1.9,1.9,1.8,1.8,1.7,1.8,1.8].map(v => +(v * scale).toFixed(2)) }]
-        };
-        break;
-
-      case '1y':
-        this.bedOccupancyData = {
-          labels: ['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
-          datasets: [{ ...this.bedOccupancyData.datasets[0],
-            data: [76,74,72,75,78,80,82,79,77,80,83,84].map(v => +(v * scale).toFixed(1)) }]
-        };
-        this.mortalityRateData = {
-          labels: ['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
-          datasets: [{ ...this.mortalityRateData.datasets[0],
-            data: [2.6,2.5,2.4,2.3,2.3,2.2,2.1,2.3,1.9,2.0,1.7,1.8].map(v => +(v * scale).toFixed(2)) }]
-        };
-        break;
-
-      default: // '30d'
-        this.bedOccupancyData = {
-          labels: ['Apr 1','Apr 5','Apr 10','Apr 15','Apr 20','Apr 25','Apr 30'],
-          datasets: [{ ...this.bedOccupancyData.datasets[0],
-            data: [72,75,79,83,81,87,84].map(v => +(v * scale).toFixed(1)) }]
-        };
-        this.mortalityRateData = {
-          labels: ['Nov','Dec','Jan','Feb','Mar','Apr'],
-          datasets: [{ ...this.mortalityRateData.datasets[0],
-            data: [2.1,2.3,1.9,2.0,1.7,1.8].map(v => +(v * scale).toFixed(2)) }]
-        };
-    }
-  }
+  // onFilterChange() { /* charts update automatically on next poll; future: pass filter params to API */ }
 }

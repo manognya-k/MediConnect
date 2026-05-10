@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AdminAuthService } from '../../services/admin-auth.service';
 
 @Component({
   selector: 'app-admin-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-login.component.html',
   styleUrl: './admin-login.component.scss'
 })
@@ -36,7 +36,13 @@ export class AdminLoginComponent {
     this.adminAuth.login({ email: this.email.trim(), password: this.password })
       .subscribe({
         next: () => {
-          this.router.navigate(['/admin/overview'])
+          const adminId = this.adminAuth.getAdmin()?.id;
+          if (!adminId) {
+            this.isLoading = false;
+            this.errorMsg  = 'Unable to resolve admin session.';
+            return;
+          }
+          this.router.navigate(['/admin', adminId, 'overview'])
             .then(navigated => {
               if (!navigated) {
                 this.isLoading = false;

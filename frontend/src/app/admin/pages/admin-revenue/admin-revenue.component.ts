@@ -12,6 +12,7 @@ import { ToastService } from '../../../services/toast.service';
 
 ensureChartRegistered();
 
+
 @Component({
   selector: 'app-admin-revenue',
   standalone: true,
@@ -23,56 +24,42 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
   loading = true;
   stats: any = {};
   private destroy$ = new Subject<void>();
+  private allAppointments: any[] = [];
 
   lineData: ChartData<'line'> = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as string[],
-    datasets: [
-      {
-        label: 'Revenue (₹M)',
-        data: [3.1, 3.6, 3.9, 4.2, 4.8, 4.5, 5.1, 4.9, 5.4, 5.2, 5.8, 6.1],
-        borderColor: '#0AAFB8',
-        backgroundColor: 'rgba(10,175,184,0.15)',
-        tension: 0.4,
-        fill: true,
-        pointRadius: 3,
-        borderWidth: 2
-      }
-    ]
+    labels: [],
+    datasets: [{
+      label: 'Appointments',
+      data: [],
+      borderColor: '#0AAFB8',
+      backgroundColor: 'rgba(10,175,184,0.15)',
+      tension: 0.4,
+      fill: true,
+      pointRadius: 3,
+      borderWidth: 2
+    }]
   };
 
   lineOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        labels: {
-          color: '#94A3B8',
-          font: { size: 11 }
-        }
-      }
+      legend: { labels: { color: '#94A3B8', font: { size: 11 } } }
     },
     scales: {
-      x: {
-        ticks: { color: '#94A3B8' },
-        grid: { color: 'rgba(255,255,255,0.05)' }
-      },
-      y: {
-        ticks: { color: '#94A3B8' },
-        grid: { color: 'rgba(255,255,255,0.05)' }
-      }
+      x: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
     }
   };
 
   doughnutData: ChartData<'doughnut'> = {
-    labels: ['OPD', 'Surgery', 'Emergency', 'ICU', 'Pharmacy', 'Lab'] as string[],
-    datasets: [
-      {
-        data: [30, 24, 16, 14, 10, 6],
-        backgroundColor: ['#0AAFB8', '#3B82F6', '#EF4444', '#F59E0B', '#10B981', '#8B5CF6'],
-        borderWidth: 0,
-        hoverOffset: 4
-      }
-    ]
+    labels: [],
+    datasets: [{
+      data: [],
+      backgroundColor: ['#0AAFB8', '#3B82F6', '#EF4444', '#F59E0B'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
   };
 
   doughnutOptions: ChartOptions<'doughnut'> = {
@@ -81,69 +68,178 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: {
-          color: '#94A3B8',
-          font: { size: 11 },
-          padding: 16,
-          usePointStyle: true
-        }
+        labels: { color: '#94A3B8', font: { size: 11 }, padding: 16, usePointStyle: true }
       }
     },
     cutout: '65%'
   };
 
-  bills = [
-    { id: 'BL-2841', patient: 'Rahul Sharma',  department: 'Cardiology', amount: '₹42,500',   date: 'Apr 30', status: 'paid' },
-    { id: 'BL-2840', patient: 'Priya Nair',    department: 'Surgery',    amount: '₹1,28,000', date: 'Apr 30', status: 'pending' },
-    { id: 'BL-2839', patient: 'Amit Verma',    department: 'Emergency',  amount: '₹18,750',   date: 'Apr 29', status: 'paid' },
-    { id: 'BL-2838', patient: 'Sneha Patel',   department: 'ICU',        amount: '₹95,000',   date: 'Apr 29', status: 'overdue' },
-    { id: 'BL-2837', patient: 'Vikram Singh',  department: 'OPD',        amount: '₹3,200',    date: 'Apr 28', status: 'paid' },
-    { id: 'BL-2836', patient: 'Deepa Rao',     department: 'Lab',        amount: '₹8,600',    date: 'Apr 28', status: 'pending' }
-  ];
+  bills: any[] = [];
 
-  claims = [
-    { id: 'IC-5521', patient: 'Rahul Sharma', insurer: 'Star Health',    amount: '₹38,000',  status: 'approved' },
-    { id: 'IC-5520', patient: 'Meera Joshi',  insurer: 'HDFC Ergo',      amount: '₹72,500',  status: 'processing' },
-    { id: 'IC-5519', patient: 'Karan Mehta',  insurer: 'New India',      amount: '₹1,15,000',status: 'rejected' },
-    { id: 'IC-5518', patient: 'Sunita Gupta', insurer: 'Max Bupa',       amount: '₹25,000',  status: 'approved' },
-    { id: 'IC-5517', patient: 'Ravi Kumar',   insurer: 'Bajaj Allianz',  amount: '₹48,000',  status: 'processing' }
-  ];
-
-  aiInsights = [
-    {
-      dot: '#10B981',
-      html: 'Revenue projected to reach <strong>₹6.5M/day</strong> by Q3 2026 based on current growth trajectory.'
-    },
-    {
-      dot: '#F59E0B',
-      html: '<strong>Insurance claim rejections</strong> up 12% this month. Review documentation process.'
-    },
-    {
-      dot: '#0AAFB8',
-      html: 'Cardiology dept generating <strong>28% of total revenue</strong> with highest per-visit value.'
-    }
-  ];
+  aiInsights: { dot: string; html: string }[] = [];
 
   constructor(private service: AdminRevenueService, private toast: ToastService) {}
 
   ngOnInit(): void {
     timer(0, 30000).pipe(
-      switchMap(() => this.service.getAppointmentStats()),
+      switchMap(() => this.service.getAllData()),
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (data) => {
-        this.stats = data;
+      next: ({ stats, appointments, bills }) => {
+        this.stats = stats;
+        this.allAppointments = appointments;
         this.loading = false;
+        this.buildBills(bills.length > 0 ? bills : appointments);
+        this.buildDoughnut(stats);
+        this.buildLineChart(appointments);
+        this.buildInsights(stats, appointments);
       },
-      error: () => {
-        this.loading = false;
-      }
+      error: () => { this.loading = false; }
     });
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private parseDate(raw: any): Date | null {
+    if (!raw) return null;
+    if (Array.isArray(raw)) return new Date(raw[0], raw[1] - 1, raw[2]);
+    return new Date(raw);
+  }
+
+  private buildBills(items: any[]) {
+    const isBill = (x: any) => x.billDate !== undefined;
+
+    if (isBill(items[0] ?? {})) {
+      this.bills = items.slice(0, 6).map(b => {
+        const date = b.billDate ? new Date(b.billDate) : null;
+        const dateStr = date ? date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—';
+        const amountNum = Number(b.amount ?? 0);
+        const status = b.status === 'PAID'   ? 'paid'
+                     : b.status === 'WAIVED' ? 'paid'
+                     : b.status === 'PENDING' ? 'pending' : 'overdue';
+        return {
+          id: `BILL-${b.id}`,
+          patient: b.patientName ?? '—',
+          department: b.department ?? 'General',
+          amount: `₹${amountNum.toLocaleString('en-IN')}`,
+          date: dateStr,
+          status
+        };
+      });
+    } else {
+      const sorted = [...items]
+        .filter(a => a.appointmentDate)
+        .sort((a, b) => {
+          const da = this.parseDate(a.appointmentDate)?.getTime() ?? 0;
+          const db = this.parseDate(b.appointmentDate)?.getTime() ?? 0;
+          return db - da;
+        })
+        .slice(0, 6);
+
+      this.bills = sorted.map(a => {
+        const date = this.parseDate(a.appointmentDate);
+        const dateStr = date ? date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—';
+        const dept = a.doctor?.specialization || a.doctor?.user?.specialization || 'General';
+        const patient = a.patient?.user?.name || '—';
+        const status = a.status === 'CONFIRMED' ? 'paid'
+                     : a.status === 'PENDING'   ? 'pending'
+                     : a.status === 'CANCELLED' ? 'overdue' : 'pending';
+        return {
+          id: `APT-${a.appointmentId}`,
+          patient,
+          department: dept,
+          amount: '—',
+          date: dateStr,
+          status
+        };
+      });
+    }
+  }
+
+  private buildDoughnut(stats: any) {
+    const confirmed = stats.confirmed || 0;
+    const pending   = stats.pending   || 0;
+    const cancelled = stats.cancelled || 0;
+    const video     = stats.video     || 0;
+    const inPerson  = Math.max(0, confirmed - video);
+
+    const entries = [
+      ['In-Person', inPerson],
+      ['Video', video],
+      ['Pending', pending],
+      ['Cancelled', cancelled]
+    ].filter(([, v]) => (v as number) > 0) as [string, number][];
+
+    if (!entries.length) return;
+
+    const colors = ['#0AAFB8', '#3B82F6', '#F59E0B', '#EF4444'];
+    this.doughnutData = {
+      labels: entries.map(([k]) => k),
+      datasets: [{
+        data: entries.map(([, v]) => v as number),
+        backgroundColor: colors.slice(0, entries.length),
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    };
+  }
+
+  private buildLineChart(appointments: any[]) {
+    const monthCounts: Record<string, number> = {};
+    const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    for (const a of appointments) {
+      const d = this.parseDate(a.appointmentDate);
+      if (!d) continue;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthCounts[key] = (monthCounts[key] || 0) + 1;
+    }
+
+    const sorted = Object.entries(monthCounts).sort(([a], [b]) => a.localeCompare(b)).slice(-12);
+    if (!sorted.length) return;
+
+    this.lineData = {
+      labels: sorted.map(([k]) => {
+        const [year, month] = k.split('-');
+        return `${monthLabels[+month - 1]} ${year}`;
+      }),
+      datasets: [{
+        label: 'Appointments',
+        data: sorted.map(([, v]) => v),
+        borderColor: '#0AAFB8',
+        backgroundColor: 'rgba(10,175,184,0.15)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 3,
+        borderWidth: 2
+      }]
+    };
+  }
+
+  private buildInsights(stats: any, appointments: any[]) {
+    const insights: { dot: string; html: string }[] = [];
+    const total: number     = stats.total     || 0;
+    const confirmed: number = stats.confirmed || 0;
+    const pending: number   = stats.pending   || 0;
+    const video: number     = stats.video     || 0;
+
+    if (total > 0) {
+      const rate = Math.round((confirmed / total) * 100);
+      insights.push({ dot: '#10B981', html: `<strong>${confirmed}</strong> of <strong>${total}</strong> appointments confirmed — <strong>${rate}%</strong> conversion rate.` });
+    }
+    if (pending > 0) {
+      insights.push({ dot: '#F59E0B', html: `<strong>${pending} appointment${pending > 1 ? 's' : ''} pending</strong> confirmation. Review and approve to reduce patient wait times.` });
+    }
+    if (video > 0) {
+      insights.push({ dot: '#0AAFB8', html: `<strong>${video}</strong> video consultations booked — ${total > 0 ? Math.round((video / total) * 100) : 0}% of total appointments are telemedicine.` });
+    }
+    if (!insights.length) {
+      insights.push({ dot: '#94A3B8', html: 'No appointment data available yet. Insights will appear once appointments are created.' });
+    }
+    this.aiInsights = insights.slice(0, 3);
   }
 
   getBillBadge(status: string): string {
@@ -153,51 +249,53 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
     return 'b-blue';
   }
 
-  getClaimBadge(status: string): string {
-    if (status === 'approved')   return 'b-green';
-    if (status === 'processing') return 'b-amber';
-    if (status === 'rejected')   return 'b-red';
-    return 'b-blue';
-  }
-
-  trackByIndex(index: number): number {
-    return index;
-  }
+  trackByIndex(index: number): number { return index; }
 
   downloadReport() {
-    const reportLines = [
-      'MediConnect Revenue Report',
-      `Generated: ${new Date().toLocaleString()}`,
-      '',
-      'BILLING SUMMARY',
-      '---',
-      ...this.bills.map(b => `${b.id} | ${b.patient} | ${b.department} | ${b.amount} | ${b.date} | ${b.status.toUpperCase()}`),
-      '',
-      'INSURANCE CLAIMS',
-      '---',
-      ...this.claims.map(c => `${c.id} | ${c.patient} | ${c.insurer} | ${c.amount} | ${c.status.toUpperCase()}`),
-    ];
-    const blob = new Blob([reportLines.join('\n')], { type: 'text/plain' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `revenue-report-${new Date().toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    this.toast.show('Revenue report downloaded.', 'success');
+    const rows = this.bills.map(b => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #E5E7EB">${b.id}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #E5E7EB">${b.patient}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #E5E7EB">${b.department}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #E5E7EB">${b.amount}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #E5E7EB">${b.date}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #E5E7EB;text-transform:capitalize">${b.status}</td>
+      </tr>`).join('');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Appointment Report</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; color: #1a1a2e; }
+  .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0AAFB8; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 700; color: #185FA5; }
+  .logo span { color: #1D9E75; }
+  h2 { font-size: 16px; color: #0D2B4E; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #F2F4F8; padding: 10px 12px; text-align: left; font-size: 12px; color: #0D2B4E; }
+  td { font-size: 13px; }
+  .footer { border-top: 1px solid #E5E7EB; margin-top: 40px; padding-top: 12px; font-size: 11px; color: #8A94A6; display: flex; justify-content: space-between; }
+  @media print { body { margin: 20px; } }
+</style></head><body>
+<div class="header"><div class="logo">Medi<span>Connect</span></div><div style="font-size:12px;color:#8A94A6">Appointment Report</div></div>
+<h2>Appointment Records</h2>
+<table><thead><tr><th>ID</th><th>Patient</th><th>Department</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+<tbody>${rows}</tbody></table>
+<div class="footer"><span>Generated by MediConnect HMS</span><span>${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</span></div>
+<script>window.onload = function(){ window.print(); }<\/script>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
+    this.toast.show('Report opened for printing/saving as PDF.', 'success');
   }
 
   exportRevenue() {
-    const csv = ['Bill ID,Patient,Department,Amount,Date,Status']
+    const csv = ['Appointment ID,Patient,Department,Amount,Date,Status']
       .concat(this.bills.map(b => `"${b.id}","${b.patient}","${b.department}","${b.amount}","${b.date}","${b.status}"`))
       .join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `billing-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.href = url; a.download = `appointments-export-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    this.toast.show('Billing data exported as CSV.', 'success');
+    this.toast.show('Exported as CSV.', 'success');
   }
 }

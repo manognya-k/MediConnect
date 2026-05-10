@@ -26,6 +26,7 @@ export interface ScheduledSession {
   reason: string;
   durationEstMinutes: number;
   status: SessionStatus;
+  joinUrl?: string;
   // Computed on frontend
   timeUntilLabel: string;
   timeBadgeClass: string;

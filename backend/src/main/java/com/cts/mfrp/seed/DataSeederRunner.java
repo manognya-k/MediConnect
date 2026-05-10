@@ -5,9 +5,10 @@ import com.cts.mfrp.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,23 +21,32 @@ import java.time.LocalTime;
  */
 @Slf4j
 @Component
-@Profile("seed")
+@org.springframework.core.annotation.Order(1)
 @RequiredArgsConstructor
 public class DataSeederRunner implements CommandLineRunner {
 
+    // ── Dependencies ─────────────────────────────────────────────
+    private final PasswordEncoder              passwordEncoder;
+
     // ── Repositories ─────────────────────────────────────────────
-    private final HospitalRepository      hospitalRepository;
-    private final UserRepository          userRepository;
-    private final DepartmentRepository    departmentRepository;
-    private final PatientRepository       patientRepository;
-    private final DoctorRepository        doctorRepository;
-    private final AppointmentRepository   appointmentRepository;
-    private final MedicalRecordRepository medicalRecordRepository;
-    private final LabReportRepository     labReportRepository;
-    private final BedRepository           bedRepository;
-    private final InventoryRepository     inventoryRepository;
-    private final NotificationRepository  notificationRepository;
-    private final ChatbotLogRepository    chatbotLogRepository;
+    private final HospitalRepository          hospitalRepository;
+    private final UserRepository              userRepository;
+    private final DepartmentRepository        departmentRepository;
+    private final PatientRepository           patientRepository;
+    private final DoctorRepository            doctorRepository;
+    private final AppointmentRepository       appointmentRepository;
+    private final MedicalRecordRepository     medicalRecordRepository;
+    private final LabReportRepository         labReportRepository;
+    private final BedRepository               bedRepository;
+    private final InventoryRepository         inventoryRepository;
+    private final NotificationRepository      notificationRepository;
+    private final ChatbotLogRepository        chatbotLogRepository;
+    private final PrescriptionRepository      prescriptionRepository;
+    private final MedicineRepository          medicineRepository;
+    private final VitalsRepository            vitalsRepository;
+    private final RescheduleRequestRepository rescheduleRequestRepository;
+    private final BillRepository              billRepository;
+    private final VideoSessionRepository      videoSessionRepository;
 
     // All seed users share the same plain-text password: MediConnect@123
     private static final String DEFAULT_PASSWORD = "MediConnect@123";
@@ -44,6 +54,11 @@ public class DataSeederRunner implements CommandLineRunner {
     // ─────────────────────────────────────────────────────────────
     @Override
     public void run(String... args) {
+        if (userRepository.count() > 0) {
+            log.info("Database already has data — skipping seed.");
+            return;
+        }
+
         log.info("");
         log.info("╔══════════════════════════════════════════════╗");
         log.info("║     MediConnect — JPA Database Seeder        ║");
@@ -71,11 +86,23 @@ public class DataSeederRunner implements CommandLineRunner {
         notificationRepository.deleteAllInBatch();
         log.info("  deleted → notifications");
 
+        prescriptionRepository.deleteAllInBatch();
+        log.info("  deleted → prescriptions");
+
         labReportRepository.deleteAllInBatch();
         log.info("  deleted → lab_reports");
 
         medicalRecordRepository.deleteAllInBatch();
         log.info("  deleted → medical_records");
+
+        rescheduleRequestRepository.deleteAllInBatch();
+        log.info("  deleted → reschedule_requests");
+
+        videoSessionRepository.deleteAllInBatch();
+        log.info("  deleted → video_sessions");
+
+        billRepository.deleteAllInBatch();
+        log.info("  deleted → bills");
 
         appointmentRepository.deleteAllInBatch();
         log.info("  deleted → appointments");
@@ -85,6 +112,12 @@ public class DataSeederRunner implements CommandLineRunner {
 
         inventoryRepository.deleteAllInBatch();
         log.info("  deleted → inventory");
+
+        medicineRepository.deleteAllInBatch();
+        log.info("  deleted → medicines");
+
+        vitalsRepository.deleteAllInBatch();
+        log.info("  deleted → vitals");
 
         patientRepository.deleteAllInBatch();
         log.info("  deleted → patients");
@@ -121,6 +154,7 @@ public class DataSeederRunner implements CommandLineRunner {
         h1.setPhone("044-22001100");
         h1.setTotalBeds(300);
         h1.setAvailableBeds(85);
+        h1.setEmailCode("CGH");
         h1 = hospitalRepository.save(h1);
 
         Hospital h2 = new Hospital();
@@ -130,6 +164,7 @@ public class DataSeederRunner implements CommandLineRunner {
         h2.setPhone("080-44002200");
         h2.setTotalBeds(200);
         h2.setAvailableBeds(60);
+        h2.setEmailCode("AMC");
         h2 = hospitalRepository.save(h2);
 
         log.info("  inserted → hospitals (2)");
@@ -138,65 +173,55 @@ public class DataSeederRunner implements CommandLineRunner {
         // Admin users
         User adminUser1 = buildUser("Admin Rajan",   "admin.rajan@cgh.com",   pwd, "9900001111",
                 "ADMIN", h1, null, null,
-                LocalDate.of(1980, 3, 15), "MALE", null,
-                "1 Admin Nagar, Chennai", "9900001112");
+                LocalDate.of(1980, 3, 15), "MALE", null, "9900001112");
         adminUser1 = userRepository.save(adminUser1);
 
         User adminUser2 = buildUser("Admin Priya",   "admin.priya@amc.com",   pwd, "9900002222",
                 "ADMIN", h2, null, null,
-                LocalDate.of(1985, 7, 22), "FEMALE", null,
-                "2 Admin Street, Bangalore", "9900002223");
+                LocalDate.of(1985, 7, 22), "FEMALE", null, "9900002223");
         adminUser2 = userRepository.save(adminUser2);
 
         // Doctor users — Hospital 1
         User drArunUser = buildUser("Dr. Arun Kumar",  "arun.kumar@cgh.com",  pwd, "9811001111",
                 "DOCTOR", h1, "Cardiology", "AVAILABLE",
-                LocalDate.of(1978, 5, 10), "MALE", "B+",
-                "10 Doctors Colony, Chennai", "9811001112");
+                LocalDate.of(1978, 5, 10), "MALE", "B+", "9811001112");
         drArunUser = userRepository.save(drArunUser);
 
         User drMeenaUser = buildUser("Dr. Meena Reddy", "meena.reddy@cgh.com", pwd, "9811002222",
                 "DOCTOR", h1, "Neurology", "AVAILABLE",
-                LocalDate.of(1982, 11, 18), "FEMALE", "A+",
-                "20 Health Avenue, Chennai", "9811002223");
+                LocalDate.of(1982, 11, 18), "FEMALE", "A+", "9811002223");
         drMeenaUser = userRepository.save(drMeenaUser);
 
         // Doctor users — Hospital 2
         User drVikramUser = buildUser("Dr. Vikram Singh", "vikram.singh@amc.com", pwd, "9822003333",
                 "DOCTOR", h2, "Orthopedics", "AVAILABLE",
-                LocalDate.of(1975, 8, 25), "MALE", "O+",
-                "15 Medical Lane, Bangalore", "9822003334");
+                LocalDate.of(1975, 8, 25), "MALE", "O+", "9822003334");
         drVikramUser = userRepository.save(drVikramUser);
 
         User drLakshmiUser = buildUser("Dr. Lakshmi Nair", "lakshmi.nair@amc.com", pwd, "9822004444",
                 "DOCTOR", h2, "Pediatrics", "NOT_AVAILABLE",
-                LocalDate.of(1988, 2, 14), "FEMALE", "AB+",
-                "30 Care Street, Bangalore", "9822004445");
+                LocalDate.of(1988, 2, 14), "FEMALE", "AB+", "9822004445");
         drLakshmiUser = userRepository.save(drLakshmiUser);
 
         // Patient users
         User patRajeshUser = buildUser("Rajesh Sharma",  "rajesh.sharma@gmail.com", pwd, "9733001111",
                 "PATIENT", h1, null, null,
-                LocalDate.of(1990, 6, 12), "MALE", "O+",
-                "45 Park Road, Chennai", "9733001112");
+                LocalDate.of(1990, 6, 12), "MALE", "O+", "9733001112");
         patRajeshUser = userRepository.save(patRajeshUser);
 
         User patSnehaUser = buildUser("Sneha Patel",    "sneha.patel@gmail.com",   pwd, "9733002222",
                 "PATIENT", h1, null, null,
-                LocalDate.of(1995, 9, 30), "FEMALE", "B+",
-                "12 Lake View, Chennai", "9733002223");
+                LocalDate.of(1995, 9, 30), "FEMALE", "B+", "9733002223");
         patSnehaUser = userRepository.save(patSnehaUser);
 
         User patMohanUser = buildUser("Mohan Das",      "mohan.das@gmail.com",     pwd, "9744003333",
                 "PATIENT", h2, null, null,
-                LocalDate.of(1988, 1, 20), "MALE", "A-",
-                "77 Brigade Road, Bangalore", "9744003334");
+                LocalDate.of(1988, 1, 20), "MALE", "A-", "9744003334");
         patMohanUser = userRepository.save(patMohanUser);
 
         User patAnithaUser = buildUser("Anitha Krishnan", "anitha.k@gmail.com",    pwd, "9744004444",
                 "PATIENT", h2, null, null,
-                LocalDate.of(2000, 4, 5), "FEMALE", "AB-",
-                "33 MG Road, Bangalore", "9744004445");
+                LocalDate.of(2000, 4, 5), "FEMALE", "AB-", "9744004445");
         patAnithaUser = userRepository.save(patAnithaUser);
 
         log.info("  inserted → users (10)");
@@ -218,19 +243,19 @@ public class DataSeederRunner implements CommandLineRunner {
 
         // ── 4. Patients ───────────────────────────────────────
         Patient rajesh = buildPatient(patRajeshUser, LocalDate.of(1990, 6, 12),
-                "MALE", "O+", "45 Park Road, Chennai", "9733001112");
+                "MALE", "O+", "9733001112");
         rajesh = patientRepository.save(rajesh);
 
         Patient sneha = buildPatient(patSnehaUser, LocalDate.of(1995, 9, 30),
-                "FEMALE", "B+", "12 Lake View, Chennai", "9733002223");
+                "FEMALE", "B+", "9733002223");
         sneha = patientRepository.save(sneha);
 
         Patient mohan = buildPatient(patMohanUser, LocalDate.of(1988, 1, 20),
-                "MALE", "A-", "77 Brigade Road, Bangalore", "9744003334");
+                "MALE", "A-", "9744003334");
         mohan = patientRepository.save(mohan);
 
         Patient anitha = buildPatient(patAnithaUser, LocalDate.of(2000, 4, 5),
-                "FEMALE", "AB-", "33 MG Road, Bangalore", "9744004445");
+                "FEMALE", "AB-", "9744004445");
         anitha = patientRepository.save(anitha);
 
         log.info("  inserted → patients (4)");
@@ -463,11 +488,11 @@ public class DataSeederRunner implements CommandLineRunner {
                            String role, Hospital hospital,
                            String specialization, String availabilityStatus,
                            LocalDate dob, String gender, String bloodGroup,
-                           String address, String emergencyContact) {
+                           String emergencyContact) {
         User u = new User();
         u.setName(name);
         u.setEmail(email);
-        u.setPassword(password);
+        u.setPassword(passwordEncoder.encode(password));
         u.setPhone(phone);
         u.setRole(role);
         u.setHospital(hospital);
@@ -476,7 +501,6 @@ public class DataSeederRunner implements CommandLineRunner {
         u.setDateOfBirth(dob);
         u.setGender(gender);
         u.setBloodGroup(bloodGroup);
-        u.setAddress(address);
         u.setEmergencyContact(emergencyContact);
         return u;
     }
@@ -489,13 +513,12 @@ public class DataSeederRunner implements CommandLineRunner {
     }
 
     private Patient buildPatient(User user, LocalDate dob, String gender,
-                                 String bloodGroup, String address, String emergencyContact) {
+                                 String bloodGroup, String emergencyContact) {
         Patient p = new Patient();
         p.setUser(user);
         p.setDateOfBirth(dob);
         p.setGender(gender);
         p.setBloodGroup(bloodGroup);
-        p.setAddress(address);
         p.setEmergencyContact(emergencyContact);
         return p;
     }

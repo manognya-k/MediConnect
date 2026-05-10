@@ -40,6 +40,7 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
   });
 
   diseaseLabels: string[] = [];
+  diseaseSlices: { label: string; value: number; color: string }[] = [];
 
   // ── Chart configs ──────────────────────────────────────────────────────────
 
@@ -147,7 +148,8 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
     };
 
     // Disease distribution
-    this.diseaseLabels   = d.diseaseData.map(s => s.label);
+    this.diseaseLabels  = d.diseaseData.map(s => s.label);
+    this.diseaseSlices  = d.diseaseData.map(s => ({ label: s.label, value: s.value, color: s.color }));
     this.diseaseChartData = {
       labels:   d.diseaseData.map(s => s.label),
       datasets: [{

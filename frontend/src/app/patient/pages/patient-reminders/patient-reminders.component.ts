@@ -100,11 +100,14 @@ export class PatientRemindersComponent implements OnInit, OnDestroy {
 
   private recalculateStats(): void {
     if (!this.stats) return;
-    const taken = this.timeSlots.flatMap(s => s.doses).filter(d => d.isTaken).length;
+    const allDoses = this.timeSlots.flatMap(s => s.doses);
+    const taken = allDoses.filter(d => d.isTaken).length;
+    const total = allDoses.length;
     this.stats = {
       ...this.stats,
       takenToday: taken,
-      dueToday:   Math.max(0, this.stats.activeMedicines - taken)
+      dueToday:   Math.max(0, total - taken),
+      adherencePercent: total > 0 ? Math.round((taken / total) * 100) : 0
     };
   }
 

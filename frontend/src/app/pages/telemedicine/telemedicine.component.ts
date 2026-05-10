@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, Subscription, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LayoutService } from '../../services/layout.service';
@@ -9,6 +10,7 @@ import { SessionTimerService } from '../../services/session-timer.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
+import { environment } from '../../../environments/environment';
 import { BackendAppointment } from '../../models/appointment.model';
 import { TelemedicineSession, TelemedicineStats, SessionStatus } from '../../models/telemedicine.model';
 import { ScheduleSessionFormComponent } from './schedule-session-form/schedule-session-form.component';
@@ -51,6 +53,8 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
 
   private allSessions: TelemedicineSession[] = [];
 
+  completingId: string | null = null;
+
   constructor(
     public layout: LayoutService,
     private apptSvc: AppointmentService,
@@ -58,7 +62,8 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
     private timerS: SessionTimerService,
     private toast: ToastService,
     private auth: AuthService,
-    private dashSvc: DashboardService
+    private dashSvc: DashboardService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -168,16 +173,18 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   }
 
   joinSession(session: TelemedicineSession) {
-    if (!session.joinUrl || session.status === 'Scheduled') return;
+    if (!this.isJoinable(session)) return;
     this.joiningId = session.id;
+    const url = session.joinUrl?.trim() ||
+      `https://meet.jit.si/mediconnect-${session.id}`;
     setTimeout(() => {
-      window.open(session.joinUrl, '_blank', 'noopener');
+      window.open(url, '_blank', 'noopener');
       this.joiningId = null;
     }, 800);
   }
 
   isJoinable(session: TelemedicineSession): boolean {
-    return session.status === 'Live' || session.status === 'Upcoming';
+    return session.status === 'Live' || session.status === 'Upcoming' || session.status === 'Scheduled';
   }
 
   statusBadgeClass(status: SessionStatus): string {
@@ -196,6 +203,42 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
     if (status === 'Completed') return 'b-green';
     if (status === 'No-show') return 'b-red';
     return 'b-gray';
+  }
+
+  /** Phase 9: marks session complete and auto-creates an ONLINE medical record. */
+  completeSession(session: TelemedicineSession): void {
+    if (this.completingId) return;
+    this.completingId = session.id;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Mark appointment COMPLETED
+    this.apptSvc.update(Number(session.id), { status: 'COMPLETED' })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+
+    // 2. Create online medical record
+    const record = {
+      patient:         { patientId: Number(session.patientId) },
+      doctor:          this.doctorId ? { doctorId: this.doctorId } : null,
+      recordDate:      today,
+      consultationType: 'ONLINE',
+      notes:           `Online consultation completed on ${today}`
+    };
+    this.http.post(`${environment.apiBase}/medical-records`, record)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toast.show('Session completed. Medical record created.', 'success');
+          this.completingId = null;
+          this.loadAll(this.doctorId);
+        },
+        error: () => {
+          this.toast.show('Session ended but record creation failed.', 'error');
+          this.completingId = null;
+          this.loadAll(this.doctorId);
+        }
+      });
   }
 
   onSessionScheduled() {

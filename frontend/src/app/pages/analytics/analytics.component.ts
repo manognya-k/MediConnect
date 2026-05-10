@@ -47,7 +47,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     labTestsOrdered: 0, avgConsultMinutes: 0,
   };
 
-  typeSplit: AppointmentTypeSplit = { inPersonPercent: 68, videoPercent: 32 };
+  typeSplit: AppointmentTypeSplit = { inPersonPercent: 0, videoPercent: 0 };
   topDiagnoses: TopDiagnosis[] = [];
 
   // ── Line chart ────────────────────────────────────
@@ -96,7 +96,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   // ── Doughnut chart ────────────────────────────────
   doughnutChartData: ChartData<'doughnut'> = {
     labels: ['In-person', 'Video'],
-    datasets: [{ data: [68, 32], backgroundColor: ['#185FA5', '#1D9E75'], borderWidth: 0, hoverOffset: 4 }],
+    datasets: [{ data: [0, 0], backgroundColor: ['#185FA5', '#1D9E75'], borderWidth: 0, hoverOffset: 4 }],
   };
 
   doughnutChartOptions: ChartOptions<'doughnut'> = {
@@ -236,23 +236,52 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   exportReport() {
     this.exporting = true;
-    this.svc.exportReport(this.activeRange).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (blob) => {
-        const date = new Date().toISOString().slice(0, 10);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mediconnect_analytics_${this.activeRange}_${date}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.exporting = false;
-        this.toast.show('Report exported successfully.', 'success');
-      },
-      error: () => {
-        this.exporting = false;
-        this.toast.show('Export failed. Try again.', 'error');
-      },
-    });
+    const date = new Date().toISOString().slice(0, 10);
+    const rows: string[] = [
+      `MediConnect Analytics Report`,
+      `Range,${this.activeRange}`,
+      `Generated,${date}`,
+      ``,
+      `Summary`,
+      `Total Patients,${this.summary.totalPatients}`,
+      `Total Appointments,${this.summary.totalAppointments}`,
+      `Lab Tests Ordered,${this.summary.labTestsOrdered}`,
+      `Avg Consultation (min),${this.summary.avgConsultMinutes}`,
+      ``,
+      `Appointment Type Split`,
+      `In-Person,${this.typeSplit.inPersonPercent}%`,
+      `Video,${this.typeSplit.videoPercent}%`,
+    ];
+
+    if (this.topDiagnoses.length) {
+      rows.push(``, `Top Diagnoses`, `Diagnosis,Count,Percentage`);
+      this.topDiagnoses.forEach(d => rows.push(`"${d.name}",${d.count},${d.percentage}%`));
+    }
+
+    const lineLabels = (this.lineChartData.labels ?? []) as string[];
+    const inPersonData = (this.lineChartData.datasets[0]?.data ?? []) as number[];
+    const videoData    = (this.lineChartData.datasets[1]?.data ?? []) as number[];
+    if (lineLabels.length) {
+      rows.push(``, `Appointments Over Time`, `Period,In-Person,Video`);
+      lineLabels.forEach((lbl, i) => rows.push(`"${lbl}",${inPersonData[i] ?? 0},${videoData[i] ?? 0}`));
+    }
+
+    const barLabels = (this.barChartData.labels ?? []) as string[];
+    const barData   = (this.barChartData.datasets[0]?.data ?? []) as number[];
+    if (barLabels.length) {
+      rows.push(``, `New Patients Per Month`, `Month,Count`);
+      barLabels.forEach((lbl, i) => rows.push(`"${lbl}",${barData[i] ?? 0}`));
+    }
+
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `mediconnect_analytics_${this.activeRange}_${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.exporting = false;
+    this.toast.show('Report exported successfully.', 'success');
   }
 
   formatNumber(n: number): string {

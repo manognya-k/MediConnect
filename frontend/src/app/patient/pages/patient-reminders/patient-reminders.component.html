@@ -79,7 +79,11 @@
             <div class="timeline-date">{{ today | date:"EEEE, MMMM d" }}</div>
           </div>
 
-          <div class="time-slots">
+          <div class="empty-state" *ngIf="timeSlots.length === 0">
+            No medicines scheduled for today.
+          </div>
+
+          <div class="time-slots" *ngIf="timeSlots.length > 0">
             <div *ngFor="let slot of timeSlots; trackBy: trackBySlot; let i = index; let last = last"
                  class="time-slot">
 
@@ -153,6 +157,10 @@
         <!-- ── RIGHT: All Prescriptions ── -->
         <div>
           <div class="timeline-title" style="margin-bottom:14px">All Prescriptions</div>
+
+          <div class="empty-state" *ngIf="prescriptions.length === 0">
+            No prescriptions on file yet.
+          </div>
 
           <div *ngFor="let rx of prescriptions; trackBy: trackByRx" class="med-card">
 

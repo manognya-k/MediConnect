@@ -116,26 +116,13 @@
           </canvas>
         </div>
         <div class="disease-legend">
-          <div class="dl-row">
-            <span class="dl-dot" style="background:#0AAFB8"></span>
-            <span class="dl-label">Cardiology</span>
-            <span class="dl-val">28%</span>
+          <div class="dl-row" *ngFor="let s of diseaseSlices">
+            <span class="dl-dot" [style.background]="s.color"></span>
+            <span class="dl-label">{{ s.label }}</span>
+            <span class="dl-val">{{ s.value }}%</span>
           </div>
-          <div class="dl-row">
-            <span class="dl-dot" style="background:#3B82F6"></span>
-            <span class="dl-label">Orthopaedics</span>
-            <span class="dl-val">19%</span>
-          </div>
-          <div class="dl-row">
-            <span class="dl-dot" style="background:#8B5CF6"></span>
-            <span class="dl-label">Neurology</span>
-            <span class="dl-val">16%</span>
-          </div>
-          <div class="dl-row">
-            <span class="dl-dot" style="background:#10B981"></span>
-            <span class="dl-label">General</span>
-            <span class="dl-val">37%</span>
-          </div>
+          <div *ngIf="!diseaseSlices.length" class="dl-row"
+               style="color:var(--sub);font-size:11px;padding:4px 0">No diagnoses recorded yet</div>
         </div>
       </div>
 

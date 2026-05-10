@@ -6,6 +6,7 @@ import { Patient } from '../../models/patient.model';
 import { PatientFormComponent } from '../patients/patient-form/patient-form.component';
 import { ToastService } from '../../services/toast.service';
 import { LayoutService } from '../../services/layout.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-patient-detail',
@@ -26,7 +27,8 @@ export class PatientDetailComponent implements OnInit {
     private router: Router,
     private patientService: PatientService,
     private toastService: ToastService,
-    public layout: LayoutService
+    public layout: LayoutService,
+    private auth: AuthService
   ) {}
 
   ngOnInit() {
@@ -70,5 +72,10 @@ export class PatientDetailComponent implements OnInit {
     this.patientService.getPatientById(id).subscribe(p => this.patient = p);
   }
 
-  goBack() { this.router.navigate(['/doctor/patients']); }
+  goBack() {
+    const doctorId = this.auth.getUser()?.userId;
+    if (doctorId) {
+      this.router.navigate(['/doctor', doctorId, 'patients']);
+    }
+  }
 }

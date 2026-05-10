@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, catchError, of, throwError } from 'rxjs';
+import { Observable, map, catchError, of, throwError, forkJoin } from 'rxjs';
 import { BackendPatient, Patient, PatientStats, PatientFilter, mapBackendPatient } from '../models/patient.model';
 
 const BASE = 'http://localhost:8081/api';
@@ -112,6 +112,50 @@ export class PatientService {
   getPatientAppointments(patientId: string): Observable<any[]> {
     return this.http.get<any[]>(`${BASE}/appointments/patient/${patientId}`).pipe(
       catchError(() => of([]))
+    );
+  }
+
+  /** Returns only patients linked to this doctor via appointments or medical records. */
+  getDoctorPatients(doctorId: number, filter: PatientFilter): Observable<PagedResult<Patient>> {
+    return forkJoin({
+      patients:     this.http.get<BackendPatient[]>(`${BASE}/doctors/${doctorId}/patients`),
+      appointments: this.http.get<any[]>(`${BASE}/appointments/doctor/${doctorId}`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ patients, appointments }) => {
+        // Build map: patientId → most recent past appointment date
+        const lastVisitMap = new Map<number, string>();
+        for (const appt of appointments) {
+          const pid  = appt.patient?.patientId as number | undefined;
+          const date = appt.appointmentDate as string | undefined;
+          if (pid && date) {
+            const existing = lastVisitMap.get(pid);
+            if (!existing || date > existing) lastVisitMap.set(pid, date);
+          }
+        }
+
+        let all = patients.map((p, i) => {
+          const mapped = mapBackendPatient(p, i);
+          mapped.lastVisit = lastVisitMap.get(p.patientId) ?? '';
+          return mapped;
+        });
+
+        if (filter.search) {
+          const q = filter.search.toLowerCase();
+          all = all.filter(p =>
+            p.fullName.toLowerCase().includes(q) ||
+            p.patientCode.toLowerCase().includes(q) ||
+            p.email?.toLowerCase().includes(q)
+          );
+        }
+        if (filter.gender)     all = all.filter(p => p.gender.toLowerCase() === filter.gender.toLowerCase());
+        if (filter.bloodGroup) all = all.filter(p => p.bloodGroup === filter.bloodGroup);
+        if (filter.status)     all = all.filter(p => p.status.toLowerCase() === filter.status.toLowerCase());
+
+        const total = all.length;
+        const start = (filter.page - 1) * filter.pageSize;
+        return { data: all.slice(start, start + filter.pageSize), total, page: filter.page, pageSize: filter.pageSize };
+      }),
+      catchError(err => throwError(() => err))
     );
   }
 }

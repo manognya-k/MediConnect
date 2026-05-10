@@ -2,7 +2,9 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -12,7 +14,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
-  activeTab: 'PATIENT' | 'DOCTOR' | 'ADMIN' = 'PATIENT';
+  activeTab: 'PATIENT' | 'DOCTOR' = 'PATIENT';
 
   firstName = '';
   lastName = '';
@@ -22,6 +24,7 @@ export class RegisterComponent {
   bloodGroup = '';
   gender = '';
   specialization = '';
+  hospitalId = '';
   password = '';
   confirmPassword = '';
   showPassword = false;
@@ -29,16 +32,42 @@ export class RegisterComponent {
   agreeTerms = false;
   loading = false;
   errorMessage = '';
-  successMessage = '';
 
   bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  constructor(private authService: AuthService, private router: Router) {}
+  specializations = [
+    'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 'Dermatology',
+    'Gastroenterology', 'Oncology', 'Psychiatry', 'Radiology', 'Endocrinology',
+    'Nephrology', 'Pulmonology', 'Rheumatology', 'Urology', 'Ophthalmology',
+    'Otolaryngology', 'Hematology', 'Infectious Disease', 'General Surgery', 'General Medicine'
+  ];
 
-  setTab(tab: 'PATIENT' | 'DOCTOR' | 'ADMIN') {
+  hospitals: any[] = [];
+  hospitalsLoading = false;
+  hospitalsError = false;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private http: HttpClient
+  ) {}
+
+  setTab(tab: 'PATIENT' | 'DOCTOR') {
     this.activeTab = tab;
     this.errorMessage = '';
     this.resetForm();
+    if (tab === 'DOCTOR' && this.hospitals.length === 0) {
+      this.loadHospitals();
+    }
+  }
+
+  loadHospitals() {
+    this.hospitalsLoading = true;
+    this.hospitalsError = false;
+    this.http.get<any[]>(`${environment.apiBase}/hospitals`).subscribe({
+      next: (data) => { this.hospitals = data; this.hospitalsLoading = false; },
+      error: () => { this.hospitalsError = true; this.hospitalsLoading = false; }
+    });
   }
 
   resetForm() {
@@ -50,24 +79,28 @@ export class RegisterComponent {
     this.bloodGroup = '';
     this.gender = '';
     this.specialization = '';
+    this.hospitalId = '';
     this.password = '';
     this.confirmPassword = '';
     this.agreeTerms = false;
   }
 
-  togglePassword() {
-    this.showPassword = !this.showPassword;
-  }
-
-  toggleConfirmPassword() {
-    this.showConfirmPassword = !this.showConfirmPassword;
-  }
+  togglePassword() { this.showPassword = !this.showPassword; }
+  toggleConfirmPassword() { this.showConfirmPassword = !this.showConfirmPassword; }
 
   onRegister() {
     this.errorMessage = '';
 
     if (!this.firstName || !this.lastName || !this.email || !this.phone || !this.password || !this.confirmPassword) {
       this.errorMessage = 'Please fill in all required fields.';
+      return;
+    }
+    if (this.activeTab === 'DOCTOR' && !this.specialization) {
+      this.errorMessage = 'Please select a specialization.';
+      return;
+    }
+    if (this.activeTab === 'DOCTOR' && !this.hospitalId) {
+      this.errorMessage = 'Please select a hospital.';
       return;
     }
     if (this.password !== this.confirmPassword) {
@@ -85,7 +118,7 @@ export class RegisterComponent {
 
     this.loading = true;
 
-    const request = {
+    const request: any = {
       firstName: this.firstName,
       lastName: this.lastName,
       email: this.email,
@@ -95,19 +128,21 @@ export class RegisterComponent {
       dateOfBirth: this.dateOfBirth || undefined,
       bloodGroup: this.bloodGroup || undefined,
       gender: this.gender || undefined,
-      specialization: this.specialization || undefined
     };
+
+    if (this.activeTab === 'DOCTOR') {
+      request.specialization = this.specialization;
+      request.hospitalId = +this.hospitalId;
+    }
 
     this.authService.register(request).subscribe({
       next: (response) => {
         this.authService.saveUser(response);
         this.loading = false;
         if (response.role === 'PATIENT') {
-          this.router.navigate(['/patient/dashboard']);
-        } else if (response.role === 'DOCTOR') {
-          this.router.navigate(['/doctor/dashboard']);
+          this.router.navigate(['/patient', response.userId, 'dashboard']);
         } else {
-          this.router.navigate(['/admin/overview']);
+          this.router.navigate(['/doctor', response.userId, 'dashboard']);
         }
       },
       error: (err) => {

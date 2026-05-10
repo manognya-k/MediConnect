@@ -29,4 +29,5 @@ public class MedicalRecord {
     private String treatment;
     private String prescription;
     private String notes;
+    private String consultationType; // ONLINE or IN_PERSON
 }

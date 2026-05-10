@@ -31,11 +31,7 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
   today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
   private destroy$ = new Subject<void>();
 
-  aiInsights = [
-    { dot: '#EF4444', html: '<strong>LDL 185 mg/dL</strong> found in 3 reports — elevated cardiovascular risk. Statin therapy review recommended for flagged patients.' },
-    { dot: '#F59E0B', html: '<strong>Troponin I elevated</strong> in 2 patients at Chennai branch. Immediate cardiology follow-up required.' },
-    { dot: '#0AAFB8', html: '<strong>23 reports pending review</strong> across all branches. Average turnaround time is 4.2 hours — within acceptable range.' }
-  ];
+  aiInsights: { dot: string; html: string }[] = [];
 
   // AI Explain panel
   showAiExplain = false;
@@ -56,6 +52,7 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
         this.stats = stats;
         if (reports.length) this.selectedReport = reports[0];
         this.isLoading = false;
+        this.buildInsights(stats, reports);
       },
       error: () => { this.isLoading = false; }
     });
@@ -64,6 +61,27 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private buildInsights(stats: any, reports: any[]) {
+    const insights: { dot: string; html: string }[] = [];
+    const abnormal: number = stats?.abnormal || 0;
+    const pending: number  = stats?.pending  || 0;
+    const total: number    = stats?.total    || reports.length;
+
+    if (abnormal > 0) {
+      insights.push({ dot: '#EF4444', html: `<strong>${abnormal} abnormal result${abnormal > 1 ? 's' : ''}</strong> detected. Clinical review and specialist follow-up is recommended for flagged patients.` });
+    }
+    if (pending > 0) {
+      insights.push({ dot: '#F59E0B', html: `<strong>${pending} report${pending > 1 ? 's' : ''} pending</strong> across all branches. Ensure timely turnaround to avoid delays in patient care.` });
+    }
+    const ready = total - pending - abnormal;
+    if (ready > 0) {
+      insights.push({ dot: '#0AAFB8', html: `<strong>${ready}</strong> of <strong>${total}</strong> lab reports are ready and within normal range.` });
+    } else if (total === 0) {
+      insights.push({ dot: '#0AAFB8', html: 'No lab reports found in the system. Reports will appear here once submitted.' });
+    }
+    this.aiInsights = insights.slice(0, 3);
   }
 
   setTab(t: string) { this.activeTab = t; }
@@ -87,8 +105,8 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
       items = items.filter(r => {
         const result = (r.result ?? '').toUpperCase();
         if (this.statusFilter === 'PENDING')  return !r.result || result === 'PENDING';
-        if (this.statusFilter === 'ABNORMAL') return result.includes('ABNORMAL');
-        if (this.statusFilter === 'READY')    return !!r.result && !result.includes('ABNORMAL') && result !== 'PENDING';
+        if (this.statusFilter === 'ABNORMAL') return r.isAbnormal === true;
+        if (this.statusFilter === 'READY')    return !!r.result && r.isAbnormal !== true && result !== 'PENDING';
         return true;
       });
     }
@@ -132,7 +150,7 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
     of(null).pipe(delay(1000), takeUntil(this.destroy$)).subscribe(() => {
       this.aiExplainLoading = false;
       const result = (r.result || '').toUpperCase();
-      if (result.includes('ABNORMAL')) {
+      if (r.isAbnormal === true) {
         this.aiExplainText = AI_EXPLANATIONS['ABNORMAL'];
       } else if (!result || result === 'PENDING') {
         this.aiExplainText = AI_EXPLANATIONS['PENDING'];
@@ -147,15 +165,15 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
     this.aiExplainReport = null;
   }
 
-  getResultBadge(result: string): string {
-    if (!result || result === 'PENDING') return 'b-amber';
-    if (result?.toUpperCase().includes('ABNORMAL')) return 'b-red';
+  getResultBadge(r: any): string {
+    if (!r?.result || r.result === 'PENDING') return 'b-amber';
+    if (r.isAbnormal === true) return 'b-red';
     return 'b-green';
   }
 
-  getResultLabel(result: string): string {
-    if (!result || result === 'PENDING') return 'Pending';
-    if (result?.toUpperCase().includes('ABNORMAL')) return 'Abnormal';
+  getResultLabel(r: any): string {
+    if (!r?.result || r.result === 'PENDING') return 'Pending';
+    if (r.isAbnormal === true) return 'Abnormal';
     return 'Ready';
   }
 

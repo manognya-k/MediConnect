@@ -34,7 +34,6 @@ export class PatientFormComponent implements OnInit {
       gender:       [this.patient?.gender    || '',    [Validators.required]],
       bloodGroup:   [this.patient?.bloodGroup || '',   [Validators.required]],
       dateOfBirth:  [this.patient?.dateOfBirth || '',  []],
-      address:      [this.patient?.address   || '',    []],
       emergencyContact: [this.patient?.emergencyContact || '', []],
       password:     [this.isEdit ? 'NOCHANGE' : '',   this.isEdit ? [] : [Validators.required, Validators.minLength(6)]],
     });
@@ -60,7 +59,6 @@ export class PatientFormComponent implements OnInit {
         gender: v.gender,
         bloodGroup: v.bloodGroup,
         dateOfBirth: v.dateOfBirth || undefined,
-        address: v.address || undefined,
         emergencyContact: v.emergencyContact || undefined,
       };
       this.patientService.updatePatient(this.patient!.id, payload as any).subscribe({

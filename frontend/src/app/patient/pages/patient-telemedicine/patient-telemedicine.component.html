@@ -201,10 +201,24 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Doctor <span class="required">*</span></label>
-          <input class="form-input" type="text" placeholder="e.g. Dr. Aisha Patel"
-                 formControlName="doctorName">
-          <div class="form-error" *ngIf="bookForm.get('doctorName')?.touched && bookForm.get('doctorName')?.invalid">
-            Doctor name is required.
+          <div class="field-loading" *ngIf="doctorsLoading">
+            <div class="mini-spinner"></div>
+            <span>Loading doctors…</span>
+          </div>
+          <div class="field-err-inline" *ngIf="doctorsError">
+            Could not load doctors. Please try again.
+            <button class="link-btn" type="button" (click)="retryLoadDoctors()">Retry</button>
+          </div>
+          <select class="form-input" formControlName="doctorId"
+                  *ngIf="!doctorsLoading && !doctorsError"
+                  [class.invalid]="bookForm.get('doctorId')?.touched && bookForm.get('doctorId')?.invalid">
+            <option [value]="null">Select a doctor</option>
+            <option *ngFor="let d of allDoctors" [value]="d.doctorId">
+              {{ d.user?.name ?? 'Doctor' }} — {{ d.specialization }}
+            </option>
+          </select>
+          <div class="form-error" *ngIf="bookForm.get('doctorId')?.touched && bookForm.get('doctorId')?.invalid">
+            Please select a doctor.
           </div>
         </div>
         <div class="form-row">

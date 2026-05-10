@@ -325,6 +325,13 @@
   font-weight: 600;
 }
 
+.cn-empty {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--sub);
+  font-style: italic;
+}
+
 // Vitals grid
 .vitals-grid {
   display: grid;

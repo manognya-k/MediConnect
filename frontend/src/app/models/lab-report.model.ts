@@ -5,6 +5,7 @@ export interface BackendLabReport {
   reportId: number;
   testName?: string;
   result?: string;       // 'PENDING' | 'NORMAL' | 'ABNORMAL' | free text
+  isAbnormal?: boolean;
   reportDate?: string;   // 'YYYY-MM-DD'
   patient?: { patientId: number; user?: { userId?: number; name: string } } | null;
   doctor?: { doctorId: number } | null;

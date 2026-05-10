@@ -4,7 +4,17 @@ import { patientAuthGuard } from './guards/patient-auth.guard';
 import { adminAuthGuard } from './guards/admin-auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./pages/landing/landing.component').then((m) => m.LandingComponent),
+    pathMatch: 'full'
+  },
+  {
+    path: 'forbidden',
+    loadComponent: () =>
+      import('./pages/forbidden/forbidden.component').then((m) => m.ForbiddenComponent)
+  },
 
   // ── Doctor portal ──
   {
@@ -18,7 +28,7 @@ export const routes: Routes = [
       import('./pages/register/register.component').then((m) => m.RegisterComponent)
   },
   {
-    path: 'doctor',
+    path: 'doctor/:id',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./layouts/doctor-layout/doctor-layout.component').then(
@@ -101,7 +111,7 @@ export const routes: Routes = [
 
   // ── Patient portal ──
   {
-    path: 'patient',
+    path: 'patient/:id',
     canActivate: [patientAuthGuard],
     loadComponent: () =>
       import('./layouts/patient-layout/patient-layout.component').then(
@@ -167,10 +177,10 @@ export const routes: Routes = [
       },
       {
         path: 'notifications',
-        data: { title: 'Notifications' },
+        data: { title: 'Notifications', subtitle: 'Your activity feed' },
         loadComponent: () =>
-          import('./patient/pages/patient-placeholder/patient-placeholder.component').then(
-            (m) => m.PatientPlaceholderComponent
+          import('./patient/pages/patient-notifications/patient-notifications.component').then(
+            (m) => m.PatientNotificationsComponent
           )
       }
     ]
@@ -185,7 +195,14 @@ export const routes: Routes = [
       )
   },
   {
-    path: 'admin',
+    path: 'admin/register',
+    loadComponent: () =>
+      import('./admin/pages/admin-register/admin-register.component').then(
+        (m) => m.AdminRegisterComponent
+      )
+  },
+  {
+    path: 'admin/:id',
     canActivate: [adminAuthGuard],
     loadComponent: () =>
       import('./admin/layouts/admin-layout/admin-layout.component').then(

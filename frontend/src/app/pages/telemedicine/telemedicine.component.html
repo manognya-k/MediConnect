@@ -148,16 +148,22 @@
       </div>
 
       <!-- Card Button -->
-      <button class="join-btn"
-              *ngIf="s.status === 'Live'"
-              [disabled]="joiningId === s.id"
-              (click)="joinSession(s)">
-        <svg *ngIf="joiningId !== s.id" width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <rect x="1" y="4" width="14" height="11" rx="2" stroke="white" stroke-width="1.5"/>
-          <path d="M15 9l5-3v8l-5-3" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-        {{ joiningId === s.id ? 'Connecting…' : 'Rejoin Session' }}
-      </button>
+      <div class="sc-btn-row" *ngIf="s.status === 'Live'">
+        <button class="join-btn"
+                [disabled]="joiningId === s.id"
+                (click)="joinSession(s)">
+          <svg *ngIf="joiningId !== s.id" width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <rect x="1" y="4" width="14" height="11" rx="2" stroke="white" stroke-width="1.5"/>
+            <path d="M15 9l5-3v8l-5-3" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          {{ joiningId === s.id ? 'Connecting…' : 'Rejoin Session' }}
+        </button>
+        <button class="complete-btn"
+                [disabled]="completingId === s.id"
+                (click)="completeSession(s)">
+          {{ completingId === s.id ? 'Completing…' : 'Complete' }}
+        </button>
+      </div>
 
       <button class="join-btn"
               *ngIf="s.status === 'Upcoming'"

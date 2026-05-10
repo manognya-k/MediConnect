@@ -14,7 +14,6 @@ export interface BackendPatient {
   dateOfBirth?: string;
   gender?: string;
   bloodGroup?: string;
-  address?: string;
   emergencyContact?: string;
 }
 
@@ -32,7 +31,6 @@ export interface Patient {
   status: 'Active' | 'Monitoring' | 'Critical' | 'Inactive';
   initials: string;
   email?: string;
-  address?: string;
   emergencyContact?: string;
   dateOfBirth?: string;
   rawId: number;
@@ -93,7 +91,6 @@ export function mapBackendPatient(bp: BackendPatient, index: number): Patient {
     status,
     initials: initials.toUpperCase() || '??',
     email: bp.user?.email,
-    address: bp.address,
     emergencyContact: bp.emergencyContact,
     dateOfBirth: dob,
   };

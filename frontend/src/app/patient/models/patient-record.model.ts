@@ -38,10 +38,12 @@ export interface PatientRecordDetail {
   doctorName: string;
   specialty: string;
   hospital: string;
+  consultationType: string;
 
   /** Clinical narrative */
   chiefComplaint: string;
   diagnosis: string;
+  treatment: string;
   notes: string;
 
   /** Vitals */

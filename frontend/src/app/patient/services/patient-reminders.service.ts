@@ -1,143 +1,202 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { MedicineStats, TimeSlot, ActivePrescription } from '../models/patient-reminder.model';
+import { Observable, of, forkJoin } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
+import { MedicineStats, TimeSlot, ActivePrescription, DoseItem, DoseStatus } from '../models/patient-reminder.model';
+import { PatientAuthService } from './patient-auth.service';
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+const BASE = 'http://localhost:8081/api';
 
-const MOCK_STATS: MedicineStats = {
-  activeMedicines: 4,
-  takenToday: 2,
-  dueToday: 2,
-  adherencePercent: 87
-};
+// Infer time-slot from frequency string and optional scheduledTime
+function inferTimes(frequency: string, scheduledTime?: string | null): string[] {
+  const f = (frequency || '').toLowerCase();
+  const base = scheduledTime?.trim() || '8:00 AM';
 
-const MOCK_SCHEDULE: TimeSlot[] = [
-  {
-    time: '8:00 AM',
-    status: 'done',
-    doses: [
-      {
-        doseId: 'dose-001',
-        medicineId: 'med-001',
-        medicineName: 'Amlodipine 5mg',
-        dosage: '1 tablet · After breakfast',
-        status: 'done',
-        isTaken: true
-      },
-      {
-        doseId: 'dose-002',
-        medicineId: 'med-003',
-        medicineName: 'Aspirin 75mg',
-        dosage: '1 tablet · After breakfast',
-        status: 'done',
-        isTaken: true
-      }
-    ]
-  },
-  {
-    time: '2:00 PM',
-    status: 'next',
-    doses: [
-      {
-        doseId: 'dose-003',
-        medicineId: 'med-002',
-        medicineName: 'Metformin 500mg',
-        dosage: '1 tablet · With lunch',
-        status: 'next',
-        isTaken: false
-      }
-    ]
-  },
-  {
-    time: '8:00 PM',
-    status: 'upcoming',
-    doses: [
-      {
-        doseId: 'dose-004',
-        medicineId: 'med-004',
-        medicineName: 'Lisinopril 10mg',
-        dosage: '1 tablet · After dinner',
-        status: 'upcoming',
-        isTaken: false
-      }
-    ]
-  }
-];
+  if (f.includes('thrice') || f.includes('three') || f.includes('3×') || f.includes('tid'))
+    return [base, '2:00 PM', '8:00 PM'];
+  if (f.includes('twice') || f.includes('two') || f.includes('2×') || f.includes('bid'))
+    return [base, '8:00 PM'];
+  if (f.includes('night') || f.includes('bedtime') || f.includes('evening'))
+    return ['9:00 PM'];
+  return [base];
+}
 
-const MOCK_PRESCRIPTIONS: ActivePrescription[] = [
-  {
-    id: 'med-001',
-    medicineName: 'Amlodipine 5mg',
-    frequency: '1× daily',
-    timing: 'Morning',
-    indication: 'Hypertension',
-    prescribedBy: 'Dr. Aisha Patel',
-    refillDate: '2025-05-15',
-    status: 'Active'
-  },
-  {
-    id: 'med-002',
-    medicineName: 'Metformin 500mg',
-    frequency: '2× daily',
-    timing: 'Meals',
-    indication: 'Type 2 Diabetes',
-    prescribedBy: 'Dr. Ramesh Gupta',
-    refillDate: '2025-05-10',
-    status: 'Active'
-  },
-  {
-    id: 'med-003',
-    medicineName: 'Aspirin 75mg',
-    frequency: '1× daily',
-    timing: 'After breakfast',
-    indication: 'Cardiac',
-    prescribedBy: 'Dr. Aisha Patel',
-    refillDate: '2025-06-01',
-    status: 'Active'
-  },
-  {
-    id: 'med-004',
-    medicineName: 'Lisinopril 10mg',
-    frequency: '1× daily',
-    timing: 'Evening',
-    indication: 'Hypertension',
-    prescribedBy: 'Dr. Aisha Patel',
-    refillDate: '2025-05-20',
-    status: 'Active'
-  }
-];
+function to24hMinutes(time12: string): number {
+  const [timePart, period] = time12.split(' ');
+  let [h, m] = timePart.split(':').map(Number);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  return h * 60 + m;
+}
 
-// ── Service ───────────────────────────────────────────────────────────────────
+function computeDoseStatus(time12: string): DoseStatus {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const slotMin = to24hMinutes(time12);
+  if (slotMin < nowMin - 30) return 'done';
+  if (slotMin <= nowMin + 60) return 'next';
+  return 'upcoming';
+}
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getTakenSet(): Set<string> {
+  try {
+    const raw = localStorage.getItem(`reminders_taken_${todayKey()}`);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+
+function saveTakenSet(taken: Set<string>): void {
+  try {
+    localStorage.setItem(`reminders_taken_${todayKey()}`, JSON.stringify([...taken]));
+  } catch {}
+}
+
+function mapMedicines(raw: any[]): {
+  prescriptions: ActivePrescription[];
+  schedule: TimeSlot[];
+  stats: MedicineStats;
+} {
+  const taken = getTakenSet();
+
+  // Build ActivePrescription list from Medicine entities
+  const prescriptions: ActivePrescription[] = raw.map(m => ({
+    id:           String(m.id),
+    medicineName: m.medicineName ?? 'Unknown',
+    frequency:    m.frequency ?? 'Once daily',
+    timing:       m.scheduledTime ?? '',
+    indication:   '',
+    prescribedBy: 'Doctor',
+    refillDate:   '',
+    status:       'Active' as const,
+  }));
+
+  // Build schedule: group doses by time slot
+  const slotMap = new Map<string, DoseItem[]>();
+
+  raw.forEach(m => {
+    const times = inferTimes(m.frequency ?? '', m.scheduledTime);
+    times.forEach((time, idx) => {
+      const doseId = `${m.id}-${idx}`;
+      const isTaken = taken.has(doseId);
+      const autoStatus = computeDoseStatus(time);
+      const status: DoseStatus = isTaken ? 'done' : autoStatus;
+      const item: DoseItem = {
+        doseId,
+        medicineId:   String(m.id),
+        medicineName: m.medicineName ?? 'Unknown',
+        dosage:       m.dosage ?? '',
+        status,
+        isTaken,
+      };
+      const existing = slotMap.get(time) ?? [];
+      existing.push(item);
+      slotMap.set(time, existing);
+    });
+  });
+
+  // Sort slots chronologically
+  const schedule: TimeSlot[] = [...slotMap.entries()]
+    .sort((a, b) => to24hMinutes(a[0]) - to24hMinutes(b[0]))
+    .map(([time, doses]) => {
+      const allDone = doses.every(d => d.isTaken);
+      const anyNext = doses.some(d => d.status === 'next');
+      const slotStatus: DoseStatus = allDone ? 'done' : anyNext ? 'next' : 'upcoming';
+      return { time, status: slotStatus, doses };
+    });
+
+  // Stats
+  const totalDoses = schedule.reduce((acc, s) => acc + s.doses.length, 0);
+  const takenCount = schedule.reduce((acc, s) => acc + s.doses.filter(d => d.isTaken).length, 0);
+  const dueCount   = totalDoses - takenCount;
+
+  const stats: MedicineStats = {
+    activeMedicines:  prescriptions.length,
+    takenToday:       takenCount,
+    dueToday:         dueCount,
+    adherencePercent: totalDoses > 0 ? Math.round((takenCount / totalDoses) * 100) : 0,
+  };
+
+  return { prescriptions, schedule, stats };
+}
 
 @Injectable({ providedIn: 'root' })
 export class PatientRemindersService {
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private auth: PatientAuthService,
+  ) {}
 
-  /** TODO: wire to GET /api/patient/medicines/stats */
+  private getPatientId(): Observable<number> {
+    const userId = this.auth.getStoredUser()?.userId ?? 0;
+    return this.http.get<any>(`${BASE}/patients/by-user/${userId}`).pipe(
+      map(p => p?.patientId ?? 0),
+      catchError(() => of(0))
+    );
+  }
+
+  private fetchMedicines(): Observable<any[]> {
+    return this.getPatientId().pipe(
+      switchMap(patientId => {
+        if (!patientId) return of([]);
+        return forkJoin({
+          medicines:     this.http.get<any[]>(`${BASE}/patients/${patientId}/medicines`).pipe(catchError(() => of([]))),
+          prescriptions: this.http.get<any[]>(`${BASE}/prescriptions/patient/${patientId}`).pipe(catchError(() => of([])))
+        }).pipe(
+          map(({ medicines, prescriptions }) => {
+            // Medicines table (has scheduledTime) takes priority
+            const nameSet = new Set(medicines.map((m: any) => (m.medicineName ?? '').toLowerCase()));
+            // Convert prescriptions to medicine-compatible shape, skip those already in medicines table
+            const rxAsMedicines = prescriptions
+              .filter((p: any) => !nameSet.has((p.medicationName ?? '').toLowerCase()))
+              .map((p: any) => ({
+                id:           `rx-${p.id}`,
+                medicineName: p.medicationName,
+                dosage:       p.dosage,
+                frequency:    p.instructions ?? 'Once daily',
+                scheduledTime: null,
+                status:       'ACTIVE',
+              }));
+            return [...medicines, ...rxAsMedicines];
+          })
+        );
+      })
+    );
+  }
+
   getStats(): Observable<MedicineStats> {
-    return of({ ...MOCK_STATS });
+    return this.fetchMedicines().pipe(
+      map(raw => mapMedicines(raw).stats)
+    );
   }
 
-  /** TODO: wire to GET /api/patient/medicines/today */
   getTodaySchedule(): Observable<TimeSlot[]> {
-    // Deep-copy so component mutations don't affect the mock
-    return of(JSON.parse(JSON.stringify(MOCK_SCHEDULE)));
+    return this.fetchMedicines().pipe(
+      map(raw => mapMedicines(raw).schedule)
+    );
   }
 
-  /** TODO: wire to GET /api/patient/medicines */
   getAllPrescriptions(): Observable<ActivePrescription[]> {
-    return of(MOCK_PRESCRIPTIONS);
+    return this.fetchMedicines().pipe(
+      map(raw => mapMedicines(raw).prescriptions)
+    );
   }
 
-  /** TODO: wire to PATCH /api/patient/medicines/{doseId}/taken */
   markTaken(doseId: string): Observable<{ success: boolean }> {
+    const taken = getTakenSet();
+    taken.add(doseId);
+    saveTakenSet(taken);
     return of({ success: true });
   }
 
-  /** TODO: wire to PATCH /api/patient/medicines/{doseId}/untaken */
   markUntaken(doseId: string): Observable<{ success: boolean }> {
+    const taken = getTakenSet();
+    taken.delete(doseId);
+    saveTakenSet(taken);
     return of({ success: true });
   }
 }

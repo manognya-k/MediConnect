@@ -36,6 +36,14 @@
   <div class="login-form-panel">
     <div class="form-card">
 
+      <!-- Back to landing -->
+      <a routerLink="/" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back to Home
+      </a>
+
       <div class="form-logo">
         <div class="form-mark">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -99,8 +107,10 @@
       </button>
 
       <p class="hint-text">
-        Default credentials: <span class="hint-mono">admin&#64;mediconnect.com</span> / <span class="hint-mono">Admin&#64;123</span>
+        New administrator?
+        <a routerLink="/admin/register" class="hint-link">Create admin account →</a>
       </p>
+
     </div>
   </div>
 

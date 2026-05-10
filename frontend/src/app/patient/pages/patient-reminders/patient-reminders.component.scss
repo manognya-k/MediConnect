@@ -358,6 +358,13 @@
   margin-top: 4px;
 }
 
+.empty-state {
+  font-size: 13px;
+  color: var(--sub, #8A94A6);
+  text-align: center;
+  padding: 32px 0;
+}
+
 // ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 900px) {

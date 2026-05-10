@@ -44,12 +44,35 @@ function patientCode(id: number): string {
   return `PT-${String(id).padStart(4,'0')}`;
 }
 
+function clampPercent(value: number): number {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function relativeTime(value: string | null | undefined): string {
+  if (!value) return 'Recently';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return 'Recently';
+  const diffMs = Date.now() - dt.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PatientDashboardService {
   constructor(
     private http: HttpClient,
     private auth: PatientAuthService
   ) {}
+
+  getCurrentUserId(): number | null {
+    return this.auth.getStoredUser()?.userId ?? null;
+  }
 
   /** Load all dashboard data in parallel */
   loadAll(): Observable<{
@@ -73,10 +96,13 @@ export class PatientDashboardService {
           patientRaw:    of(raw),
           appointments:  patientId ? this.http.get<any[]>(`${BASE}/appointments/patient/${patientId}`).pipe(catchError(() => of([]))) : of([]),
           labReports:    patientId ? this.http.get<any[]>(`${BASE}/lab-reports/patient/${patientId}`).pipe(catchError(() => of([]))) : of([]),
+          vitalsRaw:     patientId ? this.http.get<any>(`${BASE}/patients/${patientId}/vitals`).pipe(catchError(() => of(null))) : of(null),
+          medicinesRaw:  patientId ? this.http.get<any[]>(`${BASE}/patients/${patientId}/medicines`).pipe(catchError(() => of([]))) : of([]),
+          activitiesRaw: patientId ? this.http.get<any[]>(`${BASE}/patients/${patientId}/activities`).pipe(catchError(() => of([]))) : of([]),
           notifications: this.http.get<any[]>(`${BASE}/notifications/user/${userId}`).pipe(catchError(() => of([]))),
         });
       }),
-      map(({ patientRaw: raw, appointments, labReports, notifications }) => {
+      map(({ patientRaw: raw, appointments, labReports, vitalsRaw, medicinesRaw, activitiesRaw, notifications }) => {
         const patientId = raw?.patientId ?? 0;
 
         const patient: PatientUser = {
@@ -115,9 +141,9 @@ export class PatientDashboardService {
           nextAppointmentDate:  nextDate,
           pendingLabReports:    pendingLabs.length,
           labReportDueToday:    pendingLabs.length > 0,
-          activePrescriptions:  4,   // TODO: no prescriptions endpoint
-          unreadNotifications:  unread.length || 5,
-          urgentNotifications:  2,   // TODO: no urgency field in backend
+          activePrescriptions:  medicinesRaw.length,
+          unreadNotifications:  unread.length,
+          urgentNotifications:  unread.length,
         };
 
         // ── Upcoming appointments (top 3) ──
@@ -141,51 +167,77 @@ export class PatientDashboardService {
           } as PatientAppointment;
         });
 
-        // Fill with mock if no real data
-        const mockAppts: PatientAppointment[] = apptList.length > 0 ? apptList : [
-          { id:'m1', day:'22', month:'Apr', doctorName:'Dr. Sarah Johnson', speciality:'Cardiologist', hospital:'Central Hospital', time:'10:30 AM', type:'In-person', status:'Confirmed' },
-          { id:'m2', day:'25', month:'Apr', doctorName:'Dr. Priya Mehta', speciality:'General Physician', hospital:'City Clinic', time:'02:00 PM', type:'Video', status:'Pending' },
-          { id:'m3', day:'30', month:'Apr', doctorName:'Dr. Arjun Rao', speciality:'Endocrinologist', hospital:'Central Hospital', time:'11:00 AM', type:'In-person', status:'Pending' },
+        // Health score derived from available vitals.
+        const systolic = Number((vitalsRaw?.bloodPressure ?? '').split('/')[0]);
+        const heartRate = Number(vitalsRaw?.heartRate);
+        const glucose = Number(vitalsRaw?.glucose);
+        const bmi = Number(vitalsRaw?.bmi);
+        const scoreParts = [
+          Number.isFinite(systolic) ? (systolic <= 120 ? 25 : systolic <= 139 ? 20 : 12) : 0,
+          Number.isFinite(heartRate) ? (heartRate >= 60 && heartRate <= 100 ? 25 : 15) : 0,
+          Number.isFinite(glucose) ? (glucose <= 100 ? 25 : glucose <= 125 ? 18 : 12) : 0,
+          Number.isFinite(bmi) ? (bmi >= 18.5 && bmi <= 24.9 ? 25 : 15) : 0,
         ];
-
-        // ── Health Score (mock — no endpoint) ──
-        // TODO: wire to backend health score endpoint
-        const score = 80;
+        const score = scoreParts.reduce((sum, x) => sum + x, 0);
+        const status: PatientHealthScore['status'] =
+          score >= 85 ? 'Excellent' : score >= 70 ? 'Good' : score >= 50 ? 'Fair' : 'Poor';
         const healthScore: PatientHealthScore = {
           score,
-          status: 'Good',
+          status,
           strokeDashoffset: 283 - (score / 100 * 283),
         };
 
-        // ── Vitals (mock — no endpoint) ──
-        // TODO: wire to backend vitals endpoint
+        const bpPercent = Number.isFinite(systolic) ? clampPercent((systolic / 180) * 100) : 0;
+        const hrPercent = Number.isFinite(heartRate) ? clampPercent((heartRate / 140) * 100) : 0;
+        const glucosePercent = Number.isFinite(glucose) ? clampPercent((glucose / 200) * 100) : 0;
+        const bmiPercent = Number.isFinite(bmi) ? clampPercent((bmi / 40) * 100) : 0;
+
+        const rawUpdatedAt = vitalsRaw?.lastUpdatedAt ?? null;
+        const updatedDate = rawUpdatedAt ? new Date(rawUpdatedAt) : null;
+        const lastUpdatedLabel =
+          updatedDate && !Number.isNaN(updatedDate.getTime())
+            ? `${MONTHS[updatedDate.getMonth()]} ${updatedDate.getDate()}`
+            : 'N/A';
+
         const vitals: PatientVitals = {
-          bloodPressure: '138/88 mmHg', bloodPressureColor: '#B45309',
-          bloodPressurePercent: 72, bloodPressureBar: 'linear-gradient(90deg,#F59E0B,#EF4444)',
-          heartRate: '74 bpm', heartRateColor: '#0F7B50',
-          heartRatePercent: 55, heartRateBar: '#0F7B50',
-          bloodGlucose: '112 mg/dL', bloodGlucoseColor: '#B45309',
-          bloodGlucosePercent: 65, bloodGlucoseBar: 'linear-gradient(90deg,#22C55E,#F59E0B)',
-          bmi: '24.2', bmiColor: '#0D1B2A',
-          bmiPercent: 48, bmiBar: '#2272C3',
-          lastUpdated: 'Apr 18',
+          bloodPressure: vitalsRaw?.bloodPressure ? `${vitalsRaw.bloodPressure} mmHg` : 'N/A',
+          bloodPressureColor: '#B45309',
+          bloodPressurePercent: bpPercent,
+          bloodPressureBar: 'linear-gradient(90deg,#F59E0B,#EF4444)',
+          heartRate: Number.isFinite(heartRate) ? `${heartRate} bpm` : 'N/A',
+          heartRateColor: '#0F7B50',
+          heartRatePercent: hrPercent,
+          heartRateBar: '#0F7B50',
+          bloodGlucose: Number.isFinite(glucose) ? `${glucose} mg/dL` : 'N/A',
+          bloodGlucoseColor: '#B45309',
+          bloodGlucosePercent: glucosePercent,
+          bloodGlucoseBar: 'linear-gradient(90deg,#22C55E,#F59E0B)',
+          bmi: Number.isFinite(bmi) ? String(bmi) : 'N/A',
+          bmiColor: '#0D1B2A',
+          bmiPercent: bmiPercent,
+          bmiBar: '#2272C3',
+          lastUpdated: lastUpdatedLabel,
         };
 
-        // ── Today's medicines (mock — no endpoint) ──
-        // TODO: wire to backend medicines/prescriptions endpoint
-        const medicines: TodayMedicine[] = [
-          { id:'1', name:'Amlodipine 5mg', dosage:'1 tablet · After meals', scheduledTime:'8:00 AM', status:'taken' },
-          { id:'2', name:'Metformin 500mg', dosage:'1 tablet · With food', scheduledTime:'2:00 PM', status:'due' },
-        ];
+        const medicines: TodayMedicine[] = medicinesRaw.map((m: any) => ({
+          id: String(m.id),
+          name: m.medicineName ?? 'Medicine',
+          dosage: [m.dosage, m.frequency].filter(Boolean).join(' \u00b7 '),
+          scheduledTime: m.scheduledTime ?? 'N/A',
+          status: (m.status === 'taken' || m.status === 'due' || m.status === 'upcoming')
+            ? m.status
+            : 'upcoming',
+        }));
 
-        // ── Recent activity (mock — no endpoint) ──
-        // TODO: wire to backend activity feed endpoint
-        const activity: ActivityItem[] = [
-          { id:'1', text:'Lab report received — <strong>Lipid Panel</strong> results ready', timeAgo:'2 hours ago', dotColor:'#2272C3' },
-          { id:'2', text:'Appointment confirmed with <strong>Dr. Sarah Johnson</strong>', timeAgo:'Yesterday, 4:30 PM', dotColor:'#0F7B50' },
-          { id:'3', text:'Prescription updated — <strong>Amlodipine dosage</strong> adjusted', timeAgo:'Apr 18, 11:00 AM', dotColor:'#B45309' },
-          { id:'4', text:'Medical record added — <strong>Cardiology Review</strong>', timeAgo:'Apr 15, 9:00 AM', dotColor:'#8A94A6' },
-        ];
+        const activity: ActivityItem[] = activitiesRaw.map((a: any, i: number) => ({
+          id: String(a.referenceId ?? i),
+          text: a.text ?? 'Activity updated',
+          timeAgo: relativeTime(a.eventAt),
+          dotColor:
+            a.type === 'APPOINTMENT' ? '#2272C3' :
+            a.type === 'MEDICAL_RECORD' ? '#0F7B50' :
+            '#8A94A6',
+        }));
 
         // ── Notifications from real endpoint or mock ──
         const notifList: PatientNotification[] = notifications.slice(0,3).map((n: any, i: number) => ({
@@ -197,21 +249,15 @@ export class PatientDashboardService {
           iconType: 'bell' as const,
         }));
 
-        const mockNotifs: PatientNotification[] = [
-          { id:'n1', message:'<strong>Lab result flagged</strong> — Lipid panel shows elevated LDL', timeAgo:'2h ago · Urgent', iconBg:'#FEE2E2', iconStroke:'#B91C1C', iconType:'warning' },
-          { id:'n2', message:'Appointment reminder — <strong>Dr. Johnson</strong> tomorrow 10:30 AM', timeAgo:'5h ago', iconBg:'#E8F2FD', iconStroke:'#1A5FA8', iconType:'calendar' },
-          { id:'n3', message:'Medicine reminder — <strong>Metformin 500mg</strong> due at 2:00 PM', timeAgo:'Just now', iconBg:'#FEF3CD', iconStroke:'#B45309', iconType:'bell' },
-        ];
-
         return {
           patient,
           healthScore,
           stats,
-          appointments: mockAppts,
+          appointments: apptList,
           vitals,
           medicines,
           activity,
-          notifications: notifList.length > 0 ? notifList : mockNotifs,
+          notifications: notifList,
         };
       })
     );

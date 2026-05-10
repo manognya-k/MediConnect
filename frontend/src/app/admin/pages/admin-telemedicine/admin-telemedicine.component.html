@@ -28,7 +28,7 @@
         </svg>
       </div>
       <div class="stat-label">Doctors Online</div>
-      <div class="stat-val">{{ onlineDoctors.length || 2 }}</div>
+      <div class="stat-val">{{ onlineDoctors.length }}</div>
       <div class="stat-sub green-chip">Available Now</div>
     </div>
 
@@ -40,7 +40,7 @@
         </svg>
       </div>
       <div class="stat-label">Active Sessions</div>
-      <div class="stat-val">{{ busyDoctors.length || 2 }}</div>
+      <div class="stat-val">{{ busyDoctors.length }}</div>
       <div class="stat-sub blue-chip">In Progress</div>
     </div>
 
@@ -53,7 +53,7 @@
         </svg>
       </div>
       <div class="stat-label">Today Scheduled</div>
-      <div class="stat-val">{{ appointments.length || 12 }}</div>
+      <div class="stat-val">{{ todayAppointments.length }}</div>
       <div class="stat-sub teal-chip">Today</div>
     </div>
 
@@ -65,7 +65,7 @@
         </svg>
       </div>
       <div class="stat-label">This Week</div>
-      <div class="stat-val">47</div>
+      <div class="stat-val">{{ thisWeekCount }}</div>
       <div class="stat-sub amber-chip">Sessions</div>
     </div>
 
@@ -79,16 +79,16 @@
         <div class="card-sub">Real-time status</div>
       </div>
       <div class="avail-legend">
-        <span class="avail-dot online"></span><span>Online ({{ onlineDoctors.length || 2 }})</span>
-        <span class="avail-dot busy"></span><span>In Session ({{ busyDoctors.length || 2 }})</span>
-        <span class="avail-dot offline"></span><span>Offline ({{ offlineDoctors.length || 2 }})</span>
+        <span class="avail-dot online"></span><span>Online ({{ onlineDoctors.length }})</span>
+        <span class="avail-dot busy"></span><span>In Session ({{ busyDoctors.length }})</span>
+        <span class="avail-dot offline"></span><span>Offline ({{ offlineDoctors.length }})</span>
       </div>
     </div>
     <div class="card-body">
       <div class="avail-grid" *ngIf="doctors.length > 0; else noDocsTpl">
         <div *ngFor="let doc of doctors; trackBy: trackById"
              [class]="'avail-card ' + getDoctorStatusClass(doc.status)">
-          <div class="avail-avatar">{{ (doc.name || 'Dr').charAt(3) || 'D' }}</div>
+          <div class="avail-avatar">{{ (doc.name || 'Dr').charAt(0) }}</div>
           <div class="avail-info">
             <div class="avail-name">{{ doc.name }}</div>
             <div class="avail-spec">{{ doc.specialization }}</div>
@@ -216,7 +216,7 @@
                 <td>{{ appt.doctorName  || appt.doctor?.user?.name  || 'Doctor'  }}</td>
                 <td class="mono">{{ appt.appointmentTime || appt.timeSlot || '—' }}</td>
                 <td><span [class]="'badge ' + getApptBadge(appt.status)">{{ appt.status }}</span></td>
-                <td><button class="btn btn-teal btn-xs" (click)="joinSession(appt)">Join</button></td>
+                <td><button class="btn btn-teal btn-xs" (click)="joinSession(appt)" [disabled]="!canJoin(appt)">Join</button></td>
               </tr>
             </ng-container>
             <ng-template #noApptTpl>
@@ -279,11 +279,21 @@
     <div style="display:flex;flex-direction:column;gap:14px">
       <div>
         <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Doctor *</label>
-        <input class="input" [(ngModel)]="scheduleData.doctorName" placeholder="Doctor name" style="width:100%">
+        <select class="input" [(ngModel)]="scheduleData.doctorId" style="width:100%">
+          <option [ngValue]="null" disabled>Select doctor</option>
+          <option *ngFor="let d of doctors" [ngValue]="d.doctorId">
+            {{ d.user?.name || d.name || 'Doctor ' + d.doctorId }}
+          </option>
+        </select>
       </div>
       <div>
         <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Patient *</label>
-        <input class="input" [(ngModel)]="scheduleData.patientName" placeholder="Patient name" style="width:100%">
+        <select class="input" [(ngModel)]="scheduleData.patientId" style="width:100%">
+          <option [ngValue]="null" disabled>Select patient</option>
+          <option *ngFor="let p of patients" [ngValue]="p.patientId">
+            {{ p.user?.name || p.name || 'Patient ' + p.patientId }}
+          </option>
+        </select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>

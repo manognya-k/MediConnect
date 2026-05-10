@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { AdminAuthService } from '../../admin/services/admin-auth.service';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +12,7 @@ import { AdminAuthService } from '../../admin/services/admin-auth.service';
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  activeTab: 'PATIENT' | 'DOCTOR' | 'ADMIN' = 'PATIENT';
+  activeTab: 'PATIENT' | 'DOCTOR' = 'PATIENT';
   email = '';
   password = '';
   showPassword = false;
@@ -22,11 +21,10 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private adminAuth: AdminAuthService,
     private router: Router
   ) {}
 
-  setTab(tab: 'PATIENT' | 'DOCTOR' | 'ADMIN') {
+  setTab(tab: 'PATIENT' | 'DOCTOR') {
     this.activeTab = tab;
     this.errorMessage = '';
   }
@@ -43,20 +41,6 @@ export class LoginComponent {
     this.loading = true;
     this.errorMessage = '';
 
-    if (this.activeTab === 'ADMIN') {
-      this.adminAuth.login({ email: this.email, password: this.password }).subscribe({
-        next: () => {
-          this.loading = false;
-          this.router.navigate(['/admin/overview']);
-        },
-        error: (err: Error) => {
-          this.errorMessage = err.message || 'Invalid admin credentials.';
-          this.loading = false;
-        }
-      });
-      return;
-    }
-
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
         if (response.role !== this.activeTab) {
@@ -67,11 +51,9 @@ export class LoginComponent {
         this.authService.saveUser(response);
         this.loading = false;
         if (response.role === 'PATIENT') {
-          this.router.navigate(['/patient/dashboard']);
-        } else if (response.role === 'DOCTOR') {
-          this.router.navigate(['/doctor/dashboard']);
+          this.router.navigate(['/patient', response.userId, 'dashboard']);
         } else {
-          this.router.navigate(['/admin/overview']);
+          this.router.navigate(['/doctor', response.userId, 'dashboard']);
         }
       },
       error: (err) => {

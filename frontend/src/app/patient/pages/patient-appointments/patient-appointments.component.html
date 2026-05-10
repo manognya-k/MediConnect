@@ -210,8 +210,18 @@
   <div class="modal-body" [formGroup]="bookForm">
     <div class="field">
       <label class="field-label">Doctor <span class="req">*</span></label>
+      <div class="field-loading" *ngIf="doctorsLoading">
+        <div class="mini-spinner"></div>
+        <span>Loading doctors…</span>
+      </div>
+      <div class="field-err-inline" *ngIf="doctorsError">
+        Could not load doctors. Please try again.
+        <button class="link-btn" type="button" (click)="retryLoadDoctors()">Retry</button>
+      </div>
       <select class="field-input" formControlName="doctorId"
-              [class.invalid]="hasError(bookForm, 'doctorId', 'required')">
+              [disabled]="doctorsLoading || doctorsError"
+              [class.invalid]="hasError(bookForm, 'doctorId', 'required')"
+              *ngIf="!doctorsLoading && !doctorsError">
         <option [value]="null">Select a doctor</option>
         <option *ngFor="let d of allDoctors" [value]="d.doctorId">
           {{ d.user?.name ?? 'Doctor' }} — {{ d.specialization }}

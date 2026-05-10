@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, timer } from 'rxjs';
-import { switchMap, takeUntil } from 'rxjs/operators';
+import { Subject, timer, of } from 'rxjs';
+import { switchMap, takeUntil, delay } from 'rxjs/operators';
 import { AdminPatientsService } from '../../services/admin-patients.service';
 import { ToastService } from '../../../services/toast.service';
 import { AdminNotificationService } from '../../services/admin-notification.service';
@@ -28,6 +28,10 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
   showEdit = false;
   editData: any = {};
   editSubmitting = false;
+
+  // Delete confirmation
+  showDeleteConfirm = false;
+  deleteSubmitting = false;
 
   // AI Summary
   showAiSummary = false;
@@ -85,13 +89,40 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
     this.editData = {
       name:       this.selectedPatient.user?.name  ?? this.selectedPatient.name  ?? '',
       email:      this.selectedPatient.user?.email ?? this.selectedPatient.email ?? '',
-      phone:      this.selectedPatient.phone      ?? '',
+      phone:      this.selectedPatient.user?.phone ?? this.selectedPatient.phone ?? '',
       bloodGroup: this.selectedPatient.bloodGroup ?? '',
     };
     this.showEdit = true;
   }
 
   closeEditPatient() { this.showEdit = false; }
+
+  openDeletePatient() {
+    if (!this.selectedPatient) return;
+    this.showDeleteConfirm = true;
+  }
+
+  closeDeletePatient() { this.showDeleteConfirm = false; }
+
+  confirmDeletePatient() {
+    if (!this.selectedPatient) return;
+    this.deleteSubmitting = true;
+    this.svc.deletePatient(this.selectedPatient.patientId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        const removed = this.selectedPatient;
+        this.patients = this.patients.filter(p => p.patientId !== removed.patientId);
+        this.filteredPatients = this.filteredPatients.filter(p => p.patientId !== removed.patientId);
+        this.selectedPatient = this.patients[0] ?? null;
+        this.deleteSubmitting = false;
+        this.closeDeletePatient();
+        this.toast.show('Patient deleted successfully.', 'success');
+      },
+      error: () => {
+        this.deleteSubmitting = false;
+        this.toast.show('Failed to delete patient.', 'error');
+      }
+    });
+  }
 
   submitEditPatient() {
     if (!this.editData.name?.trim()) {
@@ -126,7 +157,7 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
     of(null).pipe(delay(1200), takeUntil(this.destroy$)).subscribe(() => {
       this.aiSummaryLoading = false;
       const p = this.selectedPatient;
-      this.aiSummaryText = `Patient ${p.name} (ID: ${p.patientId}) is registered in the MediConnect system` +
+      this.aiSummaryText = `Patient ${p.user?.name ?? p.name ?? 'Unknown'} (ID: ${p.patientId}) is registered in the MediConnect system` +
         (p.bloodGroup ? ` with blood group ${p.bloodGroup}` : '') + `. ` +
         `Based on available records, the patient has an active status with no critical alerts. ` +
         `Routine follow-up is recommended. For a detailed clinical AI summary, review appointment notes and lab reports via the Diagnostics module.`;

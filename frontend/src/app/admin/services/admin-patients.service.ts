@@ -17,4 +17,8 @@ export class AdminPatientsService {
   updatePatient(id: number, data: any): Observable<any> {
     return this.http.put<any>(`${this.base}/patients/${id}`, data).pipe(catchError(() => of(null)));
   }
+
+  deletePatient(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/patients/${id}`);
+  }
 }

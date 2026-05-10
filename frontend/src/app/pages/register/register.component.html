@@ -92,13 +92,6 @@
             type="button">
             Doctor
           </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeTab === 'ADMIN'"
-            (click)="setTab('ADMIN')"
-            type="button">
-            Admin
-          </button>
         </div>
 
         <!-- Error / Success -->
@@ -229,14 +222,38 @@
           <ng-container *ngIf="activeTab === 'DOCTOR'">
             <div class="form-group">
               <label class="form-label">Specialization</label>
-              <div class="input-wrapper">
-                <span class="input-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <div class="input-wrapper select-wrapper">
+                <select class="form-input form-select" [(ngModel)]="specialization" name="specialization">
+                  <option value="">Select specialization</option>
+                  <option *ngFor="let s of specializations" [value]="s">{{ s }}</option>
+                </select>
+                <span class="select-arrow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9l6 6 6-6" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </span>
-                <input type="text" class="form-input" placeholder="e.g. Cardiology, Neurology"
-                  [(ngModel)]="specialization" name="specialization" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Hospital</label>
+              <div *ngIf="hospitalsLoading" class="field-loading">
+                <span class="mini-spinner"></span> Loading hospitals...
+              </div>
+              <div *ngIf="hospitalsError" class="field-err-inline">
+                Could not load hospitals.
+                <button type="button" class="retry-btn" (click)="loadHospitals()">Retry</button>
+              </div>
+              <div *ngIf="!hospitalsLoading && !hospitalsError" class="input-wrapper select-wrapper">
+                <select class="form-input form-select" [(ngModel)]="hospitalId" name="hospitalId">
+                  <option value="">Select hospital</option>
+                  <option *ngFor="let h of hospitals" [value]="h.hospitalId">{{ h.hospitalName }}</option>
+                </select>
+                <span class="select-arrow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9l6 6 6-6" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
               </div>
             </div>
           </ng-container>

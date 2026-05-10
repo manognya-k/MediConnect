@@ -23,6 +23,11 @@ public class PatientService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
     }
 
+    public Patient getPatientByUserId(Integer userId) {
+        return patientRepository.findByUserUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
+    }
+
     public Patient savePatient(Patient patient) {
         return patientRepository.save(patient);
     }

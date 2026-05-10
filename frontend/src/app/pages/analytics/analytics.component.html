@@ -134,10 +134,10 @@
   <!-- Lower charts row: 1fr + 1fr -->
   <div class="charts-row">
 
-    <!-- Bar chart: New patients per month -->
+    <!-- Bar chart: Appointments per month -->
     <div class="chart-card" [class.chart-loading]="chartsLoading">
       <div class="card-header">
-        <div class="card-title">New patients per month</div>
+        <div class="card-title">Appointments per month</div>
       </div>
       <div class="skel skel-chart" *ngIf="loading"></div>
       <div class="chart-wrap" *ngIf="!loading">
@@ -181,6 +181,9 @@
             </div>
           </div>
           <div class="diag-count">{{ d.count }}</div>
+        </div>
+        <div class="diag-empty" *ngIf="topDiagnoses.length === 0">
+          No diagnoses recorded yet.
         </div>
       </ng-container>
 

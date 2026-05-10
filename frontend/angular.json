@@ -25,7 +25,9 @@
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": ["src/styles.css"],
-            "scripts": []
+            "scripts": [
+              "node_modules/sockjs-client/dist/sockjs.min.js"
+            ]
           },
           "configurations": {
             "production": {

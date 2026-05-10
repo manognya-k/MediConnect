@@ -35,34 +35,34 @@
 
     <nav class="sb-nav">
       <div class="nav-section">Main</div>
-      <a class="ni" routerLink="/patient/dashboard" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['dashboard'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg>
         Health Overview
       </a>
-      <a class="ni" routerLink="/patient/appointments" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['appointments'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Appointments
         <span class="ni-badge" *ngIf="stats && stats.upcomingAppointments > 0">{{ stats.upcomingAppointments }}</span>
       </a>
-      <a class="ni" routerLink="/patient/records" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['records'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="13" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Medical Records
       </a>
-      <a class="ni" routerLink="/patient/lab-reports" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['lab-reports'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M6 2v5L3 13h10L10 7V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 2h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Lab Reports
         <span class="ni-badge ni-badge-amber" *ngIf="stats && stats.pendingLabReports > 0">{{ stats.pendingLabReports }}</span>
       </a>
       <div class="nav-section">Care</div>
-      <a class="ni" routerLink="/patient/telemedicine" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['telemedicine'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 7l3-2v6l-3-2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
         Telemedicine
       </a>
-      <a class="ni" routerLink="/patient/reminders" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['reminders'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.5"/></svg>
         Medicine Reminders
       </a>
-      <a class="ni" routerLink="/patient/ai" routerLinkActive="active">
+      <a class="ni" [routerLink]="nav(['ai'])" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="12" r=".75" fill="currentColor"/></svg>
         AI Health Assistant
       </a>
@@ -99,7 +99,7 @@
       </div>
       <div class="tb-right">
         <div class="tb-blood" *ngIf="patient">Blood group: <strong>{{ patient.bloodGroup }}</strong></div>
-        <button class="tb-notif" routerLink="/patient/notifications">
+        <button class="tb-notif" [routerLink]="nav(['notifications'])">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M8 1a5 5 0 015 5v3l1.5 2.5H1.5L3 9V6a5 5 0 015-5z" stroke="#4A5568" stroke-width="1.5"/>
             <path d="M6.5 13a1.5 1.5 0 003 0" stroke="#4A5568" stroke-width="1.5"/>

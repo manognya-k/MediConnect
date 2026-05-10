@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SecurityContext } from '@angular/core';
@@ -66,22 +66,19 @@ export class PatientLabReportsComponent implements OnInit, OnDestroy {
   loadData() {
     this.loading = true;
     this.error   = '';
-    forkJoin({
-      reports: this.svc.getLabReports(),
-      flagged: this.svc.getFlaggedAlerts(),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ reports, flagged }) => {
+    this.svc.getLabReports().pipe(takeUntil(this.destroy$)).subscribe({
+      next: reports => {
         this.reports       = reports;
-        this.flaggedAlerts = flagged;
+        this.flaggedAlerts = this.svc.buildFlaggedAlertsFrom(reports);
         this.loading       = false;
 
         // Auto-expand first flagged report
         const first = reports.find(r => r.isFlagged);
         if (first) first.isExpanded = true;
 
-        // Auto-load AI explanation for first flagged alert
-        if (flagged.length > 0) {
-          this.loadAiExplanation(flagged[0].reportId);
+        // Auto-load AI explanation for first flagged report
+        if (this.flaggedAlerts.length > 0) {
+          this.loadAiExplanation(this.flaggedAlerts[0].reportId);
         }
       },
       error: () => {
@@ -179,28 +176,34 @@ export class PatientLabReportsComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.downloading[report.id] = true;
     this.svc.downloadReport(report.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        const a   = document.createElement('a');
-        a.href     = url;
-        a.download = `${report.testName.replace(/\s+/g, '_')}_${report.reportDate}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        this.downloading[report.id] = false;
-      },
+      next: () => { this.downloading[report.id] = false; },
       error: () => {
         this.downloading[report.id] = false;
-        this.toast.show('Download not available in demo mode.', 'error');
+        this.toast.show('Could not generate report. Please try again.', 'error');
       }
     });
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
-  safe(html: string): SafeHtml {
+  safe(text: string): SafeHtml {
+    const html = this.markdownToHtml(text);
     return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+  }
+
+  private markdownToHtml(md: string): string {
+    return md
+      .replace(/^### (.+)$/gm, '<h4 style="font-size:.9em;font-weight:700;margin:8px 0 3px;color:#0D2B4E">$1</h4>')
+      .replace(/^## (.+)$/gm,  '<h3 style="font-size:.95em;font-weight:700;margin:10px 0 4px;color:#0D2B4E">$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+      .replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li style="margin-bottom:3px">${l.replace(/^[-*] /, '').trim()}</li>`)
+          .join('');
+        return `<ul style="margin:6px 0 6px 16px;padding:0">${items}</ul>`;
+      })
+      .replace(/\n(?!<(?:ul|h[2-4]))/g, '<br>');
   }
 
   trackByReport(_: number, r: PatientLabReport): string { return r.id; }

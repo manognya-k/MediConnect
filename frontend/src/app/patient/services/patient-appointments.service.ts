@@ -9,7 +9,8 @@ import {
 import { PatientAuthService } from './patient-auth.service';
 import { PatientStateService } from './patient-state.service';
 
-const BASE = 'http://localhost:8081/api';
+import { environment } from '../../../environments/environment';
+const BASE = environment.apiBase;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function pad2(n: number): string { return String(n).padStart(2, '0'); }
@@ -102,23 +103,13 @@ export class PatientAppointmentsService {
           rawMap,
         };
       }),
-      catchError(() => {
-        // TODO: mock data fallback
-        const mockUpcoming: PatientAppointmentCard[] = [
-          { id:'m1', day:'22', month:'Apr', doctorName:'Dr. Sarah Johnson', speciality:'Cardiologist', hospital:'Central Hospital', time:'10:30 AM', type:'In-person', reason:'Cardiology follow-up', status:'Confirmed', tab:'upcoming' },
-          { id:'m2', day:'25', month:'Apr', doctorName:'Dr. Priya Mehta', speciality:'General Physician', hospital:'City Clinic', time:'2:00 PM', type:'Video', reason:'General check-up', status:'Video', tab:'upcoming', joinUrl:'https://meet.example.com/appt-m2' },
-          { id:'m3', day:'30', month:'Apr', doctorName:'Dr. Arjun Rao', speciality:'Endocrinologist', hospital:'Central Hospital', time:'11:00 AM', type:'In-person', reason:'Diabetes review', status:'Pending confirmation', tab:'upcoming' },
-        ];
-        const mockPast: PatientAppointmentCard[] = [
-          { id:'p1', day:'15', month:'Apr', doctorName:'Dr. Sarah Johnson', speciality:'Cardiologist', hospital:'Central Hospital', time:'9:00 AM', type:'In-person', reason:'Hypertension review', status:'Completed', tab:'past' },
-          { id:'p2', day:'02', month:'Apr', doctorName:'Dr. Priya Mehta', speciality:'General Physician', hospital:'City Clinic', time:'11:30 AM', type:'Video', reason:'General consultation', status:'Completed', tab:'past' },
-        ];
-        return of({
-          counts: { upcoming: mockUpcoming.length, past: mockPast.length, cancelled: 0 },
-          allUpcoming: mockUpcoming, allPast: mockPast, allCancelled: [] as PatientAppointmentCard[],
-          rawMap: {} as Record<string, any>,
-        });
-      }),
+      catchError(() => of({
+        counts: { upcoming: 0, past: 0, cancelled: 0 },
+        allUpcoming: [] as PatientAppointmentCard[],
+        allPast:     [] as PatientAppointmentCard[],
+        allCancelled:[] as PatientAppointmentCard[],
+        rawMap:      {} as Record<string, any>,
+      })),
       map(data => ({
         cards:  data.allUpcoming,  // default: upcoming tab
         counts: data.counts,
@@ -128,11 +119,19 @@ export class PatientAppointmentsService {
     );
   }
 
-  /** Reschedule: PUT /api/appointments/{id} */
+  /** Reschedule: POST /api/reschedule/request — submits a formal reschedule request through admin→doctor workflow */
   reschedule(id: string, newDate: string, newTime: string, original: any): Observable<any> {
-    // Convert "3:00 PM" → "15:00:00" for Spring Boot LocalTime
-    const body = { ...original, appointmentDate: newDate, appointmentTime: to24h(newTime) };
-    return this.http.put(`${BASE}/appointments/${id}`, body);
+    const patientId = this.state.getPatient()?.id;
+    if (!patientId) {
+      return this.http.put(`${BASE}/appointments/${id}`,
+        { ...original, appointmentDate: newDate, appointmentTime: to24h(newTime) });
+    }
+    return this.http.post(`${BASE}/reschedule/request`, {
+      appointmentId: +id,
+      patientId,
+      requestedDate: newDate,
+      requestedTime: to24h(newTime)
+    });
   }
 
   /** Cancel: PUT /api/appointments/{id} with status=CANCELLED */
@@ -160,8 +159,18 @@ export class PatientAppointmentsService {
     );
   }
 
-  /** Fetch all doctors for Book modal */
+  /** Fetch all doctors for Book modal — errors propagate to caller */
   getDoctors(): Observable<any[]> {
-    return this.http.get<any[]>(`${BASE}/doctors`).pipe(catchError(() => of([])));
+    return this.http.get<any[]>(`${BASE}/doctors`);
+  }
+
+  /** Fetch available 30-min slots for a doctor on a given date (YYYY-MM-DD). */
+  getAvailableSlots(doctorId: number, date: string): Observable<string[]> {
+    return this.http.get<{ availableSlots: string[] }>(
+      `${BASE}/doctors/${doctorId}/available-slots?date=${date}`
+    ).pipe(
+      map(res => res.availableSlots ?? []),
+      catchError(() => of([]))
+    );
   }
 }

@@ -1,0 +1,42 @@
+<div class="notif-page">
+  <!-- Header -->
+  <div class="notif-header">
+    <div class="header-left">
+      <h2>Notifications</h2>
+      <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }} unread</span>
+    </div>
+    <button class="mark-all-btn"
+            [disabled]="markingAllRead || unreadCount === 0"
+            (click)="markAllRead()">
+      {{ markingAllRead ? 'Marking…' : 'Mark all as read' }}
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading notifications…</p>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!loading && notifications.length === 0">
+    <span class="empty-icon">🔔</span>
+    <p>No notifications yet.</p>
+    <small>You'll see appointment updates and reminders here.</small>
+  </div>
+
+  <!-- List -->
+  <ul class="notif-list" *ngIf="!loading && notifications.length > 0">
+    <li class="notif-item"
+        *ngFor="let n of notifications"
+        [class.unread]="!n.isRead"
+        (click)="markRead(n)">
+      <span class="notif-icon">{{ typeIcon(n.notificationType) }}</span>
+      <div class="notif-body">
+        <p class="notif-msg">{{ n.message }}</p>
+        <span class="notif-time">{{ timeAgo(n.createdAt) }}</span>
+      </div>
+      <span class="unread-dot" *ngIf="!n.isRead"></span>
+    </li>
+  </ul>
+</div>

@@ -28,4 +28,7 @@ public class LabReport {
     private String result;
     private String reportUrl;
     private LocalDate reportDate;
+
+    @Column(name = "is_abnormal", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isAbnormal = false;
 }

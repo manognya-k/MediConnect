@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { PatientRecordSummary, PatientRecordDetail } from '../models/patient-record.model';
 import { PatientAuthService } from './patient-auth.service';
@@ -95,8 +95,10 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
     doctorName: 'Dr. Aisha Patel',
     specialty: 'Cardiology',
     hospital: 'MediConnect Heart Centre',
+    consultationType: 'IN_PERSON',
     chiefComplaint: 'Routine annual cardiovascular examination. Patient reports occasional mild breathlessness on exertion.',
     diagnosis: 'Stage 1 Hypertension (BP 142/92 mmHg). Otherwise, cardiovascular function within acceptable limits.',
+    treatment: 'Amlodipine 5 mg once daily. Lifestyle modification — low sodium diet, aerobic exercise 30 min/day.',
     notes: 'Patient advised to reduce sodium intake and increase aerobic activity to 30 min/day. Follow-up in 3 months. Echo and stress test deferred for now.',
     vitals: {
       bloodPressure: '142/92',
@@ -156,8 +158,10 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
     doctorName: 'Dr. Ramesh Gupta',
     specialty: 'Endocrinology',
     hospital: 'MediConnect Metabolic Clinic',
+    consultationType: 'IN_PERSON',
     chiefComplaint: 'Quarterly diabetes review. Patient reports increased fatigue and occasional thirst.',
     diagnosis: 'Type 2 Diabetes Mellitus — suboptimal glycaemic control. HbA1c 7.4% (target <7%).',
+    treatment: 'Metformin dose increased to 1000 mg BD. Dietary counselling provided.',
     notes: 'Metformin dose increased. Dietary counselling reinforced. SGLT2 inhibitor considered for next review if HbA1c remains above target.',
     vitals: {
       bloodPressure: '128/82',
@@ -202,8 +206,10 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
     doctorName: 'Dr. Sneha Iyer',
     specialty: 'General Surgery',
     hospital: 'MediConnect Surgical Centre',
+    consultationType: 'IN_PERSON',
     chiefComplaint: 'Acute right iliac fossa pain for 18 hours. Nausea and fever (38.6°C).',
     diagnosis: 'Acute appendicitis. Laparoscopic appendectomy performed under general anaesthesia.',
+    treatment: 'Laparoscopic appendectomy under general anaesthesia. Post-op antibiotics and analgesics.',
     notes: 'Procedure uncomplicated. Discharged on day 2 post-op. Wound care instructions given. Review in 2 weeks.',
     vitals: {
       bloodPressure: '118/76',
@@ -249,8 +255,10 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
     doctorName: 'Dr. Kiran Mehta',
     specialty: 'Emergency Medicine',
     hospital: 'MediConnect Emergency Department',
+    consultationType: 'IN_PERSON',
     chiefComplaint: 'Sudden onset central chest pain radiating to left shoulder. Duration: 2 hours.',
     diagnosis: 'Chest pain — non-cardiac origin. ECG, troponins normal. Likely gastroesophageal reflux disease (GERD).',
+    treatment: 'Pantoprazole 40 mg once daily for 4 weeks. Dietary advice given. Outpatient stress ECG ordered.',
     notes: 'Stress ECG recommended outpatient. Antacids prescribed. Patient advised to avoid trigger foods and follow up with cardiologist.',
     vitals: {
       bloodPressure: '138/88',
@@ -288,8 +296,10 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
     doctorName: 'Dr. Aisha Patel',
     specialty: 'Cardiology',
     hospital: 'MediConnect Heart Centre',
+    consultationType: 'IN_PERSON',
     chiefComplaint: 'Follow-up for elevated lipid panel results from recent blood work.',
     diagnosis: 'Dyslipidaemia — LDL 148 mg/dL (elevated). Statin therapy initiated.',
+    treatment: 'Atorvastatin 20 mg once daily at bedtime. Mediterranean diet counselling.',
     notes: 'Diet modification: Mediterranean diet recommended. Recheck lipids in 3 months. Patient counselled on cardiovascular risk.',
     vitals: {
       bloodPressure: '136/88',
@@ -327,8 +337,10 @@ const MOCK_DETAILS: Record<string, PatientRecordDetail> = {
     doctorName: 'Dr. Ramesh Gupta',
     specialty: 'Endocrinology',
     hospital: 'MediConnect Metabolic Clinic',
+    consultationType: 'IN_PERSON',
     chiefComplaint: 'Mildly raised creatinine (1.3 mg/dL) on routine labs — referred for specialist evaluation.',
     diagnosis: 'Possible early diabetic nephropathy. Nephrology referral for further assessment.',
+    treatment: 'Referral to nephrology for further evaluation. Continue existing diabetes management.',
     notes: 'Nephrology appointment scheduled. Patient to bring all previous lab results. Continue diabetes management as planned.',
     vitals: null,
     prescriptions: [],
@@ -360,10 +372,10 @@ export class PatientRecordsService {
       : this.http.get<any>(`${BASE}/patients/by-user/${userId}`).pipe(
           catchError(() => of(null)),
           switchMap(patient => {
-            if (!patient?.patientId) return of(MOCK_SUMMARIES);
+            if (!patient?.patientId) return of([] as PatientRecordSummary[]);
             return this.http.get<any[]>(`${BASE}/medical-records/patient/${patient.patientId}`).pipe(
-              map(records => records.length > 0 ? records.map(mapBackendRecord) : MOCK_SUMMARIES),
-              catchError(() => of(MOCK_SUMMARIES))
+              map(records => records.map(mapBackendRecord)),
+              catchError(() => of([] as PatientRecordSummary[]))
             );
           })
         );
@@ -385,6 +397,53 @@ export class PatientRecordsService {
   }
 
   getRecordDetail(id: string): Observable<PatientRecordDetail | null> {
-    return of(MOCK_DETAILS[id] ?? null);
+    return forkJoin({
+      record: this.http.get<any>(`${BASE}/medical-records/${id}`).pipe(catchError(() => of(null))),
+      rxList: this.http.get<any[]>(`${BASE}/prescriptions/medical-record/${id}`).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ record: r, rxList }) => {
+        if (!r) return null;
+
+        const prescriptions = (rxList ?? []).map((p: any) => ({
+          id:             String(p.id),
+          medicationName: p.medicationName ?? '',
+          dosage:         p.dosage ?? '',
+          frequency:      p.instructions ?? '',
+          duration:       '',
+          notes:          '',
+        }));
+
+        // Also include the MedicalRecord.prescription text as a single entry if no linked prescriptions
+        if (prescriptions.length === 0 && r.prescription) {
+          prescriptions.push({
+            id:             'rx-text',
+            medicationName: r.prescription,
+            dosage:         '',
+            frequency:      '',
+            duration:       '',
+            notes:          '',
+          });
+        }
+
+        return {
+          id:              String(r.recordId ?? id),
+          title:           r.diagnosis ?? 'Medical Record',
+          type:            (r.consultationType === 'ONLINE' ? 'Consultation' : r.consultationType ?? 'Consultation') as any,
+          date:            r.recordDate ? new Date(r.recordDate) : new Date(),
+          doctorName:      r.doctor?.user?.name ? `Dr. ${r.doctor.user.name}` : 'Doctor',
+          specialty:       r.doctor?.specialization ?? '',
+          hospital:        r.hospital?.hospitalName ?? '',
+          consultationType: r.consultationType ?? '',
+          chiefComplaint:  '',
+          diagnosis:       r.diagnosis ?? '',
+          treatment:       r.treatment ?? '',
+          notes:           r.notes ?? '',
+          vitals:          null,
+          prescriptions,
+          timeline:        [],
+        } as PatientRecordDetail;
+      }),
+      catchError(() => of(null))
+    );
   }
 }

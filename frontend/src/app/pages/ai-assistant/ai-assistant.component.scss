@@ -336,3 +336,29 @@ $faint:         #aaaaaa;
 
   svg { flex-shrink: 0; margin-top: 1px; }
 }
+
+
+// ── Markdown rendering inside AI bubbles ──────────────────────────────────────
+
+::ng-deep .msg-bubble {
+  .md-h2 { font-size: 1.05em; font-weight: 700; margin: 10px 0 4px; color: #185FA5; }
+  .md-h3 { font-size: 1em;    font-weight: 700; margin: 8px 0 3px;  color: #185FA5; }
+  .md-h4 { font-size: .95em;  font-weight: 600; margin: 7px 0 3px;  color: #334155; }
+
+  .md-ul, .md-ol {
+    margin: 6px 0 6px 18px;
+    padding: 0;
+    li { margin-bottom: 3px; line-height: 1.5; }
+  }
+
+  .md-code {
+    background: #EBF3FC;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .88em;
+    color: #185FA5;
+  }
+
+  .md-hr { border: none; border-top: 1px solid #E8E9EC; margin: 10px 0; }
+}

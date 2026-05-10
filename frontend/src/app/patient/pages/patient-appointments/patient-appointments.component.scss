@@ -459,6 +459,47 @@ $radius:    16px;
 
 .field-error { font-size: 11px; color: $red; }
 
+.field-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: $mid;
+  padding: 8px 0;
+}
+
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid $border;
+  border-top-color: $blue;
+  animation: spin .8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.field-err-inline {
+  font-size: 13px;
+  color: $red;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: $blue;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
 .radio-group {
   display: flex;
   gap: 20px;

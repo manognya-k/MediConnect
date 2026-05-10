@@ -8,8 +8,6 @@ import { PatientAppointmentCard, AppointmentTab, AppointmentTabCounts } from '..
 import { ToastService } from '../../../services/toast.service';
 import { PatientStateService } from '../../services/patient-state.service';
 
-const MOCK_TIMES = ['9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM',
-                    '2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM'];
 
 @Component({
   selector: 'app-patient-appointments',
@@ -46,6 +44,7 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
   reschedulingAppt: PatientAppointmentCard | null = null;
   rescheduleForm!: FormGroup;
   rescheduleSlots: string[] = [];
+  rescheduleSlotsLoading = false;
   rescheduleSubmitting = false;
 
   // Notes panel
@@ -59,7 +58,10 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
   showBook = false;
   bookForm!: FormGroup;
   allDoctors: any[] = [];
+  doctorsLoading = false;
+  doctorsError = false;
   bookSlots: string[] = [];
+  bookSlotsLoading = false;
   bookSubmitting = false;
   prebookAppt: PatientAppointmentCard | null = null; // for Rebook action
 
@@ -133,12 +135,8 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
   // ── Join Call ─────────────────────────────────────────────
 
   joinCall(appt: PatientAppointmentCard) {
-    if (appt.joinUrl) {
-      window.open(appt.joinUrl, '_blank');
-    } else {
-      // TODO: no sessionUrl on backend record — show guidance
-      this.toast.show('Video link not available yet. Please check your email.', 'error');
-    }
+    const url = appt.joinUrl?.trim() || `https://meet.jit.si/mediconnect-${appt.id}`;
+    window.open(url, '_blank', 'noopener');
   }
 
   // ── Cancel ───────────────────────────────────────────────
@@ -190,8 +188,18 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
   }
 
   loadRescheduleSlots() {
-    // TODO: wire to GET /api/doctors/:id/slots?date=... endpoint
-    this.rescheduleSlots = MOCK_TIMES;
+    if (!this.reschedulingAppt) return;
+    const date = this.rescheduleForm.get('date')?.value;
+    if (!date) return;
+    const orig = this.rawMap[this.reschedulingAppt.id];
+    const doctorId = orig?.doctor?.doctorId;
+    if (!doctorId) return;
+    this.rescheduleSlotsLoading = true;
+    this.rescheduleSlots = [];
+    this.svc.getAvailableSlots(doctorId, date).pipe(takeUntil(this.destroy$)).subscribe(slots => {
+      this.rescheduleSlots = slots;
+      this.rescheduleSlotsLoading = false;
+    });
   }
 
   closeReschedule() {
@@ -254,6 +262,11 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
       reason:   ['', [Validators.required, Validators.minLength(3)]],
     });
     this.bookForm.get('date')!.valueChanges.subscribe(() => this.loadBookSlots());
+    this.bookForm.get('doctorId')!.valueChanges.subscribe(() => {
+      this.bookSlots = [];
+      this.bookForm.get('time')?.reset();
+      this.loadBookSlots();
+    });
   }
 
   openBook(prefill?: PatientAppointmentCard) {
@@ -262,14 +275,31 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
     this.bookSlots    = [];
     this.showBook     = true;
     if (!this.allDoctors.length) {
-      this.svc.getDoctors().pipe(takeUntil(this.destroy$)).subscribe(d => {
-        this.allDoctors = d;
-        // Pre-fill doctor for rebook only after the doctor list has loaded
-        if (prefill) this.applyBookPrefill(prefill);
+      this.doctorsLoading = true;
+      this.doctorsError   = false;
+      this.svc.getDoctors().pipe(takeUntil(this.destroy$)).subscribe({
+        next: d => {
+          this.allDoctors     = d;
+          this.doctorsLoading = false;
+          if (prefill) this.applyBookPrefill(prefill);
+        },
+        error: () => {
+          this.doctorsLoading = false;
+          this.doctorsError   = true;
+        },
       });
     } else if (prefill) {
       this.applyBookPrefill(prefill);
     }
+  }
+
+  retryLoadDoctors() {
+    this.doctorsError   = false;
+    this.doctorsLoading = true;
+    this.svc.getDoctors().pipe(takeUntil(this.destroy$)).subscribe({
+      next: d => { this.allDoctors = d; this.doctorsLoading = false; },
+      error: () => { this.doctorsLoading = false; this.doctorsError = true; },
+    });
   }
 
   private applyBookPrefill(prefill: PatientAppointmentCard): void {
@@ -278,8 +308,15 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
   }
 
   loadBookSlots() {
-    // TODO: wire to GET /api/doctors/:id/slots?date=... endpoint
-    this.bookSlots = MOCK_TIMES;
+    const doctorId = this.bookForm.get('doctorId')?.value;
+    const date     = this.bookForm.get('date')?.value;
+    if (!doctorId || !date) return;
+    this.bookSlotsLoading = true;
+    this.bookSlots = [];
+    this.svc.getAvailableSlots(+doctorId, date).pipe(takeUntil(this.destroy$)).subscribe(slots => {
+      this.bookSlots = slots;
+      this.bookSlotsLoading = false;
+    });
   }
 
   closeBook() {
@@ -299,6 +336,7 @@ export class PatientAppointmentsComponent implements OnInit, OnDestroy {
         this.closeBook();
         this.toast.show('Appointment booked successfully.', 'success');
         this.loadData();
+        this.state.triggerRefresh();
       },
       error: () => {
         this.bookSubmitting = false;

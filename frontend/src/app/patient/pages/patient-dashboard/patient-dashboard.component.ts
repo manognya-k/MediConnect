@@ -47,6 +47,12 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.loadDashboard();
+
+    this.state.refresh$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadDashboard());
+  }
+
+  private loadDashboard() {
     this.svc.loadAll().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.patient       = data.patient;
@@ -110,7 +116,17 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 
   goToAi(query?: string) {
     const extras = query ? { queryParams: { q: query } } : {};
-    this.router.navigate(['/patient/ai'], extras);
+    const patientId = this.svc.getCurrentUserId();
+    if (patientId) {
+      this.router.navigate(['/patient', patientId, 'ai'], extras);
+    }
+  }
+
+  goToPatientPage(path: string): void {
+    const patientId = this.svc.getCurrentUserId();
+    if (patientId) {
+      this.router.navigate(['/patient', patientId, path]);
+    }
   }
 
   trackByActivity(_: number, item: ActivityItem): string  { return item.id; }

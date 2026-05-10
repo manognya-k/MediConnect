@@ -197,8 +197,40 @@ export class AiAssistantComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   safeHtml(content: string): SafeHtml {
-    const formatted = content.replace(/\n/g, '<br>');
-    return this.sanitizer.sanitize(SecurityContext.HTML, formatted) ?? '';
+    const html = this.markdownToHtml(content);
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+  }
+
+  private markdownToHtml(md: string): string {
+    return md
+      // Headers (### ## #)
+      .replace(/^### (.+)$/gm, '<h4 class="md-h4">$1</h4>')
+      .replace(/^## (.+)$/gm,  '<h3 class="md-h3">$1</h3>')
+      .replace(/^# (.+)$/gm,   '<h2 class="md-h2">$1</h2>')
+      // Bold + italic
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,         '<em>$1</em>')
+      // Bullet lists: group consecutive lines starting with - or *
+      .replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li>${l.replace(/^[-*] /, '').trim()}</li>`)
+          .join('');
+        return `<ul class="md-ul">${items}</ul>`;
+      })
+      // Numbered lists
+      .replace(/((?:^\d+\. .+\n?)+)/gm, (block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li>${l.replace(/^\d+\. /, '').trim()}</li>`)
+          .join('');
+        return `<ol class="md-ol">${items}</ol>`;
+      })
+      // Inline code
+      .replace(/`([^`]+)`/g, '<code class="md-code">$1</code>')
+      // Horizontal rule
+      .replace(/^---$/gm, '<hr class="md-hr">')
+      // Remaining newlines → <br> (skip lines that are block elements)
+      .replace(/\n(?!<(?:ul|ol|h[2-4]|hr|li))/g, '<br>');
   }
 
   trackByMessageId(_: number, msg: ChatMessage): string {

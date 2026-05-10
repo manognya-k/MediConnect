@@ -16,7 +16,11 @@ public class ChatbotLog {
     @JoinColumn(name = "user_id")
     private User user;
     
+    @Column(columnDefinition = "TEXT")
     private String query;
+
+    @Column(columnDefinition = "TEXT")
     private String response;
+
     private LocalDateTime createdAt;
 }

@@ -179,6 +179,18 @@
   margin: 0 auto;
 }
 
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6B7280;
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color .15s;
+  &:hover { color: #185FA5; }
+}
+
 /* Logo */
 .logo {
   display: flex;

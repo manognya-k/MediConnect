@@ -117,19 +117,32 @@
           <div class="detail-section">
             <div class="ds-heading">Clinical Notes</div>
             <div class="ds-card">
-              <div class="cn-row">
-                <div class="cn-label">Chief Complaint</div>
-                <div class="cn-val">{{ selectedRecord.chiefComplaint }}</div>
+
+              <div class="cn-row" *ngIf="selectedRecord.consultationType">
+                <div class="cn-label">Consultation Type</div>
+                <div class="cn-val">{{ selectedRecord.consultationType }}</div>
               </div>
-              <div class="cn-divider"></div>
-              <div class="cn-row">
+              <div class="cn-divider" *ngIf="selectedRecord.consultationType"></div>
+
+              <div class="cn-row" *ngIf="selectedRecord.diagnosis">
                 <div class="cn-label">Diagnosis</div>
                 <div class="cn-val cn-val-strong">{{ selectedRecord.diagnosis }}</div>
               </div>
-              <div class="cn-divider"></div>
-              <div class="cn-row">
+              <div class="cn-divider" *ngIf="selectedRecord.diagnosis"></div>
+
+              <div class="cn-row" *ngIf="selectedRecord.treatment">
+                <div class="cn-label">Treatment</div>
+                <div class="cn-val">{{ selectedRecord.treatment }}</div>
+              </div>
+              <div class="cn-divider" *ngIf="selectedRecord.treatment"></div>
+
+              <div class="cn-row" *ngIf="selectedRecord.notes">
                 <div class="cn-label">Doctor's Notes</div>
                 <div class="cn-val">{{ selectedRecord.notes }}</div>
+              </div>
+
+              <div class="cn-empty" *ngIf="!selectedRecord.diagnosis && !selectedRecord.treatment && !selectedRecord.notes">
+                No clinical notes recorded.
               </div>
             </div>
           </div>
@@ -180,7 +193,12 @@
                 </div>
                 <div class="rx-info">
                   <div class="rx-name">{{ rx.medicationName }}</div>
-                  <div class="rx-detail">{{ rx.dosage }} · {{ rx.frequency }} · {{ rx.duration }}</div>
+                  <div class="rx-detail" *ngIf="rx.dosage || rx.frequency">
+                    <span *ngIf="rx.dosage">{{ rx.dosage }}</span>
+                    <span *ngIf="rx.dosage && rx.frequency"> · </span>
+                    <span *ngIf="rx.frequency">{{ rx.frequency }}</span>
+                    <span *ngIf="rx.duration"> · {{ rx.duration }}</span>
+                  </div>
                   <div class="rx-note" *ngIf="rx.notes">{{ rx.notes }}</div>
                 </div>
               </div>

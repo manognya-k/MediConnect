@@ -10,8 +10,18 @@ export interface AdminLoginRequest {
   password: string;
 }
 
+export interface AdminRegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  hospitalId: number;
+}
+
 export interface AdminUser {
   id: number;
+  uniqueId?: string;
   name: string;
   email: string;
   role: string;
@@ -30,20 +40,41 @@ export class AdminAuthService {
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  login(request: AdminLoginRequest): Observable<AdminLoginResponse> {
-    return this.http.post<any>(`${environment.apiBase}/auth/login`, request).pipe(
+  register(request: AdminRegisterRequest): Observable<AdminLoginResponse> {
+    return this.http.post<any>(`${environment.apiBase}/admin/register`, request).pipe(
       map(res => {
-        if (res.role !== 'ADMIN') {
-          throw new Error('This account does not have admin access.');
-        }
         const loginRes: AdminLoginResponse = {
           token: res.token,
-          admin: { id: res.userId, name: res.name, email: res.email, role: res.role }
+          admin: { id: res.userId, uniqueId: res.uniqueId, name: res.name, email: res.email, role: res.role }
         };
         this.persist(loginRes);
         return loginRes;
       }),
-      catchError(err => throwError(() => new Error(err.error?.message ?? err.message ?? 'Invalid email or password.')))
+      catchError(err => {
+        const msg = typeof err.error === 'string' && err.error
+          ? err.error
+          : err.error?.message ?? 'Registration failed. Please try again.';
+        return throwError(() => new Error(msg));
+      })
+    );
+  }
+
+  login(request: AdminLoginRequest): Observable<AdminLoginResponse> {
+    return this.http.post<any>(`${environment.apiBase}/admin/login`, request).pipe(
+      map(res => {
+        const loginRes: AdminLoginResponse = {
+          token: res.token,
+          admin: { id: res.userId, uniqueId: res.uniqueId, name: res.name, email: res.email, role: res.role }
+        };
+        this.persist(loginRes);
+        return loginRes;
+      }),
+      catchError(err => {
+        const msg = typeof err.error === 'string' && err.error
+          ? err.error
+          : err.error?.message ?? 'Invalid email or password.';
+        return throwError(() => new Error(msg));
+      })
     );
   }
 
@@ -68,7 +99,8 @@ export class AdminAuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const admin = this.getAdmin();
+    return !!this.getToken() && !!admin && admin.role === 'ADMIN';
   }
 
   get adminInitials(): string {

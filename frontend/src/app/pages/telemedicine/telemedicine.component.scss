@@ -210,6 +210,27 @@ $text-muted:   #888888;
 }
 
 // ── Buttons ───────────────────────────────────────
+.sc-btn-row {
+  display: flex;
+  gap: 8px;
+  .join-btn, .complete-btn { flex: 1; width: auto; }
+}
+
+.complete-btn {
+  background: #fff;
+  color: #0F7B50;
+  border: 1.5px solid #0F7B50;
+  border-radius: 8px;
+  padding: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background .12s, color .12s;
+  &:hover { background: #E6F5EF; }
+  &:disabled { opacity: .7; cursor: wait; }
+}
+
 .join-btn {
   width: 100%;
   background: $primary;

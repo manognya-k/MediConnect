@@ -2,12 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
 import { PatientService, PagedResult } from '../../services/patient.service';
+import { DashboardService } from '../../services/dashboard.service';
 import { Patient, PatientStats, PatientFilter } from '../../models/patient.model';
 import { LayoutService } from '../../services/layout.service';
 import { ToastService } from '../../services/toast.service';
 import { PatientFormComponent } from './patient-form/patient-form.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-patients',
@@ -33,6 +35,8 @@ export class PatientsComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private search$ = new Subject<string>();
+  private doctorUserId: number | null = null;
+  private doctorId: number | null = null;
 
   readonly avatarColors = [
     { bg: '#EBF3FC', color: '#185FA5' },
@@ -47,10 +51,15 @@ export class PatientsComponent implements OnInit, OnDestroy {
     public layout: LayoutService,
     private patientService: PatientService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    private auth: AuthService,
+    private dashSvc: DashboardService
   ) {}
 
   ngOnInit() {
+    const user = this.auth.getUser();
+    this.doctorUserId = user?.userId ?? null;
+
     this.search$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -59,26 +68,36 @@ export class PatientsComponent implements OnInit, OnDestroy {
       this.filter = { ...this.filter, search: v, page: 1 };
       this.load();
     });
-    this.load();
+
+    // Resolve the doctor entity ID (doctorId ≠ userId) then load patients
+    if (this.doctorUserId) {
+      this.dashSvc.getAllDoctors().pipe(takeUntil(this.destroy$)).subscribe({
+        next: docs => {
+          const doc = docs.find((d: any) => d.user?.userId === this.doctorUserId);
+          this.doctorId = doc?.doctorId ?? null;
+          this.load();
+        },
+        error: () => this.load()
+      });
+    } else {
+      this.load();
+    }
   }
 
   ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
 
   load() {
+    if (!this.doctorId) return; // wait until doctorId is resolved
     this.loading = true;
     this.error = '';
-    this.patientService.getPatients(this.filter).subscribe({
+    this.patientService.getDoctorPatients(this.doctorId, this.filter).subscribe({
       next: (res) => {
         this.patients = res.data;
         this.total = res.total;
         this.totalPages = Math.ceil(res.total / this.filter.pageSize);
         this.buildPageNumbers();
-
-        // Compute stats from full list on first load
         if (this.stats.total === 0) {
-          this.patientService.getPatients({ ...this.filter, page: 1, pageSize: 99999, search: '', gender: '', bloodGroup: '', status: '' }).subscribe(all => {
-            this.stats = this.patientService.getStats(all.data);
-          });
+          this.stats = this.patientService.getStats(res.data);
         }
         this.loading = false;
       },
@@ -137,7 +156,10 @@ export class PatientsComponent implements OnInit, OnDestroy {
     return m[s] || 'b-gray';
   }
 
-  viewPatient(id: string) { this.router.navigate(['/doctor/patients', id]); }
+  viewPatient(id: string) {
+    if (!this.doctorUserId) return;
+    this.router.navigate(['/doctor', this.doctorUserId, 'patients', id]);
+  }
 
   openAddForm() { this.editPatient = null; this.showForm = true; }
   openEditForm(p: Patient, event: Event) { event.stopPropagation(); this.editPatient = p; this.showForm = true; }

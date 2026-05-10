@@ -46,6 +46,26 @@
   </div>
 </div>
 
+<!-- ── Delete Confirm Modal ───────────────────────────────────────────────────── -->
+<div *ngIf="showDeleteConfirm"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeDeletePatient()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:400px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E;margin-bottom:8px">Delete Patient</div>
+    <div style="font-size:13px;color:#64748B;line-height:1.6;margin-bottom:20px">
+      Are you sure you want to delete <strong>{{ selectedPatient?.user?.name || selectedPatient?.name }}</strong>?
+      This action cannot be undone and will remove all associated records.
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" (click)="closeDeletePatient()">Cancel</button>
+      <button class="btn" style="background:#EF4444;color:#fff" (click)="confirmDeletePatient()" [disabled]="deleteSubmitting">
+        {{ deleteSubmitting ? 'Deleting…' : 'Delete Patient' }}
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ── AI Summary Modal ────────────────────────────────────────────────────────── -->
 <div *ngIf="showAiSummary"
   style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
@@ -150,10 +170,10 @@
       </thead>
       <tbody>
         <tr *ngFor="let p of filteredPatients" (click)="selectPatient(p)" style="cursor:pointer">
-          <td>{{ p.name }}</td>
-          <td>{{ p.email }}</td>
+          <td>{{ p.user?.name || '—' }}</td>
+          <td>{{ p.user?.email || '—' }}</td>
           <td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">{{ p.bloodGroup || '—' }}</td>
-          <td>{{ p.phone || '—' }}</td>
+          <td>{{ p.user?.phone || '—' }}</td>
           <td><span class="badge b-green">Active</span></td>
           <td><button class="btn btn-ghost btn-sm" (click)="selectPatient(p)">View</button></td>
         </tr>
@@ -171,11 +191,12 @@
   <div class="card" *ngIf="selectedPatient">
     <div class="card-header">
       <div>
-        <div class="card-title">Patient Detail — {{ selectedPatient.name }}</div>
+        <div class="card-title">Patient Detail — {{ selectedPatient.user?.name || selectedPatient.name }}</div>
         <div class="card-sub">Patient ID: {{ selectedPatient.patientId }}</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost btn-sm" (click)="openEditPatient()">Edit</button>
+        <button class="btn btn-sm" style="background:#FEF2F2;color:#EF4444" (click)="openDeletePatient()">Delete</button>
         <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple)" (click)="openAiSummary()">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.5c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           AI Summarize
@@ -190,11 +211,11 @@
         </div>
         <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
           <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Email</div>
-          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.email }}</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.user?.email || selectedPatient.email }}</div>
         </div>
         <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
           <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Phone</div>
-          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.phone || '—' }}</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">{{ selectedPatient.user?.phone || selectedPatient.phone || '—' }}</div>
         </div>
         <div style="background:var(--surf2);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
           <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Patient ID</div>
@@ -203,7 +224,7 @@
       </div>
       <div style="margin-top:10px;background:var(--purple-lt);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:12px 14px">
         <div style="font-size:10px;color:var(--purple);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">AI Patient Summary</div>
-        <div style="font-size:12px;color:var(--mid);line-height:1.6">Patient <strong style="color:var(--text)">{{ selectedPatient.name }}</strong> is registered in the MediConnect system. For a detailed AI health summary, connect to the AI assistant module from the patient's doctor portal view.</div>
+        <div style="font-size:12px;color:var(--mid);line-height:1.6">Patient <strong style="color:var(--text)">{{ selectedPatient.user?.name || selectedPatient.name }}</strong> is registered in the MediConnect system. For a detailed AI health summary, connect to the AI assistant module from the patient's doctor portal view.</div>
       </div>
     </div>
   </div>

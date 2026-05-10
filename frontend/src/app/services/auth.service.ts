@@ -23,6 +23,7 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   userId: number;
+  uniqueId?: string;
   name: string;
   email: string;
   role: string;

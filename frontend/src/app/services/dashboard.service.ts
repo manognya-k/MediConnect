@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, of, forkJoin, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface DoctorEntity {
   doctorId: number;
@@ -68,7 +69,7 @@ export interface PatientEntity {
   bloodGroup: string;
 }
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -119,6 +120,12 @@ export class DashboardService {
   getAllPatients(): Observable<PatientEntity[]> {
     return this.http.get<PatientEntity[]>(`${BASE}/patients`).pipe(
       catchError(() => of([]))
+    );
+  }
+
+  markAllNotificationsRead(userId: number): Observable<void> {
+    return this.http.put<void>(`${BASE}/notifications/read-all/${userId}`, {}).pipe(
+      catchError(() => of(undefined as any))
     );
   }
 }

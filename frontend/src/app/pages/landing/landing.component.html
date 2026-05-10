@@ -1,0 +1,78 @@
+<div class="landing">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <app-logo></app-logo>
+    <div class="nav-actions">
+      <button class="btn-ghost" (click)="goToAdmin()">Admin</button>
+      <button class="btn-primary" (click)="goToLogin()">Patient / Doctor</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">Healthcare Platform</div>
+    <h1 class="hero-title">Intelligent Hospital<br>Management System</h1>
+    <p class="hero-sub">
+      Connect patients, doctors, and administrators in one unified platform.
+      Real-time updates, AI-powered insights, and seamless care delivery.
+    </p>
+    <div class="hero-cta">
+      <button class="btn-primary btn-lg" (click)="goToLogin()">Get Started</button>
+      <button class="btn-outline btn-lg" (click)="goToAdmin()">Admin Portal</button>
+    </div>
+  </section>
+
+  <!-- FEATURE CARDS -->
+  <section class="features">
+    <div class="feat-card">
+      <div class="feat-icon feat-teal">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="5" r="3" stroke="white" stroke-width="1.5"/>
+          <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Patient Portal</div>
+      <div class="feat-desc">View vitals, book appointments, track prescriptions, and chat with an AI health assistant.</div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon feat-blue">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+          <rect x="3" y="2" width="10" height="13" rx="1.5" stroke="white" stroke-width="1.5"/>
+          <path d="M5 6h6M5 9h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Doctor Dashboard</div>
+      <div class="feat-desc">Manage patients, write prescriptions, conduct telemedicine, and access clinical AI support.</div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon feat-purple">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+          <path d="M2 12V8l3-3 3 3 3-4 3 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Admin Analytics</div>
+      <div class="feat-desc">Monitor bed occupancy, appointments, inventory, and hospital performance in real-time.</div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon feat-green">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="4" width="10" height="8" rx="1.5" stroke="white" stroke-width="1.5"/>
+          <path d="M11 7l3-2v6l-3-2" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="feat-title">Telemedicine</div>
+      <div class="feat-desc">Secure video consultations with automatic medical record creation after each session.</div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <app-logo></app-logo>
+    <div class="footer-copy">&copy; 2026 MediConnect. All rights reserved.</div>
+  </footer>
+
+</div>

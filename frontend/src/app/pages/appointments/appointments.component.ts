@@ -306,7 +306,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
 
   viewPatient(appt: Appointment, event: Event) {
     event.stopPropagation();
-    if (appt.patientId) this.router.navigate(['/doctor/patients', appt.patientId]);
+    const doctorUserId = this.auth.getUser()?.userId;
+    if (appt.patientId && doctorUserId) {
+      this.router.navigate(['/doctor', doctorUserId, 'patients', appt.patientId]);
+    }
   }
 
   openEditModal(appt: Appointment, event: Event) {

@@ -112,6 +112,31 @@ $sb-width: 200px;
   margin: 5px 8px;
 }
 
+.sb-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 16px);
+  margin: 4px 8px 6px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid $border;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: $muted;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background .12s, color .12s;
+  flex-shrink: 0;
+  &:hover {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-color: #FECACA;
+    svg path { stroke: #B91C1C; }
+  }
+}
+
 .sb-foot {
   padding: 12px 14px;
   border-top: 1px solid $border;

@@ -128,20 +128,7 @@ export class AdminSupplyComponent implements OnInit, OnDestroy {
     cutout: '65%'
   };
 
-  aiInsights = [
-    {
-      dot: '#EF4444',
-      html: '<strong>Paracetamol</strong> stock at Chennai will deplete in <strong>4 days</strong> at current usage rate.'
-    },
-    {
-      dot: '#F59E0B',
-      html: '<strong>Aspirin</strong> inventory below reorder level at <strong>3 branches</strong>. Trigger purchase order.'
-    },
-    {
-      dot: '#0AAFB8',
-      html: 'Metformin consumption up <strong>18%</strong> this month. Adjust monthly procurement target.'
-    }
-  ];
+  aiInsights: { dot: string; html: string }[] = [];
 
   constructor(private service: AdminSupplyService, private toast: ToastService) {}
 
@@ -154,6 +141,8 @@ export class AdminSupplyComponent implements OnInit, OnDestroy {
         this.inventory = inventory;
         this.alerts = alerts;
         this.loading = false;
+        this.buildInsights(alerts, inventory);
+        this.buildDoughnut(inventory);
       },
       error: () => {
         this.loading = false;
@@ -164,6 +153,47 @@ export class AdminSupplyComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private buildInsights(alerts: any, inventory: any[]) {
+    const insights: { dot: string; html: string }[] = [];
+    const lowCount: number = alerts?.lowStockCount || 0;
+    const lowItems: any[] = alerts?.lowStockItems || [];
+
+    if (lowCount > 0) {
+      const first = lowItems[0];
+      const name = first?.itemName || first?.name || 'An item';
+      insights.push({ dot: '#EF4444', html: `<strong>${name}</strong> and <strong>${lowCount - 1}</strong> other item${lowCount > 1 ? 's' : ''} are at or below reorder level. Trigger purchase orders immediately.` });
+    }
+    if (lowItems.length > 1) {
+      const critical = lowItems.filter((i: any) => (i.quantity || 0) === 0);
+      if (critical.length) {
+        insights.push({ dot: '#F59E0B', html: `<strong>${critical.length}</strong> item${critical.length > 1 ? 's are' : ' is'} completely out of stock. Urgent procurement required.` });
+      }
+    }
+    const total: number = alerts?.totalItems || inventory.length;
+    insights.push({ dot: '#0AAFB8', html: `<strong>${total}</strong> total inventory items tracked across all hospitals. ${lowCount} require restocking.` });
+    this.aiInsights = insights.slice(0, 3);
+  }
+
+  private buildDoughnut(inventory: any[]) {
+    if (!inventory.length) return;
+    const counts: Record<string, number> = {};
+    for (const item of inventory) {
+      const cat = item.category || 'Others';
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const colors = ['#0AAFB8', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+    this.doughnutData = {
+      labels: sorted.map(([k]) => k),
+      datasets: [{
+        data: sorted.map(([, v]) => v),
+        backgroundColor: colors.slice(0, sorted.length),
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    };
   }
 
   get filteredInventory(): any[] {

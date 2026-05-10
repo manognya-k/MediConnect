@@ -1,9 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { NextSession, ScheduledSession, PastSession } from '../models/patient-telemedicine.model';
+import { PatientAuthService } from './patient-auth.service';
+import { environment } from '../../../environments/environment';
 
-// ── Helper: compute time-until badge ─────────────────────────────────────────
+const BASE = environment.apiBase;
+
+const AVATAR_PALETTES = [
+  { bg: '#E8F2FD', color: '#1A5FA8' },
+  { bg: '#E6F5EF', color: '#0F7B50' },
+  { bg: '#FEF3CD', color: '#B45309' },
+  { bg: '#F3E8FF', color: '#7C3AED' },
+  { bg: '#FEE2E2', color: '#B91C1C' },
+];
 
 export function computeTimeBadge(scheduledAt: string): { timeUntilLabel: string; timeBadgeClass: string } {
   const diffMs    = new Date(scheduledAt).getTime() - Date.now();
@@ -15,140 +26,177 @@ export function computeTimeBadge(scheduledAt: string): { timeUntilLabel: string;
   if (diffHours < 24) return { timeUntilLabel: `In ${diffHours}h`, timeBadgeClass: 'b-blue' };
   if (diffDays === 1) return { timeUntilLabel: 'Tomorrow',          timeBadgeClass: 'b-blue' };
   if (diffDays === 2) return { timeUntilLabel: 'In 2 days',         timeBadgeClass: 'b-blue' };
-
-  // More than 2 days — format as "MMM d"
   const d = new Date(scheduledAt);
-  const month = d.toLocaleString('en-US', { month: 'short' });
-  const day   = d.getDate();
-  return { timeUntilLabel: `${month} ${day}`, timeBadgeClass: 'b-amber' };
+  return { timeUntilLabel: `${d.toLocaleString('en-US',{month:'short'})} ${d.getDate()}`, timeBadgeClass: 'b-amber' };
 }
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-function makeFutureDate(daysFromNow: number, hour: number, minute = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromNow);
-  d.setHours(hour, minute, 0, 0);
-  return d.toISOString();
+function getInitials(name: string): string {
+  return (name || '').split(' ').filter(Boolean).map(w => w[0].toUpperCase()).slice(0, 2).join('') || 'DR';
 }
 
-const MOCK_NEXT: NextSession = {
-  sessionId: 'sess-hero',
-  doctorName: 'Dr. Priya Mehta',
-  doctorRole: 'General Physician',
-  clinic: 'City Clinic',
-  doctorInitials: 'PM',
-  scheduledAt: makeFutureDate(0, new Date().getHours() + 1, 0), // 1 hour from now
-  durationEstMinutes: 30,
-  minutesUntilStart: 60
-};
+function palette(index: number) {
+  return AVATAR_PALETTES[index % AVATAR_PALETTES.length];
+}
 
-const MOCK_SCHEDULED: ScheduledSession[] = [
-  {
-    sessionId: 'sess-001',
-    doctorName: 'Dr. Aisha Patel',
-    doctorRole: 'Cardiologist',
-    clinic: 'MediConnect Heart Centre',
-    doctorInitials: 'AP',
-    avatarBg: '#E8F2FD',
-    avatarColor: '#1A5FA8',
-    scheduledAt: makeFutureDate(2, 10, 30),
-    sessionType: 'In-person',
-    reason: 'Cardiology follow-up',
+function toIso(date: string, time: string): string {
+  return `${date}T${time ?? '00:00:00'}`;
+}
+
+function mapToScheduled(a: any, i: number): ScheduledSession {
+  const iso = toIso(a.appointmentDate, a.appointmentTime);
+  const name = a.doctor?.user?.name ?? 'Doctor';
+  const p = palette(i);
+  return {
+    sessionId:          String(a.appointmentId),
+    doctorName:         `Dr. ${name}`,
+    doctorRole:         a.doctor?.specialization ?? 'Doctor',
+    clinic:             a.hospital?.hospitalName ?? a.doctor?.hospital?.hospitalName ?? 'Clinic',
+    doctorInitials:     getInitials(name),
+    avatarBg:           p.bg,
+    avatarColor:        p.color,
+    scheduledAt:        iso,
+    sessionType:        'Video',
+    reason:             a.notes || 'Video consultation',
     durationEstMinutes: 30,
-    status: 'Confirmed',
-    ...computeTimeBadge(makeFutureDate(2, 10, 30))
-  },
-  {
-    sessionId: 'sess-002',
-    doctorName: 'Dr. Ramesh Gupta',
-    doctorRole: 'Endocrinologist',
-    clinic: 'MediConnect Metabolic Clinic',
-    doctorInitials: 'RG',
-    avatarBg: '#E6F5EF',
-    avatarColor: '#0F7B50',
-    scheduledAt: makeFutureDate(10, 11, 0),
-    sessionType: 'In-person',
-    reason: 'Diabetes review',
-    durationEstMinutes: 45,
-    status: 'Pending',
-    ...computeTimeBadge(makeFutureDate(10, 11, 0))
-  }
-];
+    status:             a.status === 'CONFIRMED' ? 'Confirmed' : a.status === 'CANCELLED' ? 'Cancelled' : 'Pending',
+    joinUrl:            a.sessionUrl ?? undefined,
+    ...computeTimeBadge(iso),
+  };
+}
 
-const MOCK_PAST: PastSession[] = [
-  {
-    sessionId: 'past-001',
-    doctorName: 'Dr. Aisha Patel',
-    sessionDate: new Date(Date.now() - 18 * 24 * 3600000).toISOString(),
-    sessionType: 'In-person',
-    durationMinutes: 28,
-    reason: 'Hypertension review',
-    status: 'Completed'
-  },
-  {
-    sessionId: 'past-002',
-    doctorName: 'Dr. Priya Mehta',
-    sessionDate: new Date(Date.now() - 31 * 24 * 3600000).toISOString(),
-    sessionType: 'Video',
-    durationMinutes: 22,
-    reason: 'General consultation',
-    status: 'Completed'
-  },
-  {
-    sessionId: 'past-003',
-    doctorName: 'Dr. Ramesh Gupta',
-    sessionDate: new Date(Date.now() - 54 * 24 * 3600000).toISOString(),
-    sessionType: 'In-person',
-    durationMinutes: 35,
-    reason: 'Diabetes baseline',
-    status: 'Completed'
-  }
-];
-
-// ── Service ───────────────────────────────────────────────────────────────────
+function mapToPast(a: any): PastSession {
+  return {
+    sessionId:       String(a.appointmentId),
+    doctorName:      `Dr. ${a.doctor?.user?.name ?? 'Doctor'}`,
+    sessionDate:     toIso(a.appointmentDate, a.appointmentTime),
+    sessionType:     'Video',
+    durationMinutes: 0,
+    reason:          a.notes || 'Video consultation',
+    status:          a.status === 'CANCELLED' ? 'Cancelled' : a.status === 'NO_SHOW' ? 'No-show' : 'Completed',
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class PatientTelemedicineService {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: PatientAuthService) {}
 
-  /** TODO: wire to GET /api/patient/telemedicine/next */
-  getNextSession(): Observable<NextSession | null> {
-    const s = { ...MOCK_NEXT };
-    s.minutesUntilStart = Math.ceil(
-      (new Date(s.scheduledAt).getTime() - Date.now()) / 60000
+  private getVideoAppointments(): Observable<any[]> {
+    const userId = this.auth.getStoredUser()?.userId ?? 0;
+    return this.http.get<any>(`${BASE}/patients/by-user/${userId}`).pipe(
+      catchError(() => of(null)),
+      switchMap(patient => {
+        if (!patient?.patientId) return of([]);
+        return this.http.get<any[]>(`${BASE}/appointments/patient/${patient.patientId}`).pipe(
+          map(appts => appts.filter(a => a.appointmentType === 'VIDEO')),
+          catchError(() => of([]))
+        );
+      })
     );
-    return of(s);
   }
 
-  /** TODO: wire to GET /api/patient/telemedicine/scheduled */
+  getNextSession(): Observable<NextSession | null> {
+    return this.getVideoAppointments().pipe(
+      map(appts => {
+        const now = Date.now();
+        const upcoming = appts
+          .filter(a => a.status !== 'CANCELLED' && a.status !== 'COMPLETED')
+          .map(a => ({ ...a, _ms: new Date(toIso(a.appointmentDate, a.appointmentTime)).getTime() }))
+          .filter(a => a._ms > now)
+          .sort((a, b) => a._ms - b._ms);
+
+        if (!upcoming.length) return null;
+        const a = upcoming[0];
+        const iso = toIso(a.appointmentDate, a.appointmentTime);
+        const name = a.doctor?.user?.name ?? 'Doctor';
+        const minutesUntilStart = Math.ceil((a._ms - now) / 60000);
+        return {
+          sessionId:           String(a.appointmentId),
+          doctorName:          `Dr. ${name}`,
+          doctorRole:          a.doctor?.specialization ?? 'Doctor',
+          clinic:              a.hospital?.hospitalName ?? a.doctor?.hospital?.hospitalName ?? 'Clinic',
+          doctorInitials:      getInitials(name),
+          scheduledAt:         iso,
+          durationEstMinutes:  30,
+          minutesUntilStart,
+          joinUrl:             a.sessionUrl ?? undefined,
+        } as NextSession;
+      })
+    );
+  }
+
   getScheduledSessions(): Observable<ScheduledSession[]> {
-    return of(MOCK_SCHEDULED.map(s => ({ ...s, ...computeTimeBadge(s.scheduledAt) })));
+    return this.getVideoAppointments().pipe(
+      map(appts => {
+        const now = Date.now();
+        return appts
+          .filter(a => a.status !== 'CANCELLED' && a.status !== 'COMPLETED')
+          .filter(a => new Date(toIso(a.appointmentDate, a.appointmentTime)).getTime() > now)
+          .sort((a, b) =>
+            new Date(toIso(a.appointmentDate, a.appointmentTime)).getTime() -
+            new Date(toIso(b.appointmentDate, b.appointmentTime)).getTime()
+          )
+          .map((a, i) => mapToScheduled(a, i));
+      })
+    );
   }
 
-  /** TODO: wire to GET /api/patient/telemedicine/past */
   getPastSessions(page = 1, pageSize = 10): Observable<{ data: PastSession[]; total: number }> {
-    return of({ data: MOCK_PAST, total: MOCK_PAST.length });
+    return this.getVideoAppointments().pipe(
+      map(appts => {
+        const now = Date.now();
+        const past = appts
+          .filter(a =>
+            a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'NO_SHOW' ||
+            new Date(toIso(a.appointmentDate, a.appointmentTime)).getTime() < now
+          )
+          .sort((a, b) =>
+            new Date(toIso(b.appointmentDate, b.appointmentTime)).getTime() -
+            new Date(toIso(a.appointmentDate, a.appointmentTime)).getTime()
+          )
+          .map(mapToPast);
+        const start = (page - 1) * pageSize;
+        return { data: past.slice(start, start + pageSize), total: past.length };
+      })
+    );
   }
 
-  /** TODO: wire to GET /api/patient/telemedicine/:sessionId/join */
   getJoinUrl(sessionId: string): Observable<{ url: string }> {
-    return of({ url: `https://meet.mediconnect.example/session/${sessionId}` });
+    return this.http.get<any>(`${BASE}/appointments/${sessionId}`).pipe(
+      map(a => ({ url: a.sessionUrl ?? '' })),
+      catchError(() => of({ url: '' }))
+    );
   }
 
-  /** TODO: wire to POST /api/patient/telemedicine/book */
-  bookSession(data: Partial<ScheduledSession>): Observable<ScheduledSession> {
-    return of(MOCK_SCHEDULED[0]);
+  bookSession(data: { doctorId: number; date: string; time: string; reason: string }): Observable<any> {
+    // booking is handled via the appointments API
+    return this.http.post(`${BASE}/appointments`, {
+      doctor:          { doctorId: data.doctorId },
+      appointmentDate: data.date,
+      appointmentTime: data.time,
+      appointmentType: 'VIDEO',
+      status:          'PENDING',
+      notes:           data.reason,
+    });
   }
 
-  /** TODO: wire to PATCH /api/patient/telemedicine/:sessionId/reschedule */
   rescheduleSession(sessionId: string, newDate: string, newTime: string): Observable<ScheduledSession> {
-    return of(MOCK_SCHEDULED[0]);
+    return this.http.get<any>(`${BASE}/appointments/${sessionId}`).pipe(
+      switchMap(orig => this.http.put<any>(`${BASE}/appointments/${sessionId}`, {
+        ...orig,
+        appointmentDate: newDate,
+        appointmentTime: newTime,
+      })),
+      map(a => mapToScheduled(a, 0)),
+      catchError(() => of({} as ScheduledSession))
+    );
   }
 
-  /** TODO: wire to PATCH /api/patient/telemedicine/:sessionId/cancel */
   cancelSession(sessionId: string): Observable<{ success: boolean }> {
-    return of({ success: true });
+    return this.http.get<any>(`${BASE}/appointments/${sessionId}`).pipe(
+      switchMap(orig => this.http.put(`${BASE}/appointments/${sessionId}`, { ...orig, status: 'CANCELLED' })),
+      map(() => ({ success: true })),
+      catchError(() => of({ success: false }))
+    );
   }
 }

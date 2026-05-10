@@ -30,8 +30,8 @@ interface BedGroup {
 export class DoctorDashboardComponent implements OnInit {
   currentUser: AuthResponse | null = null;
   doctorInfo: DoctorEntity | null = null;
-  hospitalName = 'Central Hospital';
-  departmentName = 'Cardiology';
+  hospitalName = '';
+  departmentName = '';
   today = new Date();
 
   loading = true;
@@ -90,11 +90,11 @@ export class DoctorDashboardComponent implements OnInit {
         ) || null;
 
         if (this.doctorInfo) {
-          this.hospitalName = this.doctorInfo.hospital?.hospitalName || 'Central Hospital';
+          this.hospitalName = this.doctorInfo.hospital?.hospitalName || '';
           this.departmentName =
             this.doctorInfo.department?.departmentName ||
             this.doctorInfo.specialization ||
-            'Cardiology';
+            '';
         }
 
         this.loadDashboardData();
@@ -324,15 +324,21 @@ export class DoctorDashboardComponent implements OnInit {
     return 'notif-new';
   }
 
-  getRelativeTime(dateStr: string): string {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
+  getRelativeTime(raw: any): string {
+    if (!raw) return '';
+    let date: Date;
+    if (Array.isArray(raw)) {
+      date = new Date(raw[0], raw[1] - 1, raw[2], raw[3] ?? 0, raw[4] ?? 0, raw[5] ?? 0);
+    } else {
+      date = new Date(raw);
+    }
+    if (isNaN(date.getTime())) return '';
     const diffMs = Date.now() - date.getTime();
     const diffH = Math.floor(diffMs / 3600000);
     const diffM = Math.floor(diffMs / 60000);
     if (diffH >= 24) return `${Math.floor(diffH / 24)}d ago`;
     if (diffH >= 1) return `${diffH}h ago`;
-    return `${diffM}m ago`;
+    return diffM > 0 ? `${diffM}m ago` : 'just now';
   }
 
   getBedFreeClass(count: number): string {
@@ -349,6 +355,37 @@ export class DoctorDashboardComponent implements OnInit {
   getUserInitials(): string {
     const name = this.currentUser?.name || 'Dr';
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  viewAllAppointments() {
+    const userId = this.currentUser?.userId;
+    if (userId) this.router.navigate(['/doctor', userId, 'appointments']);
+  }
+
+  joinUpcoming(appt: AppointmentEntity) {
+    const url = (appt.sessionUrl?.trim()) ||
+      `https://meet.jit.si/mediconnect-${appt.appointmentId}`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  showNotifPanel = false;
+
+  toggleNotifPanel() { this.showNotifPanel = !this.showNotifPanel; }
+  closeNotifPanel()  { this.showNotifPanel = false; }
+
+  markingAllRead = false;
+  markAllNotificationsRead() {
+    const userId = this.currentUser?.userId;
+    if (!userId || this.markingAllRead) return;
+    this.markingAllRead = true;
+    this.dashboardService.markAllNotificationsRead(userId).subscribe({
+      next: () => {
+        this.notifications = this.notifications.map(n => ({ ...n, isRead: true }));
+        this.unreadNotifCount = 0;
+        this.markingAllRead = false;
+      },
+      error: () => { this.markingAllRead = false; }
+    });
   }
 
   logout() {

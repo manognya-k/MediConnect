@@ -19,6 +19,9 @@ public class Hospital {
     private String phone;
     private Integer totalBeds;
     private Integer availableBeds;
+
+    @Column(name = "email_code", length = 10)
+    private String emailCode;
     
     @JsonIgnore
     @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL)

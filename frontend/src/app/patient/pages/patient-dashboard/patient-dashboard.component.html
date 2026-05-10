@@ -108,7 +108,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Upcoming Appointments</div>
-          <a class="card-link" routerLink="/patient/appointments">View all →</a>
+          <button class="card-link" type="button" (click)="goToPatientPage('appointments')">View all →</button>
         </div>
         <div class="appt-item" *ngFor="let appt of appointments; trackBy: trackByAppt">
           <div class="ai-date">
@@ -160,7 +160,7 @@
         <div class="card card-sm">
           <div class="card-header">
             <div class="card-title card-title-sm">Today's Medicines</div>
-            <a class="card-link" routerLink="/patient/reminders">All →</a>
+            <button class="card-link" type="button" (click)="goToPatientPage('reminders')">All →</button>
           </div>
           <div class="rem-item" *ngFor="let med of medicines; trackBy: trackByMed">
             <div class="ri-icon">
@@ -241,7 +241,7 @@
         <div class="ai-chips">
           <button class="ai-chip" (click)="goToAi('Explain my lab report')">Explain my lab report</button>
           <button class="ai-chip" (click)="goToAi('Symptom checker')">Symptom checker</button>
-          <button class="ai-chip" (click)="router.navigate(['/patient/appointments'])">Book appointment</button>
+          <button class="ai-chip" (click)="goToPatientPage('appointments')">Book appointment</button>
         </div>
         <button class="ai-cta" (click)="goToAi()">Open AI Assistant →</button>
       </div>

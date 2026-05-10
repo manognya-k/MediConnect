@@ -4,8 +4,6 @@
     <div class="tb-sub">Calendar view · All hospitals · {{ today }}</div>
   </div>
   <div class="tb-right">
-    <div class="tb-chip">All Hospitals ↓</div>
-    <div class="tb-chip">Apr 2026 ↓</div>
     <button class="btn btn-teal btn-sm" (click)="openNewAppt()">+ New Appointment</button>
     <div class="tb-notif" (click)="notifSvc.togglePanel()" style="cursor:pointer;position:relative">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -39,74 +37,155 @@
     <div class="stat red">
       <div class="stat-label">Cancelled</div>
       <div class="stat-val">{{ cancelled }}</div>
-      <div class="stat-sub" style="background:var(--red-lt);color:var(--red)">Today</div>
+      <div class="stat-sub" style="background:var(--red-lt);color:var(--red)">Total</div>
     </div>
   </div>
 
   <!-- Calendar + Filters layout -->
   <div class="g2 mb16" style="grid-template-columns:1.4fr 1fr">
-    <!-- Calendar card -->
+
+    <!-- ── Calendar card ── -->
     <div class="card">
       <div class="card-header">
-        <div><div class="card-title">April 2026</div></div>
+        <div><div class="card-title">{{ calMonthLabel }}</div></div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm">‹</button>
-          <button class="btn btn-ghost btn-sm">›</button>
+          <button class="btn btn-ghost btn-sm" (click)="prevMonth()">‹</button>
+          <button class="btn btn-ghost btn-sm" (click)="nextMonth()">›</button>
         </div>
       </div>
       <div class="card-body">
+        <!-- Day-of-week headers (Mon–Sun) -->
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
           <div *ngFor="let d of ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"
                style="font-size:10px;font-weight:600;color:var(--sub);text-align:center;padding:4px;font-family:'IBM Plex Mono',monospace">{{d}}</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
-          <!-- 2 empty slots for April start on Wed -->
-          <div style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border);opacity:.3"></div>
-          <div style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border);opacity:.3"></div>
+          <!-- Empty offset slots (before day 1 of month) -->
+          <div *ngFor="let _ of calOffsetSlots"
+               style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border);opacity:.3"></div>
+          <!-- Day tiles -->
           <div *ngFor="let day of calDays"
-               [style.border-color]="day === 3 ? 'var(--teal)' : ''"
-               style="background:var(--surf2);border-radius:6px;padding:6px;min-height:52px;border:1px solid var(--border)">
-            <div [style.color]="day === 3 ? 'var(--teal)' : ''" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--sub);margin-bottom:3px">{{day}}</div>
-            <div *ngIf="day % 3 === 0" style="background:var(--teal-lt);color:var(--teal);font-size:9px;border-radius:3px;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ (day * 3) + 10 }} appts</div>
+               (click)="onDateSelect(day)"
+               [style.border-color]="selectedDate === day ? 'var(--teal)' : 'var(--border)'"
+               [style.background]="selectedDate === day ? 'var(--teal-lt)' : 'var(--surf2)'"
+               style="border-radius:6px;padding:6px;min-height:52px;border:1px solid;cursor:pointer;transition:border-color .15s,background .15s">
+            <div [style.color]="selectedDate === day ? 'var(--teal)' : 'var(--sub)'"
+                 style="font-size:11px;font-family:'IBM Plex Mono',monospace;margin-bottom:3px;font-weight:600">{{day}}</div>
+            <div *ngIf="calendarSummary.get(day)"
+                 style="background:var(--teal-lt);color:var(--teal);font-size:9px;border-radius:3px;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              {{ calendarSummary.get(day) }} appt{{calendarSummary.get(day)! > 1 ? 's' : ''}}
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Filters + Today list -->
+    <!-- ── Filters + date-selected list ── -->
     <div style="display:flex;flex-direction:column;gap:12px">
       <div class="card">
-        <div class="card-header"><div class="card-title">Filters</div></div>
+        <div class="card-header">
+          <div class="card-title">Filters</div>
+          <button class="btn btn-ghost btn-sm" (click)="clearFilters()">Clear all</button>
+        </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
-          <select class="input" style="width:100%"><option>All Doctors</option></select>
-          <select class="input" style="width:100%"><option>All Departments</option><option>Cardiology</option><option>Neurology</option></select>
-          <select class="input" style="width:100%"><option>All Hospitals</option></select>
-          <input class="input" type="date" style="width:100%" [value]="'2026-04-03'">
+          <select class="input" style="width:100%" [(ngModel)]="filterDoctorId" (change)="applyFilters()">
+            <option value="">All Doctors</option>
+            <option *ngFor="let d of uniqueDoctors" [value]="d.id">{{ d.name }}</option>
+          </select>
+          <select class="input" style="width:100%" [(ngModel)]="filterHospitalId" (change)="applyFilters()">
+            <option value="">All Hospitals</option>
+            <option *ngFor="let h of uniqueHospitals" [value]="h.id">{{ h.name }}</option>
+          </select>
+          <input class="input" type="date" style="width:100%"
+                 [(ngModel)]="filterDate" (change)="applyFilters()"
+                 placeholder="Filter by date">
         </div>
       </div>
+
+      <!-- Selected-date appointments panel -->
       <div class="card" style="flex:1">
         <div class="card-header">
-          <div class="card-title">Today's Appointments</div>
-          <span style="font-size:11px;color:var(--sub)">{{ totalToday }} total</span>
+          <div class="card-title">
+            {{ selectedDate
+                ? (calMonthLabel.split(' ')[0] + ' ' + selectedDate + ' Appointments')
+                : 'Recent Appointments' }}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--sub)">
+              {{ (selectedDate ? selectedDateAppts : filteredAppointments).length }} shown
+            </span>
+            <button *ngIf="selectedDate" class="btn btn-ghost btn-sm" (click)="clearDateSelection()">✕</button>
+          </div>
         </div>
         <div *ngIf="isLoading" style="padding:20px;text-align:center;color:var(--sub)">Loading…</div>
-        <div style="overflow-y:auto;max-height:220px">
+        <div style="overflow-y:auto;max-height:240px">
           <table>
             <thead><tr><th>Patient</th><th>Doctor</th><th>Status</th></tr></thead>
             <tbody>
-              <tr *ngFor="let a of filteredAppointments.slice(0,6)">
+              <tr *ngFor="let a of (selectedDate ? selectedDateAppts : filteredAppointments).slice(0,8)">
                 <td>{{ patientName(a) }}</td>
                 <td>{{ doctorName(a) }}</td>
                 <td><span class="badge" [ngClass]="getStatusBadge(a.status)">{{ a.status }}</span></td>
               </tr>
             </tbody>
           </table>
+          <div *ngIf="!(selectedDate ? selectedDateAppts : filteredAppointments).length && !isLoading"
+               style="padding:20px;text-align:center;color:var(--sub);font-size:12px">
+            No appointments found
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Full table -->
+  <!-- ── Reschedule Requests panel ── -->
+  <div class="card mb16" *ngIf="rescheduleRequests.length">
+    <div class="card-header">
+      <div>
+        <div class="card-title">
+          Reschedule Requests
+          <span *ngIf="pendingRescheduleCount"
+                style="display:inline-block;background:var(--amber-lt);color:var(--amber);font-size:10px;font-weight:700;border-radius:10px;padding:2px 8px;margin-left:6px">
+            {{ pendingRescheduleCount }} pending
+          </span>
+        </div>
+        <div class="card-sub">Patients requesting appointment date changes</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Patient</th><th>Doctor</th><th>Current Appt #</th><th>Requested Date</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of rescheduleRequests">
+          <td>{{ r.patient?.user?.name || '—' }}</td>
+          <td>{{ r.doctor?.user?.name  || '—' }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal)">#{{ r.appointment?.appointmentId }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.requestedDate | date:'MMM d, y' }}</td>
+          <td><span class="badge" [ngClass]="getRescheduleBadge(r.status)">{{ r.status }}</span></td>
+          <td>
+            <div style="display:flex;gap:4px" *ngIf="r.status === 'PENDING'">
+              <button class="btn btn-teal btn-sm"
+                      (click)="forwardReschedule(r)"
+                      [disabled]="processingRescheduleId === r.id">
+                {{ processingRescheduleId === r.id ? '…' : 'Forward to Doctor' }}
+              </button>
+              <button class="btn btn-sm" style="background:#FEF2F2;color:#EF4444"
+                      (click)="rejectReschedule(r)"
+                      [disabled]="processingRescheduleId === r.id">
+                Reject
+              </button>
+            </div>
+            <span *ngIf="r.status !== 'PENDING'" style="font-size:11px;color:var(--sub)">
+              {{ r.status === 'FORWARDED' ? 'Awaiting doctor' : 'Resolved' }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Full appointments table ── -->
   <div class="card">
     <div class="card-header">
       <div><div class="card-title">All Appointments</div></div>
@@ -143,13 +222,10 @@
     </table>
     <div class="pagination">
       <span>Showing {{ filteredAppointments.length }} of {{ totalToday }}</span>
-      <div class="pg-btns">
-        <div class="pg-btn">‹</div><div class="pg-btn active">1</div><div class="pg-btn">2</div><div class="pg-btn">›</div>
-      </div>
     </div>
   </div>
 
-  <!-- Appointment Detail Panel -->
+  <!-- ── Appointment Detail Panel ── -->
   <div class="card" *ngIf="viewingAppt" style="margin-top:16px">
     <div class="card-header">
       <div>
@@ -175,7 +251,7 @@
         </div>
         <div style="background:var(--surf2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
           <div style="font-size:10px;color:var(--sub);margin-bottom:3px">Doctor</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text)">{{ viewingAppt.doctorName || viewingAppt.doctor?.user?.name || '—' }}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">{{ doctorName(viewingAppt) }}</div>
           <div style="font-size:11px;color:var(--teal)">{{ viewingAppt.doctor?.specialization || '' }}</div>
         </div>
         <div style="background:var(--surf2);border-radius:8px;padding:10px 14px;border:1px solid var(--border)">
@@ -197,7 +273,7 @@
   </div>
 </div>
 
-<!-- ── New Appointment Modal ────────────────────────────────────────────────── -->
+<!-- ── New Appointment Modal ── -->
 <div *ngIf="showNewAppt"
   style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
   (click)="closeNewAppt()">

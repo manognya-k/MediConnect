@@ -33,6 +33,15 @@
     <!-- Right: Form Section -->
     <div class="form-section">
       <div class="form-inner">
+
+        <!-- Back to landing -->
+        <a routerLink="/" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back to Home
+        </a>
+
         <!-- Logo -->
         <div class="logo">
           <div class="logo-icon">
@@ -61,13 +70,6 @@
             (click)="setTab('DOCTOR')"
             type="button">
             Doctor Login
-          </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeTab === 'ADMIN'"
-            (click)="setTab('ADMIN')"
-            type="button">
-            Admin Login
           </button>
         </div>
 

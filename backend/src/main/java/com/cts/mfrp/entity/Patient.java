@@ -21,7 +21,6 @@ public class Patient {
     private LocalDate dateOfBirth;
     private String gender;
     private String bloodGroup;
-    private String address;
     private String emergencyContact;
     
     @JsonIgnore

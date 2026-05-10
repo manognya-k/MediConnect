@@ -19,19 +19,15 @@ export class AdminTelemedicineComponent implements OnInit, OnDestroy {
   loading = true;
   appointments: any[] = [];
   doctors: any[]      = [];
+  patients: any[]     = [];
   searchTerm = '';
 
-  sessionRecords = [
-    { id: 'VS-1041', doctor: 'Dr. Ananya Sharma',  patient: 'Rahul Mehta',    dept: 'Cardiology',   duration: '18 min', date: 'Apr 30, 9:00 AM',  status: 'completed' },
-    { id: 'VS-1040', doctor: 'Dr. Suresh Patel',   patient: 'Priya Nair',     dept: 'General',      duration: '12 min', date: 'Apr 30, 8:30 AM',  status: 'completed' },
-    { id: 'VS-1039', doctor: 'Dr. Kavya Reddy',    patient: 'Amit Verma',     dept: 'Neurology',    duration: '25 min', date: 'Apr 29, 5:00 PM',  status: 'completed' },
-    { id: 'VS-1038', doctor: 'Dr. Arjun Nair',     patient: 'Sunita Gupta',   dept: 'Orthopedics',  duration: '—',      date: 'Apr 29, 3:00 PM',  status: 'missed'    },
-    { id: 'VS-1037', doctor: 'Dr. Deepika Singh',  patient: 'Vikram Sharma',  dept: 'Cardiology',   duration: '22 min', date: 'Apr 28, 11:00 AM', status: 'completed' },
-  ];
+  sessionRecords: any[] = [];
 
   // Schedule Session modal
   showSchedule = false;
-  scheduleData = { doctorName: '', patientName: '', date: '', time: '', type: 'VIDEO', notes: '' };
+  scheduleData: { doctorId: number | null; patientId: number | null; date: string; time: string; type: string; notes: string } =
+    { doctorId: null, patientId: null, date: '', time: '', type: 'VIDEO', notes: '' };
   scheduleSubmitting = false;
 
   // ── Doctor status getters ──────────────────────────────────────────────────
@@ -50,12 +46,33 @@ export class AdminTelemedicineComponent implements OnInit, OnDestroy {
 
   // ── Appointment getters ────────────────────────────────────────────────────
 
+  private parseDateISO(raw: any): string | null {
+    if (!raw) return null;
+    if (Array.isArray(raw))
+      return `${raw[0]}-${String(raw[1]).padStart(2,'0')}-${String(raw[2]).padStart(2,'0')}`;
+    return String(raw).substring(0, 10);
+  }
+
   get todayAppointments(): any[] {
-    const today = new Date().toISOString().split('T')[0];
-    const filtered = this.appointments.filter(a =>
-      a.appointmentDate && a.appointmentDate.includes(today)
-    );
-    return filtered.length > 0 ? filtered : this.appointments.slice(0, 5);
+    const todayStr = new Date().toISOString().split('T')[0];
+    return this.appointments.filter(a => this.parseDateISO(a.appointmentDate) === todayStr);
+  }
+
+  get thisWeekCount(): number {
+    const now = new Date();
+    const dow = now.getDay();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dow);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    return this.appointments.filter(a => {
+      const iso = this.parseDateISO(a.appointmentDate);
+      if (!iso) return false;
+      const d = new Date(iso);
+      return d >= weekStart && d <= weekEnd;
+    }).length;
   }
 
   get filteredAppointments(): any[] {
@@ -111,31 +128,34 @@ export class AdminTelemedicineComponent implements OnInit, OnDestroy {
   // ── Schedule Session ──────────────────────────────────────────────────────
 
   openSchedule() {
-    this.scheduleData = { doctorName: '', patientName: '', date: '', time: '', type: 'VIDEO', notes: '' };
+    this.scheduleData = { doctorId: null, patientId: null, date: '', time: '', type: 'VIDEO', notes: '' };
     this.showSchedule = true;
   }
 
   closeSchedule() { this.showSchedule = false; }
 
   submitSchedule() {
-    if (!this.scheduleData.doctorName?.trim() || !this.scheduleData.patientName?.trim() ||
+    if (!this.scheduleData.doctorId || !this.scheduleData.patientId ||
         !this.scheduleData.date || !this.scheduleData.time) {
       this.toast.show('Please fill all required fields.', 'error');
       return;
     }
     this.scheduleSubmitting = true;
     const payload = {
+      patient:         { patientId: this.scheduleData.patientId },
+      doctor:          { doctorId:  this.scheduleData.doctorId  },
       appointmentDate: this.scheduleData.date,
-      appointmentTime: this.scheduleData.time,
-      appointmentType: this.scheduleData.type,
-      notes: this.scheduleData.notes,
-      status: 'PENDING',
+      appointmentTime: this.scheduleData.time + ':00',
+      appointmentType: 'VIDEO',
+      notes:           this.scheduleData.notes || '',
+      status:          'PENDING',
     };
     this.telemedicineSvc.scheduleAppointment(payload).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.scheduleSubmitting = false;
         this.closeSchedule();
         this.toast.show('Video session scheduled successfully.', 'success');
+        this.loadData();
       },
       error: () => {
         this.scheduleSubmitting = false;
@@ -146,13 +166,20 @@ export class AdminTelemedicineComponent implements OnInit, OnDestroy {
 
   // ── Join Session ──────────────────────────────────────────────────────────
 
+  canJoin(appt: any): boolean {
+    const s = (appt.status || '').toUpperCase();
+    return s !== 'CANCELLED' && s !== 'COMPLETED';
+  }
+
   joinSession(appt: any) {
-    const url = appt.sessionUrl || appt.joinUrl;
-    if (url) {
-      window.open(url, '_blank');
-    } else {
-      this.toast.show('Video link not available. Check patient email for the session link.', 'error');
+    if (!this.canJoin(appt)) {
+      this.toast.show('Cannot join a cancelled or completed appointment.', 'error');
+      return;
     }
+    const url = appt.sessionUrl && appt.sessionUrl.startsWith('http')
+      ? appt.sessionUrl
+      : `https://meet.jit.si/mediconnect-${appt.appointmentId}`;
+    window.open(url, '_blank', 'noopener');
   }
 
   constructor(
@@ -161,10 +188,18 @@ export class AdminTelemedicineComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.loadData();
+    this.telemedicineSvc.getPatients().pipe(takeUntil(this.destroy$)).subscribe(p => this.patients = p);
+  }
+
+  loadData(): void {
     this.telemedicineSvc.getData().pipe(takeUntil(this.destroy$)).subscribe(({ appointments, doctors }) => {
       this.appointments = appointments ?? [];
-      this.doctors      = doctors      ?? [];
+      this.doctors      = doctors ?? [];
       this.loading      = false;
+    });
+    this.telemedicineSvc.getVideoSessions().pipe(takeUntil(this.destroy$)).subscribe(sessions => {
+      this.sessionRecords = sessions;
     });
   }
 
