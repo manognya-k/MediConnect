@@ -79,7 +79,7 @@ public class AiContextService {
             List<LabReport> labs = labReportRepo.findByDoctorDoctorId(doctor.getDoctorId());
             LocalDate cutoff = LocalDate.now().minusDays(14);
             List<LabReport> recentLabs = labs.stream()
-                    .filter(l -> l.getReportDate() != null && !l.getReportDate().isBefore(cutoff))
+                    .filter(l -> l.getReportDate() != null && !l.getReportDate().isBefore(cutoff) && l.getTestName() != null)
                     .sorted(Comparator.comparing((LabReport l) -> Boolean.TRUE.equals(l.getIsAbnormal()) ? 0 : 1)
                             .thenComparing(Comparator.comparing(LabReport::getReportDate).reversed()))
                     .limit(10)
@@ -92,9 +92,10 @@ public class AiContextService {
                 for (LabReport r : recentLabs) {
                     String patName = r.getPatient() != null && r.getPatient().getUser() != null
                             ? r.getPatient().getUser().getName() : "Unknown";
-                    String flag = Boolean.TRUE.equals(r.getIsAbnormal()) ? " ⚠ ABNORMAL" : "";
+                    String flag   = Boolean.TRUE.equals(r.getIsAbnormal()) ? " ⚠ ABNORMAL" : "";
+                    String result = r.getResult() != null ? r.getResult() : "Pending";
                     sb.append(String.format("  - %s | %s | %s%s | %s\n",
-                            patName, r.getTestName(), r.getResult(), flag,
+                            patName, r.getTestName(), result, flag,
                             r.getReportDate().format(DATE_FMT)));
                 }
             }
@@ -179,6 +180,7 @@ public class AiContextService {
             // Recent lab reports
             List<LabReport> labs = labReportRepo.findByPatientPatientId(patient.getPatientId())
                     .stream()
+                    .filter(l -> l.getReportDate() != null && l.getTestName() != null)
                     .sorted(Comparator.comparing(LabReport::getReportDate).reversed())
                     .limit(8)
                     .toList();
@@ -188,11 +190,12 @@ public class AiContextService {
                 sb.append("  No lab reports on file.\n");
             } else {
                 for (LabReport r : labs) {
-                    String flag = Boolean.TRUE.equals(r.getIsAbnormal()) ? " ⚠ ABNORMAL" : "";
+                    String flag   = Boolean.TRUE.equals(r.getIsAbnormal()) ? " ⚠ ABNORMAL" : "";
+                    String result = r.getResult() != null ? r.getResult() : "Pending";
                     String docName = r.getDoctor() != null && r.getDoctor().getUser() != null
                             ? "Dr. " + r.getDoctor().getUser().getName() : "";
                     sb.append(String.format("  - %s | %s | %s%s | %s\n",
-                            r.getReportDate().format(DATE_FMT), r.getTestName(), r.getResult(), flag,
+                            r.getReportDate().format(DATE_FMT), r.getTestName(), result, flag,
                             docName));
                 }
             }

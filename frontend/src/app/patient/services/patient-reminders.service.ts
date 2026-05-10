@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, forkJoin } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, switchMap, shareReplay } from 'rxjs/operators';
 import { MedicineStats, TimeSlot, ActivePrescription, DoseItem, DoseStatus } from '../models/patient-reminder.model';
 import { PatientAuthService } from './patient-auth.service';
+import { environment } from '../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 // Infer time-slot from frequency string and optional scheduledTime
 function inferTimes(frequency: string, scheduledTime?: string | null): string[] {
@@ -33,7 +34,8 @@ function computeDoseStatus(time12: string): DoseStatus {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const slotMin = to24hMinutes(time12);
-  if (slotMin < nowMin - 30) return 'done';
+  // Past doses that weren't taken appear as 'next' (highlights missed doses)
+  // Only mark 'done' via explicit isTaken flag
   if (slotMin <= nowMin + 60) return 'next';
   return 'upcoming';
 }
@@ -168,22 +170,24 @@ export class PatientRemindersService {
     );
   }
 
-  getStats(): Observable<MedicineStats> {
+  /** Single cached fetch that all three observables share — avoids triple API calls */
+  getAllMedicineData(): Observable<ReturnType<typeof mapMedicines>> {
     return this.fetchMedicines().pipe(
-      map(raw => mapMedicines(raw).stats)
+      map(raw => mapMedicines(raw)),
+      shareReplay(1)
     );
+  }
+
+  getStats(): Observable<MedicineStats> {
+    return this.getAllMedicineData().pipe(map(d => d.stats));
   }
 
   getTodaySchedule(): Observable<TimeSlot[]> {
-    return this.fetchMedicines().pipe(
-      map(raw => mapMedicines(raw).schedule)
-    );
+    return this.getAllMedicineData().pipe(map(d => d.schedule));
   }
 
   getAllPrescriptions(): Observable<ActivePrescription[]> {
-    return this.fetchMedicines().pipe(
-      map(raw => mapMedicines(raw).prescriptions)
-    );
+    return this.getAllMedicineData().pipe(map(d => d.prescriptions));
   }
 
   markTaken(doseId: string): Observable<{ success: boolean }> {

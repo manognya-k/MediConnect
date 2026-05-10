@@ -124,7 +124,7 @@ export class PatientDashboardService {
           .filter((a: any) => new Date(a.appointmentDate) >= today && a.status !== 'CANCELLED')
           .sort((a: any, b: any) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime());
 
-        const pendingLabs = myLabs.filter((l: any) => !l.results || l.results === '');
+        const pendingLabs = myLabs.filter((l: any) => !l.result || l.result === '' || l.result === 'PENDING');
 
         const unread = notifications.filter((n: any) => !n.isRead);
 

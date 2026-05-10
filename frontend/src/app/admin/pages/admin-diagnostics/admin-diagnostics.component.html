@@ -37,7 +37,7 @@
     </div>
     <div class="stat blue">
       <div class="stat-label">Imaging Requests</div>
-      <div class="stat-val">31</div>
+      <div class="stat-val">{{ radiologyReports.length + imagingReports.length }}</div>
       <div class="stat-sub" style="background:var(--blue-lt);color:var(--blue)">MRI / CT / X-Ray</div>
     </div>
   </div>
@@ -86,6 +86,8 @@
                 <button class="btn btn-ghost btn-sm" (click)="viewReport(r); $event.stopPropagation()">View</button>
                 <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple);font-size:10px;padding:3px 8px"
                   (click)="openAiExplain(r, $event)">AI Explain</button>
+                <button class="btn btn-sm" style="background:var(--teal-lt);color:var(--teal);font-size:10px;padding:3px 8px"
+                  (click)="openUploadResult(r, $event)">Upload Result</button>
               </div>
             </td>
           </tr>
@@ -132,13 +134,119 @@
     </div>
   </ng-container>
 
-  <ng-container *ngIf="activeTab !== 'labs'">
-    <div class="card">
-      <div class="card-body" style="text-align:center;padding:60px;color:var(--sub)">
-        {{ activeTab === 'radio' ? 'Radiology' : 'Imaging' }} module coming soon.
+  <!-- Radiology Tab -->
+  <ng-container *ngIf="activeTab === 'radio'">
+    <div class="card mb16">
+      <div class="card-header">
+        <div><div class="card-title">Radiology Reports</div><div class="card-sub">X-Ray · CT Scan · Computed Tomography</div></div>
+      </div>
+      <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading…</div>
+      <table *ngIf="!isLoading && radiologyReports.length > 0">
+        <thead><tr><th>Patient</th><th>Test</th><th>Report Date</th><th>Result</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of radiologyReports" (click)="selectReport(r)" style="cursor:pointer">
+            <td>
+              {{ patientName(r) }}
+              <div style="font-size:10px;color:var(--teal);font-family:'IBM Plex Mono',monospace">{{ patientCode(r) }}</div>
+            </td>
+            <td>{{ r.testName || r.reportType || '—' }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.reportDate | date:'MMM d, y' }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px"
+                [style.color]="r.isAbnormal ? 'var(--red)' : 'var(--green)'">
+              {{ r.result || 'Processing…' }}
+            </td>
+            <td><span class="badge" [ngClass]="getResultBadge(r)">{{ getResultLabel(r) }}</span></td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-ghost btn-sm" (click)="viewReport(r);$event.stopPropagation()">View</button>
+                <button class="btn btn-sm" style="background:var(--teal-lt);color:var(--teal);font-size:10px;padding:3px 8px"
+                  (click)="openUploadResult(r, $event)">Upload Result</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!isLoading && radiologyReports.length === 0"
+           style="padding:48px;text-align:center;color:var(--sub);font-size:13px">
+        No radiology reports found. Reports with X-Ray, CT Scan or similar test names will appear here.
       </div>
     </div>
   </ng-container>
+
+  <!-- Imaging Tab -->
+  <ng-container *ngIf="activeTab === 'imaging'">
+    <div class="card mb16">
+      <div class="card-header">
+        <div><div class="card-title">Imaging Reports</div><div class="card-sub">MRI · Ultrasound · PET Scan · Echocardiogram</div></div>
+      </div>
+      <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading…</div>
+      <table *ngIf="!isLoading && imagingReports.length > 0">
+        <thead><tr><th>Patient</th><th>Test</th><th>Report Date</th><th>Result</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of imagingReports" (click)="selectReport(r)" style="cursor:pointer">
+            <td>
+              {{ patientName(r) }}
+              <div style="font-size:10px;color:var(--teal);font-family:'IBM Plex Mono',monospace">{{ patientCode(r) }}</div>
+            </td>
+            <td>{{ r.testName || r.reportType || '—' }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.reportDate | date:'MMM d, y' }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px"
+                [style.color]="r.isAbnormal ? 'var(--red)' : 'var(--green)'">
+              {{ r.result || 'Processing…' }}
+            </td>
+            <td><span class="badge" [ngClass]="getResultBadge(r)">{{ getResultLabel(r) }}</span></td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-ghost btn-sm" (click)="viewReport(r);$event.stopPropagation()">View</button>
+                <button class="btn btn-sm" style="background:var(--teal-lt);color:var(--teal);font-size:10px;padding:3px 8px"
+                  (click)="openUploadResult(r, $event)">Upload Result</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!isLoading && imagingReports.length === 0"
+           style="padding:48px;text-align:center;color:var(--sub);font-size:13px">
+        No imaging reports found. Reports with MRI, Ultrasound, PET Scan or similar test names will appear here.
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- ── Upload Result Modal ──────────────────────────────────────────────────── -->
+<div *ngIf="showUploadResult"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center"
+  (click)="closeUploadResult()">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)"
+       (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1A1A2E">Upload Result</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">
+          {{ patientName(uploadResultReport) }} · {{ uploadResultReport?.testName || uploadResultReport?.reportType || 'Lab Report' }}
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeUploadResult()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;display:block;margin-bottom:5px">Result *</label>
+        <input class="input" [(ngModel)]="uploadResultData.result"
+               placeholder="e.g. Normal, Abnormal, 12.4 mg/dL…" style="width:100%">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="isAbnormal" [(ngModel)]="uploadResultData.isAbnormal"
+               style="width:15px;height:15px;cursor:pointer">
+        <label for="isAbnormal" style="font-size:12px;color:#64748B;cursor:pointer">Mark as Abnormal</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      <button class="btn btn-ghost" (click)="closeUploadResult()">Cancel</button>
+      <button class="btn btn-teal" (click)="submitUploadResult()" [disabled]="uploadResultSubmitting || !uploadResultData.result.trim()">
+        {{ uploadResultSubmitting ? 'Saving…' : 'Send Result' }}
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ── AI Explain Modal ─────────────────────────────────────────────────────── -->

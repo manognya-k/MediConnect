@@ -46,6 +46,14 @@ export class AdminAnalyticsComponent implements OnInit, OnDestroy {
 
   get patientFlow(): number { return this.stats.totalPatients ?? 0; }
 
+  get newPatientsThisMonth(): number { return this.stats.newPatientsThisMonth ?? 0; }
+
+  get totalAppointments(): number { return this.stats.totalAppointments ?? 0; }
+  get confirmedCount(): number   { return this.stats.confirmedAppointments ?? 0; }
+  get pendingCount(): number     { return this.stats.pendingAppointments ?? 0; }
+  get cancelledCount(): number   { return this.stats.cancelledAppointments ?? 0; }
+  get completedCount(): number   { return this.stats.completedAppointments ?? 0; }
+
   get occupancyPct(): string {
     if (this.stats.totalBeds && this.stats.occupiedBeds != null)
       return ((this.stats.occupiedBeds / this.stats.totalBeds) * 100).toFixed(1) + '%';
