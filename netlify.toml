@@ -1,0 +1,10 @@
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist/mediconnect-frontend/browser"
+
+# SPA fallback — every URL serves index.html so Angular's router can handle it
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
