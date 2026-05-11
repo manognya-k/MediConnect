@@ -5,8 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { AppointmentService } from '../../../services/appointment.service';
 import { ToastService } from '../../../services/toast.service';
 import { Appointment, BackendAppointment } from '../../../models/appointment.model';
+import { environment } from '../../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 interface PatientOption {
   patientId: number;

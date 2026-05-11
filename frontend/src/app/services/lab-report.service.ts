@@ -5,8 +5,9 @@ import {
   BackendLabReport, LabReport, LabReportStats,
   LabReportFilter, PagedLabReports, LabReportStatus
 } from '../models/lab-report.model';
+import { environment } from '../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 const AVATAR_COLORS: Array<{ bg: string; color: string }> = [
   { bg: '#EBF3FC', color: '#185FA5' },
