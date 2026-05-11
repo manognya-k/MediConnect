@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Client, IMessage } from '@stomp/stompjs';
+import { environment } from '../../environments/environment';
 
 declare const SockJS: any;
 
@@ -20,7 +21,7 @@ export class WebSocketService implements OnDestroy {
     if (this.connected || this.client?.active) return;
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(environment.wsBase),
       connectHeaders: { Authorization: `Bearer ${token}` },
       onConnect: () => {
         this.connected = true;

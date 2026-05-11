@@ -4,8 +4,9 @@ import { Observable, of, forkJoin } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { MedicineStats, TimeSlot, ActivePrescription, DoseItem, DoseStatus } from '../models/patient-reminder.model';
 import { PatientAuthService } from './patient-auth.service';
+import { environment } from '../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 // Infer time-slot from frequency string and optional scheduledTime
 function inferTimes(frequency: string, scheduledTime?: string | null): string[] {

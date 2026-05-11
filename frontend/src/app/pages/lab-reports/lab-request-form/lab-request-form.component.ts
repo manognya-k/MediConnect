@@ -6,8 +6,9 @@ import { LabReportService } from '../../../services/lab-report.service';
 import { ToastService } from '../../../services/toast.service';
 import { AuthService } from '../../../services/auth.service';
 import { DashboardService } from '../../../services/dashboard.service';
+import { environment } from '../../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 interface PatientOption {
   patientId: number;

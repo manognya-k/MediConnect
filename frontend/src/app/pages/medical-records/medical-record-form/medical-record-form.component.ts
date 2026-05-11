@@ -5,8 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { MedicalRecordService } from '../../../services/medical-record.service';
 import { ToastService } from '../../../services/toast.service';
 import { MedicalRecord } from '../../../models/medical-record.model';
+import { environment } from '../../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 interface PatientOption { patientId: number; name: string; }
 

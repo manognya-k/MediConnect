@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BackendMedicalRecord, MedicalRecord, PatientSummary, RecordStatus } from '../models/medical-record.model';
+import { environment } from '../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 const AVATAR_COLORS = [
   { bg: '#EBF3FC', color: '#185FA5' },
