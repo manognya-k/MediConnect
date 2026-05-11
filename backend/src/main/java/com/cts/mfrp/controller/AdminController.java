@@ -54,6 +54,17 @@ public class AdminController {
                 .count();
         stats.put("doctorsOnDuty", onlineDoctors);
 
+        // New patients registered this calendar month
+        java.time.LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        java.time.LocalDateTime monthEnd   = monthStart.plusMonths(1);
+        stats.put("newPatientsThisMonth", patientRepository.countByCreatedAtBetween(monthStart, monthEnd));
+
+        // Appointment status breakdown
+        stats.put("confirmedAppointments", appointmentRepository.countByStatus("CONFIRMED"));
+        stats.put("pendingAppointments",   appointmentRepository.countByStatus("PENDING"));
+        stats.put("cancelledAppointments", appointmentRepository.countByStatus("CANCELLED"));
+        stats.put("completedAppointments", appointmentRepository.countByStatus("COMPLETED"));
+
         return ResponseEntity.ok(stats);
     }
 
@@ -190,20 +201,28 @@ public class AdminController {
                         (a.getDoctor() != null && department.equalsIgnoreCase(a.getDoctor().getSpecialization())))
                 .collect(Collectors.toList());
 
-        // Monthly appointment flow — last 6 months
-        Map<String, Long> monthlyFlow = new LinkedHashMap<>();
+        // Monthly appointment flow — last 6 months, split by type
+        Map<String, Long> monthlyFlow        = new LinkedHashMap<>();
+        Map<String, Long> monthlyInPerson    = new LinkedHashMap<>();
+        Map<String, Long> monthlyVideo       = new LinkedHashMap<>();
         for (int i = 5; i >= 0; i--) {
             LocalDate month = now.minusMonths(i);
             String key = month.getMonth().getDisplayName(TextStyle.SHORT, java.util.Locale.US) + " " + month.getYear();
             int y = month.getYear(), m = month.getMonthValue();
-            long count = allAppts.stream()
+            List<Appointment> monthAppts = allAppts.stream()
                     .filter(a -> a.getAppointmentDate() != null
                             && a.getAppointmentDate().getYear() == y
                             && a.getAppointmentDate().getMonthValue() == m)
-                    .count();
-            monthlyFlow.put(key, count);
+                    .collect(Collectors.toList());
+            monthlyFlow.put(key, (long) monthAppts.size());
+            monthlyInPerson.put(key, monthAppts.stream()
+                    .filter(a -> !"VIDEO".equalsIgnoreCase(a.getAppointmentType())).count());
+            monthlyVideo.put(key, monthAppts.stream()
+                    .filter(a -> "VIDEO".equalsIgnoreCase(a.getAppointmentType())).count());
         }
         result.put("monthlyFlow", monthlyFlow);
+        result.put("monthlyInPersonFlow", monthlyInPerson);
+        result.put("monthlyVideoFlow", monthlyVideo);
 
         // Department-wise: completed and total appointment counts
         Map<String, Long> completedByDept = allAppts.stream()

@@ -10,11 +10,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/lab-reports")
@@ -65,6 +67,17 @@ public class LabReportController {
     public ResponseEntity<LabReport> updateReport(@PathVariable Integer id, @Valid @RequestBody LabReport report) {
         report.setReportId(id);
         return ResponseEntity.ok(labReportService.saveReport(report));
+    }
+
+    /** Admin uploads/updates the result of a pending lab report */
+    @PatchMapping("/{id}/result")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LabReport> uploadResult(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Object> body) {
+        String result     = body.getOrDefault("result", "").toString();
+        Boolean isAbnormal = Boolean.parseBoolean(body.getOrDefault("isAbnormal", "false").toString());
+        return ResponseEntity.ok(labReportService.updateResult(id, result, isAbnormal));
     }
 
     @DeleteMapping("/{id}")

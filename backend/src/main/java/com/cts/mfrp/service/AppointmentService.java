@@ -132,6 +132,23 @@ public class AppointmentService {
                             admin.getUserId(), "APPOINTMENT_CANCELLED",
                             patientName + " cancelled their appointment on " + dateStr + "."));
         }
+
+        if ("COMPLETED".equals(newStatus) && !"COMPLETED".equals(oldStatus)) {
+            // Notify doctor to write the medical record
+            if (saved.getDoctor() != null && saved.getDoctor().getUser() != null) {
+                notificationService.createNotification(saved.getDoctor().getUser().getUserId(),
+                        "RECORD_REMINDER",
+                        "Appointment with " + patientName + " on " + dateStr
+                        + " is complete. Please update the medical record.");
+            }
+            // Notify patient that appointment is done
+            if (saved.getPatient() != null && saved.getPatient().getUser() != null) {
+                notificationService.createNotification(saved.getPatient().getUser().getUserId(),
+                        "APPOINTMENT_COMPLETED",
+                        "Your appointment on " + dateStr + " has been completed. "
+                        + "Visit the Medical Records section to view your notes.");
+            }
+        }
         return saved;
     }
 

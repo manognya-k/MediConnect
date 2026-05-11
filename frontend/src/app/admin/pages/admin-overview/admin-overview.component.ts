@@ -2,6 +2,7 @@ import {
   Component, OnInit, OnDestroy
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { Subject, timer } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
 
@@ -99,7 +100,8 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
   constructor(
     private overviewSvc: AdminOverviewService,
     private adminAuth:   AdminAuthService,
-    public notifSvc: AdminNotificationService
+    public  notifSvc:    AdminNotificationService,
+    private router:      Router
   ) {}
 
   ngOnInit() {
@@ -114,6 +116,16 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
 
+  goToAnalytics() {
+    const adminId = this.adminAuth.getAdmin()?.id;
+    if (adminId) this.router.navigate(['/admin', adminId, 'analytics']);
+  }
+
+  goTo(page: string) {
+    const adminId = this.adminAuth.getAdmin()?.id;
+    if (adminId) this.router.navigate(['/admin', adminId, page]);
+  }
+
   private applyData(d: AdminOverviewData): void {
     this.stats        = d.stats;
     this.hospitalPins = d.hospitalPins;
@@ -125,7 +137,7 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
       labels:   d.inflowData.map(p => p.label),
       datasets: [
         {
-          label:           'Inpatient',
+          label:           'In-Person',
           data:            d.inflowData.map(p => p.inpatient),
           borderColor:     '#0AAFB8',
           backgroundColor: 'rgba(10,175,184,.08)',
@@ -135,7 +147,7 @@ export class AdminOverviewComponent implements OnInit, OnDestroy {
           borderWidth:     2
         },
         {
-          label:           'Outpatient',
+          label:           'Video',
           data:            d.inflowData.map(p => p.outpatient),
           borderColor:     '#3B82F6',
           backgroundColor: 'rgba(59,130,246,.05)',

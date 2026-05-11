@@ -20,4 +20,8 @@ export class AdminDiagnosticsService {
   getAllData() {
     return forkJoin({ reports: this.getLabReports(), stats: this.getLabStats() });
   }
+
+  updateResult(id: number, result: string, isAbnormal: boolean): Observable<any> {
+    return this.http.patch(`${this.base}/lab-reports/${id}/result`, { result, isAbnormal });
+  }
 }

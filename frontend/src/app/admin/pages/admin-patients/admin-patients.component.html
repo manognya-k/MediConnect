@@ -136,7 +136,7 @@
     </div>
     <div class="stat teal">
       <div class="stat-label">Outpatients Today</div>
-      <div class="stat-val">—</div>
+      <div class="stat-val">{{ outpatients.length }}</div>
       <div class="stat-sub" style="background:var(--teal-lt);color:var(--teal)">OPD visits</div>
     </div>
     <div class="stat amber">
@@ -149,7 +149,7 @@
   <!-- Tabs -->
   <div class="tab-bar">
     <div class="tab" [class.active]="activeTab==='inpatients'" (click)="setTab('inpatients')">Inpatients ({{ patients.length }})</div>
-    <div class="tab" [class.active]="activeTab==='outpatients'" (click)="setTab('outpatients')">Outpatients</div>
+    <div class="tab" [class.active]="activeTab==='outpatients'" (click)="setTab('outpatients')">Outpatients ({{ outpatients.length }})</div>
   </div>
 
   <!-- Patient table -->
@@ -164,7 +164,9 @@
       </div>
     </div>
     <div *ngIf="isLoading" style="padding:40px;text-align:center;color:var(--sub)">Loading patients…</div>
-    <table *ngIf="!isLoading">
+
+    <!-- Inpatients table -->
+    <table *ngIf="!isLoading && activeTab === 'inpatients'">
       <thead>
         <tr><th>Patient</th><th>Email</th><th>Blood Group</th><th>Phone</th><th>Status</th><th>Action</th></tr>
       </thead>
@@ -175,15 +177,42 @@
           <td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">{{ p.bloodGroup || '—' }}</td>
           <td>{{ p.user?.phone || '—' }}</td>
           <td><span class="badge b-green">Active</span></td>
-          <td><button class="btn btn-ghost btn-sm" (click)="selectPatient(p)">View</button></td>
+          <td><button class="btn btn-ghost btn-sm" (click)="selectPatient(p);$event.stopPropagation()">View</button></td>
+        </tr>
+        <tr *ngIf="filteredPatients.length === 0">
+          <td colspan="6" style="text-align:center;padding:32px;color:var(--sub)">No inpatients found</td>
         </tr>
       </tbody>
     </table>
-    <div class="pagination">
+    <div *ngIf="!isLoading && activeTab === 'inpatients'" class="pagination">
       <span>Showing {{ filteredPatients.length }} of {{ totalCount }} patients</span>
       <div class="pg-btns">
         <div class="pg-btn">‹</div><div class="pg-btn active">1</div><div class="pg-btn">2</div><div class="pg-btn">›</div>
       </div>
+    </div>
+
+    <!-- Outpatients table -->
+    <table *ngIf="!isLoading && activeTab === 'outpatients'">
+      <thead>
+        <tr><th>Patient</th><th>Email</th><th>Blood Group</th><th>Appt Time</th><th>Type</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of filteredOutpatients" (click)="selectPatient(p)" style="cursor:pointer">
+          <td>{{ p.user?.name || p.name || '—' }}</td>
+          <td>{{ p.user?.email || p.email || '—' }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">{{ p.bloodGroup || '—' }}</td>
+          <td>{{ p._appointmentTime || '—' }}</td>
+          <td><span class="badge b-teal">{{ p._appointmentType || '—' }}</span></td>
+          <td><span class="badge" [ngClass]="getStatusBadge(p._status)">{{ p._status || '—' }}</span></td>
+          <td><button class="btn btn-ghost btn-sm" (click)="selectPatient(p);$event.stopPropagation()">View</button></td>
+        </tr>
+        <tr *ngIf="filteredOutpatients.length === 0">
+          <td colspan="7" style="text-align:center;padding:32px;color:var(--sub)">No outpatients today</td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!isLoading && activeTab === 'outpatients'" class="pagination">
+      <span>Showing {{ filteredOutpatients.length }} of {{ outpatients.length }} outpatients today</span>
     </div>
   </div>
 

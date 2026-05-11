@@ -44,12 +44,25 @@ export class AdminOverviewService {
 
   private buildStatCards(s: any): StatCard[] {
     const occupancy = Math.round(Number(s.occupancyPct ?? 0));
+    const newThisMonth = s.newPatientsThisMonth ?? 0;
+    const revenue = Math.round(Number(s.revenue ?? 0));
     return [
-      { accent: 'teal',  icon: 'hospital', label: 'Total Patients',  value: String(s.totalPatients ?? 0),      sub: 'Registered patients',                     subAccent: 'teal'  },
-      { accent: 'green', icon: 'patients', label: 'Total Doctors',   value: this.fmt(s.totalDoctors ?? 0),     sub: 'Doctors onboarded',    subAccent: 'green' },
-      { accent: occupancy >= 80 ? 'red' : 'amber', icon: 'icu', label: 'Occupancy', value: `${occupancy}%`, sub: 'Current bed occupancy', subAccent: occupancy >= 80 ? 'red' : 'amber' },
-      { accent: 'amber', icon: 'revenue',  label: 'Revenue',   value: this.fmt(Math.round(Number(s.revenue ?? 0))), sub: 'Booked revenue',                    subAccent: 'amber' },
-      { accent: 'blue',  icon: 'doctors',  label: 'Doctors On Duty',   value: String(s.doctorsOnDuty ?? 0),       sub: `of ${s.totalDoctors ?? 0} total`,     subAccent: 'blue'  }
+      { accent: 'teal',  icon: 'hospital', label: 'Total Patients',
+        value: String(s.totalPatients ?? 0),
+        sub: newThisMonth > 0 ? `+${newThisMonth} new this month` : 'Registered patients',
+        subAccent: 'teal'  },
+      { accent: 'green', icon: 'patients', label: 'Total Doctors',
+        value: this.fmt(s.totalDoctors ?? 0),
+        sub: 'Doctors onboarded', subAccent: 'green' },
+      { accent: occupancy >= 80 ? 'red' : 'amber', icon: 'icu', label: 'Bed Occupancy',
+        value: `${occupancy}%`,
+        sub: 'Current bed occupancy', subAccent: occupancy >= 80 ? 'red' : 'amber' },
+      { accent: 'amber', icon: 'revenue',  label: 'Revenue (Month)',
+        value: `₹${this.fmt(revenue)}`,
+        sub: `${s.completedAppointments ?? 0} completed appts`, subAccent: 'amber' },
+      { accent: 'blue',  icon: 'doctors',  label: 'Doctors On Duty',
+        value: String(s.doctorsOnDuty ?? 0),
+        sub: `of ${s.totalDoctors ?? 0} total`, subAccent: 'blue'  }
     ];
   }
 
@@ -80,11 +93,14 @@ export class AdminOverviewService {
 
   private buildInsights(s: any, beds: any[]): AiInsight[] {
     const out: AiInsight[] = [];
-    const critical = beds?.find(h => h.occupancyPct >= 90);
+    const critical = beds?.find((h: any) => h.occupancyPct >= 90);
     if (critical) out.push({ dot: '#EF4444', html: `<strong>${critical.hospitalName}</strong> at <strong>${critical.occupancyPct}%</strong> bed occupancy — recommend patient transfer protocols.` });
-    if ((s.occupancyPct ?? 0) >= 75) out.push({ dot: '#F59E0B', html: `Hospital network occupancy at <strong>${Math.round(s.occupancyPct)}%</strong>.` });
+    const pending = s.pendingAppointments ?? 0;
+    if (pending > 0) out.push({ dot: '#F59E0B', html: `<strong>${pending} appointment${pending > 1 ? 's' : ''} pending</strong> confirmation. Review and approve to reduce patient wait times.` });
     out.push({ dot: '#0AAFB8', html: `<strong>${s.doctorsOnDuty ?? 0}</strong> of <strong>${s.totalDoctors ?? 0}</strong> doctors currently on duty across all branches.` });
-    if ((s.totalPatients ?? 0) > 0) out.push({ dot: '#10B981', html: `<strong>${this.fmt(s.totalPatients)}</strong> active patients with <strong>${s.totalAppointments}</strong> appointments in the system.` });
+    const newThis = s.newPatientsThisMonth ?? 0;
+    if (newThis > 0) out.push({ dot: '#10B981', html: `<strong>${newThis} new patient${newThis > 1 ? 's' : ''}</strong> registered this month. Total: <strong>${this.fmt(s.totalPatients ?? 0)}</strong>.` });
+    else if ((s.totalPatients ?? 0) > 0) out.push({ dot: '#10B981', html: `<strong>${this.fmt(s.totalPatients)}</strong> patients with <strong>${s.totalAppointments ?? 0}</strong> total appointments in the system.` });
     return out.slice(0, 3);
   }
 
@@ -103,11 +119,16 @@ export class AdminOverviewService {
   }
 
   private buildInflow(analytics: any): PatientInflowPoint[] {
-    const flow: Record<string, number> = analytics?.monthlyFlow ?? {};
-    return Object.entries(flow).map(([label, total]) => ({
+    const inPerson: Record<string, number> = analytics?.monthlyInPersonFlow ?? {};
+    const video:    Record<string, number> = analytics?.monthlyVideoFlow    ?? {};
+    const flow:     Record<string, number> = analytics?.monthlyFlow         ?? {};
+
+    // Prefer the split data; fall back to total if not available
+    const keys = Object.keys(flow);
+    return keys.map(label => ({
       label,
-      outpatient: total as number,
-      inpatient: 0
+      inpatient:  Number(inPerson[label] ?? 0),
+      outpatient: Number(video[label]    ?? 0),
     }));
   }
 

@@ -110,18 +110,19 @@ export class DoctorDashboardComponent implements OnInit {
     const doctorId = this.doctorInfo?.doctorId;
     const hospitalId = this.doctorInfo?.hospital?.hospitalId;
 
-    // Total patients
-    this.dashboardService.getAllPatients().subscribe(patients => {
-      this.totalPatients = patients.length;
-    });
-
-    // Appointments
+    // Appointments (load first so we can derive patient count from this doctor's data)
     if (doctorId) {
       this.dashboardService.getAppointmentsByDoctor(doctorId).subscribe({
         next: (appts) => {
+          // Total patients = distinct patients in this doctor's appointment history
+          const uniquePatientIds = new Set(
+            appts.filter(a => a.patient?.patientId).map(a => a.patient!.patientId)
+          );
+          this.totalPatients = uniquePatientIds.size;
+
           const todayStr = this.formatDateISO(this.today);
           this.todayAppointments = appts
-            .filter(a => a.appointmentDate === todayStr)
+            .filter(a => this.normalizeDateStr(a.appointmentDate) === todayStr)
             .sort((a, b) => (a.appointmentTime || '').localeCompare(b.appointmentTime || ''));
 
           this.todayAppointmentCount = this.todayAppointments.length;
@@ -129,18 +130,13 @@ export class DoctorDashboardComponent implements OnInit {
             a => a.appointmentType?.toUpperCase() === 'VIDEO'
           ).length;
           this.inPersonCount = this.todayAppointments.filter(
-            a => a.appointmentType?.toUpperCase() === 'IN_PERSON' ||
-                 a.appointmentType?.toUpperCase() === 'IN-PERSON' ||
-                 a.appointmentType?.toUpperCase() === 'INPERSON'
+            a => a.appointmentType?.toUpperCase() !== 'VIDEO'
           ).length;
 
-          const todayDate = new Date();
           this.upcomingConsultations = appts
-            .filter(a => {
-              const apptDate = new Date(a.appointmentDate);
-              return apptDate > todayDate;
-            })
-            .sort((a, b) => a.appointmentDate.localeCompare(b.appointmentDate))
+            .filter(a => this.normalizeDateStr(a.appointmentDate) > todayStr)
+            .sort((a, b) => this.normalizeDateStr(a.appointmentDate).localeCompare(
+                            this.normalizeDateStr(b.appointmentDate)))
             .slice(0, 3);
 
           this.apptLoading = false;
@@ -244,6 +240,16 @@ export class DoctorDashboardComponent implements OnInit {
     return `${y}-${m}-${d}`;
   }
 
+  /** Normalise a backend date value (ISO string or [y,m,d] array) to "YYYY-MM-DD". */
+  private normalizeDateStr(raw: any): string {
+    if (!raw) return '';
+    if (Array.isArray(raw)) {
+      return `${raw[0]}-${String(raw[1]).padStart(2, '0')}-${String(raw[2]).padStart(2, '0')}`;
+    }
+    // Already a string — strip any time portion
+    return String(raw).split('T')[0];
+  }
+
   formatTime(time: string): string {
     if (!time) return '';
     const parts = time.split(':');
@@ -254,13 +260,15 @@ export class DoctorDashboardComponent implements OnInit {
     return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
   }
 
-  formatUpcomingDate(dateStr: string, timeStr: string): string {
-    const date = new Date(dateStr);
+  formatUpcomingDate(dateStr: any, timeStr: string): string {
+    const normalized = this.normalizeDateStr(dateStr);
+    const date = new Date(normalized);
     const tomorrow = new Date(this.today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const isToday = dateStr === this.formatDateISO(this.today);
-    const isTomorrow = dateStr === this.formatDateISO(tomorrow);
+    const isToday = normalized === this.formatDateISO(this.today);
+    const isTomorrow = normalized === this.formatDateISO(tomorrow);
+    dateStr = normalized;
 
     const timeLabel = timeStr ? ` ${this.formatTime(timeStr)}` : '';
 
@@ -357,10 +365,10 @@ export class DoctorDashboardComponent implements OnInit {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   }
 
-  viewAllAppointments() {
-    const userId = this.currentUser?.userId;
-    if (userId) this.router.navigate(['/doctor', userId, 'appointments']);
-  }
+  viewAllAppointments()   { const id = this.currentUser?.userId; if (id) this.router.navigate(['/doctor', id, 'appointments']); }
+  viewAllConsultations()  { const id = this.currentUser?.userId; if (id) this.router.navigate(['/doctor', id, 'appointments']); }
+  viewAllLabReports()     { const id = this.currentUser?.userId; if (id) this.router.navigate(['/doctor', id, 'lab-reports']); }
+  viewAllSupplyChain()    { const id = this.currentUser?.userId; if (id) this.router.navigate(['/doctor', id, 'supply-chain']); }
 
   joinUpcoming(appt: AppointmentEntity) {
     const url = (appt.sessionUrl?.trim()) ||

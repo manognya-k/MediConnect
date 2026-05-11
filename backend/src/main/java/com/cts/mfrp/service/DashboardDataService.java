@@ -116,9 +116,17 @@ public class DashboardDataService {
         }
 
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalPatients", patientRepository.count());
+        long totalPatients = patientRepository.count();
+        stats.put("totalPatients", totalPatients);
         stats.put("totalDoctors", doctorRepository.count());
-        stats.put("totalAppointments", appointmentRepository.count());
+
+        long totalAppts = appointmentRepository.count();
+        stats.put("totalAppointments", totalAppts);
+        stats.put("confirmedAppointments", appointmentRepository.countByStatus("CONFIRMED"));
+        stats.put("pendingAppointments",   appointmentRepository.countByStatus("PENDING"));
+        stats.put("cancelledAppointments", appointmentRepository.countByStatus("CANCELLED"));
+        stats.put("completedAppointments", appointmentRepository.countByStatus("COMPLETED"));
+
         long doctorsOnDuty = doctorRepository.findAll().stream()
                 .filter(d -> "AVAILABLE".equalsIgnoreCase(d.getAvailabilityStatus()))
                 .count();
@@ -134,6 +142,17 @@ public class DashboardDataService {
         LocalDate monthEnd   = monthStart.plusMonths(1).minusDays(1);
         BigDecimal revenue = billRepository.sumRevenueBetween(monthStart, monthEnd);
         stats.put("revenue", revenue != null ? revenue.doubleValue() : 0D);
+
+        // New patients registered this calendar month
+        java.time.LocalDateTime monthStartDt = monthStart.atStartOfDay();
+        java.time.LocalDateTime monthEndDt   = monthEnd.plusDays(1).atStartOfDay();
+        long newPatientsThisMonth = patientRepository.countByCreatedAtBetween(monthStartDt, monthEndDt);
+        stats.put("newPatientsThisMonth", newPatientsThisMonth);
+
+        // Today's appointments
+        long todayAppts = appointmentRepository.findByAppointmentDate(LocalDate.now()).stream()
+                .filter(a -> !"CANCELLED".equalsIgnoreCase(a.getStatus())).count();
+        stats.put("todayAppointments", todayAppts);
 
         Map<String, Long> diseaseDistribution = medicalRecordRepository.findAll().stream()
                 .collect(Collectors.groupingBy(

@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
     Optional<Patient> findByUserUserId(Integer userId);
     Optional<Patient> findByUserEmail(String email);
+    long countByCreatedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
 }

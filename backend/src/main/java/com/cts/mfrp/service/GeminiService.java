@@ -15,7 +15,7 @@ import java.util.*;
 public class GeminiService {
 
     private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=";
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
 
     // ── Role-specific system prompts ──────────────────────────────────────────
 
@@ -86,6 +86,12 @@ public class GeminiService {
 
         } catch (HttpClientErrorException e) {
             log.error("GeminiService HTTP {} — body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 429) {
+                return "AI quota exceeded. Please try again later or contact your administrator to update the API key.";
+            }
+            if (e.getStatusCode().value() == 400) {
+                return "AI assistant could not process this request. Please rephrase and try again.";
+            }
             return "AI assistant temporarily unavailable.";
         } catch (Exception e) {
             log.error("GeminiService error [{}]: {}", e.getClass().getSimpleName(), e.getMessage());
@@ -95,14 +101,16 @@ public class GeminiService {
 
     /**
      * Converts the message list into Gemini-format contents.
-     * Embeds the system prompt inside the first user message so we don't
-     * rely on system_instruction (which requires specific model versions).
+     * Gemini requires the conversation to START with a 'user' turn — any
+     * leading 'model' messages (e.g. system-prompt entries stored in history)
+     * are skipped. The system prompt is injected into the first real user turn.
      */
     private List<Map<String, Object>> buildContents(
             List<AiChatRequestDto.MessageDto> messages, String system) {
 
         List<Map<String, Object>> contents = new ArrayList<>();
         boolean systemInjected = false;
+        boolean firstUserSeen  = false;
 
         for (AiChatRequestDto.MessageDto msg : messages) {
             if (msg == null || msg.getContent() == null || msg.getContent().isBlank()) continue;
@@ -110,10 +118,18 @@ public class GeminiService {
             String role = "assistant".equalsIgnoreCase(msg.getRole()) ? "model" : "user";
             String text = msg.getContent();
 
-            // Prepend system context to the very first user message
-            if (!systemInjected && "user".equals(role)) {
-                text = "[CONTEXT] " + system + "\n\n[USER] " + text;
-                systemInjected = true;
+            // Skip any leading 'model' turns — Gemini rejects conversations that
+            // don't start with 'user'. These are typically system-prompt entries
+            // stored in the frontend's conversationHistory as 'assistant'.
+            if ("model".equals(role) && !firstUserSeen) continue;
+
+            if ("user".equals(role)) {
+                firstUserSeen = true;
+                // Inject the system context into the very first user message
+                if (!systemInjected) {
+                    text = "[SYSTEM] " + system + "\n\n[USER] " + text;
+                    systemInjected = true;
+                }
             }
 
             Map<String, Object> part = new HashMap<>();
@@ -127,7 +143,9 @@ public class GeminiService {
             entry.put("parts", parts);
             contents.add(entry);
         }
-        return contents;
+
+        // If there are no user messages at all, return empty so caller can short-circuit
+        return firstUserSeen ? contents : new ArrayList<>();
     }
 
     @SuppressWarnings("unchecked")

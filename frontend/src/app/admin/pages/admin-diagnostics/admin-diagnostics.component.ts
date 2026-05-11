@@ -39,6 +39,12 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
   aiExplainLoading = false;
   aiExplainText = '';
 
+  // Upload Result modal
+  showUploadResult = false;
+  uploadResultReport: any = null;
+  uploadResultData = { result: '', isAbnormal: false };
+  uploadResultSubmitting = false;
+
   constructor(private svc: AdminDiagnosticsService, public notifSvc: AdminNotificationService) {}
 
   ngOnInit() {
@@ -165,6 +171,38 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
     this.aiExplainReport = null;
   }
 
+  openUploadResult(r: any, event: Event) {
+    event.stopPropagation();
+    this.uploadResultReport = r;
+    this.uploadResultData = { result: r.result || '', isAbnormal: r.isAbnormal ?? false };
+    this.showUploadResult = true;
+  }
+
+  closeUploadResult() {
+    this.showUploadResult = false;
+    this.uploadResultReport = null;
+  }
+
+  submitUploadResult() {
+    if (!this.uploadResultData.result?.trim()) return;
+    this.uploadResultSubmitting = true;
+    this.svc.updateResult(
+      this.uploadResultReport.reportId,
+      this.uploadResultData.result.trim(),
+      this.uploadResultData.isAbnormal
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updated) => {
+        const idx = this.reports.findIndex(r => r.reportId === this.uploadResultReport.reportId);
+        if (idx !== -1) this.reports[idx] = updated;
+        this.applyFilter();
+        if (this.selectedReport?.reportId === this.uploadResultReport.reportId) this.selectedReport = updated;
+        this.uploadResultSubmitting = false;
+        this.closeUploadResult();
+      },
+      error: () => { this.uploadResultSubmitting = false; }
+    });
+  }
+
   getResultBadge(r: any): string {
     if (!r?.result || r.result === 'PENDING') return 'b-amber';
     if (r.isAbnormal === true) return 'b-red';
@@ -180,4 +218,23 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
   get totalReports()  { return this.stats.total    || this.reports.length; }
   get pendingCount()  { return this.stats.pending   || 0; }
   get abnormalCount() { return this.stats.abnormal  || 0; }
+
+  private static readonly RADIOLOGY_KEYWORDS = ['x-ray', 'xray', 'ct', 'ct scan', 'computed tomography'];
+  private static readonly IMAGING_KEYWORDS    = ['mri', 'ultrasound', 'pet', 'pet scan', 'sonogram', 'echocardiogram'];
+
+  get radiologyReports(): any[] {
+    const kw = AdminDiagnosticsComponent.RADIOLOGY_KEYWORDS;
+    return this.reports.filter(r => {
+      const name = (r.testName || r.reportType || '').toLowerCase();
+      return kw.some(k => name.includes(k));
+    });
+  }
+
+  get imagingReports(): any[] {
+    const kw = AdminDiagnosticsComponent.IMAGING_KEYWORDS;
+    return this.reports.filter(r => {
+      const name = (r.testName || r.reportType || '').toLowerCase();
+      return kw.some(k => name.includes(k));
+    });
+  }
 }

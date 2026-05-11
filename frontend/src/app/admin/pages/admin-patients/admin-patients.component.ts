@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, timer, of } from 'rxjs';
+import { Subject, timer, of, forkJoin } from 'rxjs';
 import { switchMap, takeUntil, delay } from 'rxjs/operators';
 import { AdminPatientsService } from '../../services/admin-patients.service';
+import { AdminAppointmentsService } from '../../services/admin-appointments.service';
 import { ToastService } from '../../../services/toast.service';
 import { AdminNotificationService } from '../../services/admin-notification.service';
 
@@ -17,6 +18,8 @@ import { AdminNotificationService } from '../../services/admin-notification.serv
 export class AdminPatientsComponent implements OnInit, OnDestroy {
   patients: any[] = [];
   filteredPatients: any[] = [];
+  outpatients: any[] = [];
+  filteredOutpatients: any[] = [];
   searchTerm = '';
   activeTab: 'inpatients' | 'outpatients' = 'inpatients';
   selectedPatient: any = null;
@@ -39,20 +42,39 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
   aiSummaryText = '';
 
   constructor(
-    private svc: AdminPatientsService,
-    private toast: ToastService,
-    public notifSvc: AdminNotificationService
+    private svc:       AdminPatientsService,
+    private apptSvc:   AdminAppointmentsService,
+    private toast:     ToastService,
+    public  notifSvc:  AdminNotificationService
   ) {}
 
   ngOnInit() {
+    const today = new Date().toISOString().slice(0, 10);
     timer(0, 30000).pipe(
-      switchMap(() => this.svc.getPatients()),
+      switchMap(() => forkJoin({
+        patients:     this.svc.getPatients(),
+        appointments: this.apptSvc.getAppointments()
+      })),
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (patients) => {
+      next: ({ patients, appointments }) => {
         this.patients = patients;
         this.filteredPatients = [...patients];
         if (patients.length) this.selectedPatient = patients[0];
+
+        // Outpatients = distinct patients with appointments today
+        const todayAppts = appointments.filter((a: any) => a.appointmentDate === today);
+        const seen = new Set<number>();
+        this.outpatients = todayAppts
+          .filter((a: any) => {
+            const pid = a.patient?.patientId;
+            if (!pid || seen.has(pid)) return false;
+            seen.add(pid);
+            return true;
+          })
+          .map((a: any) => ({ ...a.patient, _appointmentTime: a.appointmentTime, _appointmentType: a.appointmentType, _status: a.status }));
+        this.filteredOutpatients = [...this.outpatients];
+
         this.isLoading = false;
       },
       error: () => { this.isLoading = false; }
@@ -64,11 +86,16 @@ export class AdminPatientsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  setTab(tab: 'inpatients' | 'outpatients') { this.activeTab = tab; }
+  setTab(tab: 'inpatients' | 'outpatients') { this.activeTab = tab; this.search(); }
 
   search() {
     const t = this.searchTerm.toLowerCase();
     this.filteredPatients = this.patients.filter(p => {
+      const name  = (p.user?.name  ?? p.name  ?? '').toLowerCase();
+      const email = (p.user?.email ?? p.email ?? '').toLowerCase();
+      return name.includes(t) || email.includes(t);
+    });
+    this.filteredOutpatients = this.outpatients.filter(p => {
       const name  = (p.user?.name  ?? p.name  ?? '').toLowerCase();
       const email = (p.user?.email ?? p.email ?? '').toLowerCase();
       return name.includes(t) || email.includes(t);

@@ -35,15 +35,11 @@ export class PatientRemindersComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    forkJoin({
-      stats:     this.svc.getStats(),
-      schedule:  this.svc.getTodaySchedule(),
-      medicines: this.svc.getAllPrescriptions()
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ stats, schedule, medicines }) => {
+    this.svc.getAllMedicineData().pipe(takeUntil(this.destroy$)).subscribe({
+      next: ({ stats, schedule, prescriptions }) => {
         this.stats         = stats;
         this.timeSlots     = schedule;
-        this.prescriptions = medicines;
+        this.prescriptions = prescriptions;
         this.loading       = false;
       },
       error: () => {
