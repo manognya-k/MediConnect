@@ -2,6 +2,6 @@
 // Example: 'https://mediconnect-backend.up.railway.app/api'
 export const environment = {
   production: true,
-  apiBase: 'https://YOUR-BACKEND.up.railway.app/api',
-  wsBase: 'https://YOUR-BACKEND.up.railway.app/ws'
+  apiBase: 'https://mediconnect-production-c233.up.railway.app/api',
+  wsBase: 'https://mediconnect-production-c233.up.railway.app/ws'
 };
