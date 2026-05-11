@@ -29,10 +29,7 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDTO("", ex.getReason() != null ? ex.getReason() : ex.getMessage(), ex.getStatusCode().value()));
     }
 
-    @ExceptionHandler({
-        org.springframework.security.access.AccessDeniedException.class,
-        org.springframework.security.authorization.AuthorizationDeniedException.class
-    })
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<ErrorResponseDTO> handleAccessDenied(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponseDTO("", "Access denied", 403));
