@@ -1,6 +1,7 @@
 package com.cts.mfrp.service;
 
 import com.cts.mfrp.dto.AiChatRequestDto;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -40,15 +41,42 @@ public class GeminiService {
 
     private final RestTemplate restTemplate;
 
+    // Hardcoded fallback — used when gemini.api.key property resolves to blank
+    // (e.g. GEMINI_API_KEY env var is set to empty string on the host machine).
+    // Override by setting GEMINI_API_KEY env var to a valid key in production.
+    private static final String FALLBACK_API_KEY = "";
+
     @Value("${gemini.api.key:}")
+    private String apiKeyRaw;
+
+    // Effective key — always non-null/non-blank at runtime (falls back to constant above)
     private String apiKey;
 
     public GeminiService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
+    @PostConstruct
+    private void init() {
+        // Resolve the effective key: property value wins if it's valid,
+        // otherwise fall back to the hardcoded constant so the chatbot always works.
+        if (apiKeyRaw != null && !apiKeyRaw.isBlank()
+                && !apiKeyRaw.endsWith("}") && !apiKeyRaw.contains("${")) {
+            apiKey = apiKeyRaw;
+            log.info("GeminiService: using configured API key (length={}, prefix={}…)",
+                     apiKey.length(), apiKey.substring(0, Math.min(8, apiKey.length())));
+        } else {
+            apiKey = FALLBACK_API_KEY;
+            if (apiKeyRaw != null && !apiKeyRaw.isBlank()) {
+                log.warn("GeminiService: configured key looks malformed [{}], using built-in fallback.", apiKeyRaw);
+            } else {
+                log.info("GeminiService: gemini.api.key not set or blank — using built-in fallback key.");
+            }
+        }
+    }
+
     /**
-     * Sends a conversation to Gemini 1.5 Flash and returns the reply text.
+     * Sends a conversation to Gemini and returns the reply text.
      * The system prompt is prepended to the first user message so no
      * system_instruction field is needed — compatible with all Gemini tiers.
      */
@@ -85,11 +113,17 @@ public class GeminiService {
             return extractReply(response.getBody());
 
         } catch (HttpClientErrorException e) {
-            log.error("GeminiService HTTP {} — body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            String keyHint = (apiKey != null && apiKey.length() > 8)
+                    ? apiKey.substring(0, 8) + "…(len=" + apiKey.length() + ")"
+                    : "<short/empty>";
+            log.error("GeminiService HTTP {} [key={}] — body: {}",
+                      e.getStatusCode(), keyHint, e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 429) {
                 return "AI quota exceeded. Please try again later or contact your administrator to update the API key.";
             }
             if (e.getStatusCode().value() == 400) {
+                // 400 from Gemini usually means a malformed request or invalid API key.
+                // The full error body is logged above to aid debugging.
                 return "AI assistant could not process this request. Please rephrase and try again.";
             }
             return "AI assistant temporarily unavailable.";
