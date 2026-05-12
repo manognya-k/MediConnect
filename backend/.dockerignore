@@ -1,0 +1,14 @@
+target/
+.idea/
+.mvn/wrapper/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.vscode/
+.git/
+.gitignore
+README.md
+HELP.md
