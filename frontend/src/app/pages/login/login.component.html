@@ -1,25 +1,42 @@
 <div class="page-wrapper">
   <div class="login-container">
 
-    <!-- Left: Image / Illustration Section -->
+    <!-- Left: Image / Brand Panel -->
     <div class="image-section">
       <div class="image-content">
-        <div class="medical-illustration">
-          <div class="illustration-circle"></div>
-          <div class="illustration-cross">
-            <span class="cross-v"></span>
-            <span class="cross-h"></span>
-          </div>
-          <div class="illustration-dots">
-            <span></span><span></span><span></span>
-            <span></span><span></span><span></span>
+        <div class="panel-brand">
+          <img src="assets/logo.svg" alt="MediConnect Logo" class="panel-logo" />
+          <p class="panel-tagline">Connecting care.<br>Improving lives.</p>
+          <div class="panel-features">
+            <div class="panel-feat-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>AI-Powered Health Insights</span>
+            </div>
+            <div class="panel-feat-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Real-Time Doctor Access</span>
+            </div>
+            <div class="panel-feat-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Secure &amp; Encrypted Data</span>
+            </div>
           </div>
         </div>
       </div>
+
       <div class="secure-badge">
         <div class="badge-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="#2563EB"/>
+            <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="#1565C0"/>
             <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
@@ -34,7 +51,6 @@
     <div class="form-section">
       <div class="form-inner">
 
-        <!-- Back to landing -->
         <a routerLink="/" class="back-link">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -42,33 +58,17 @@
           Back to Home
         </a>
 
-        <!-- Logo -->
-        <div class="logo">
-          <div class="logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" fill="white"/>
-            </svg>
-          </div>
-          <span class="logo-text">MediConnect</span>
-        </div>
+        <app-logo></app-logo>
 
         <h1 class="welcome-title">Welcome Back</h1>
         <p class="welcome-sub">Sign in to access your healthcare account</p>
 
         <!-- Role Tabs -->
         <div class="tabs">
-          <button
-            class="tab-btn"
-            [class.active]="activeTab === 'PATIENT'"
-            (click)="setTab('PATIENT')"
-            type="button">
+          <button class="tab-btn" [class.active]="activeTab === 'PATIENT'" (click)="setTab('PATIENT')" type="button">
             Patient Login
           </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeTab === 'DOCTOR'"
-            (click)="setTab('DOCTOR')"
-            type="button">
+          <button class="tab-btn" [class.active]="activeTab === 'DOCTOR'" (click)="setTab('DOCTOR')" type="button">
             Doctor Login
           </button>
         </div>
@@ -94,14 +94,8 @@
                   <path d="M2 8l10 6 10-6" stroke="#9CA3AF" stroke-width="2"/>
                 </svg>
               </span>
-              <input
-                type="email"
-                class="form-input"
-                placeholder="Enter your email"
-                [(ngModel)]="email"
-                name="email"
-                required
-              />
+              <input type="email" class="form-input" placeholder="Enter your email"
+                [(ngModel)]="email" name="email" required />
             </div>
           </div>
 
@@ -114,14 +108,8 @@
                   <path d="M8 11V7a4 4 0 018 0v4" stroke="#9CA3AF" stroke-width="2"/>
                 </svg>
               </span>
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                class="form-input"
-                placeholder="Enter your password"
-                [(ngModel)]="password"
-                name="password"
-                required
-              />
+              <input [type]="showPassword ? 'text' : 'password'" class="form-input"
+                placeholder="Enter your password" [(ngModel)]="password" name="password" required />
               <button type="button" class="eye-btn" (click)="togglePassword()">
                 <svg *ngIf="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#9CA3AF" stroke-width="2"/>

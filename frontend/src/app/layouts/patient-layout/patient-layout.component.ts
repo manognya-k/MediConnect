@@ -9,6 +9,7 @@ import { PatientAuthService } from '../../patient/services/patient-auth.service'
 import { PatientStateService } from '../../patient/services/patient-state.service';
 import { PatientUser, PatientDashboardStats } from '../../patient/models/patient-dashboard.model';
 import { ToastComponent } from '../../components/toast/toast.component';
+import { LogoComponent } from '../../components/logo/logo.component';
 import { WebSocketService } from '../../services/websocket.service';
 
 const BASE = 'http://localhost:8081/api';
@@ -16,7 +17,7 @@ const BASE = 'http://localhost:8081/api';
 @Component({
   selector: 'app-patient-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, ToastComponent],
+  imports: [CommonModule, RouterModule, DatePipe, ToastComponent, LogoComponent],
   templateUrl: './patient-layout.component.html',
   styleUrl: './patient-layout.component.scss'
 })

@@ -3,31 +3,35 @@
   <!-- Left branding panel -->
   <div class="login-brand">
     <div class="brand-content">
-      <div class="brand-mark">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
-          <path d="M8 2v12M2 8h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="brand-name">MediConnect</div>
-      <div class="brand-sub">Admin Control Panel</div>
-
-      <div class="brand-divider"></div>
-
-      <div class="brand-feature">
-        <div class="bf-dot bf-teal"></div>
-        <span>Real-time hospital network monitoring</span>
-      </div>
-      <div class="brand-feature">
-        <div class="bf-dot bf-green"></div>
-        <span>AI-powered operational insights</span>
-      </div>
-      <div class="brand-feature">
-        <div class="bf-dot bf-amber"></div>
-        <span>Multi-branch administration & analytics</span>
+      <div class="panel-brand">
+        <img src="assets/logo.svg" alt="MediConnect Logo" class="panel-logo" />
+        <p class="panel-tagline">Connecting care.<br>Improving lives.</p>
+        <div class="panel-features">
+          <div class="panel-feat-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Real-time hospital network monitoring</span>
+          </div>
+          <div class="panel-feat-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>AI-powered operational insights</span>
+          </div>
+          <div class="panel-feat-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Multi-branch administration &amp; analytics</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="brand-grid"></div>
     <div class="brand-glow brand-glow-1"></div>
     <div class="brand-glow brand-glow-2"></div>
   </div>
@@ -36,7 +40,6 @@
   <div class="login-form-panel">
     <div class="form-card">
 
-      <!-- Back to landing -->
       <a routerLink="/" class="back-link">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
           <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -45,11 +48,7 @@
       </a>
 
       <div class="form-logo">
-        <div class="form-mark">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2v12M2 8h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </div>
+        <app-logo></app-logo>
       </div>
 
       <h1 class="form-title">Admin Sign In</h1>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D47A1"/>
+      <stop offset="100%" stop-color="#1565C0"/>
+    </linearGradient>
+    <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#90CAF9"/>
+      <stop offset="100%" stop-color="#BBDEFB"/>
+    </linearGradient>
+    <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#29B6F6"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield -->
+  <path d="M100 12 L170 42 L170 100 C170 145 138 178 100 190 C62 178 30 145 30 100 L30 42 Z"
+        fill="url(#shieldGrad)" stroke="#1976D2" stroke-width="2"/>
+  <!-- Shield inner highlight -->
+  <path d="M100 24 L158 50 L158 100 C158 138 131 167 100 178 C69 167 42 138 42 100 L42 50 Z"
+        fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <!-- Medical Cross vertical -->
+  <rect x="87" y="64" width="26" height="72" rx="6" fill="url(#crossGrad)" opacity="0.95"/>
+  <!-- Medical Cross horizontal -->
+  <rect x="63" y="88" width="74" height="26" rx="6" fill="url(#crossGrad)" opacity="0.95"/>
+  <!-- Orbit ellipse -->
+  <ellipse cx="100" cy="100" rx="58" ry="28" stroke="url(#orbitGrad)" stroke-width="2.5" fill="none" opacity="0.9" transform="rotate(-30 100 100)"/>
+  <!-- Orbit dots -->
+  <circle cx="142" cy="72" r="5" fill="#29B6F6"/>
+  <circle cx="58" cy="128" r="5" fill="#29B6F6"/>
+  <circle cx="148" cy="118" r="4" fill="#64B5F6"/>
+  <circle cx="52" cy="82" r="4" fill="#64B5F6"/>
+  <!-- Circuit lines -->
+  <line x1="142" y1="72" x2="155" y2="60" stroke="#29B6F6" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="155" cy="60" r="3" fill="#29B6F6" opacity="0.7"/>
+  <line x1="58" y1="128" x2="45" y2="140" stroke="#29B6F6" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="45" cy="140" r="3" fill="#29B6F6" opacity="0.7"/>
+</svg>

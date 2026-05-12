@@ -8,6 +8,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { AdminAuthService, AdminRegisterRequest } from '../../services/admin-auth.service';
 import { environment } from '../../../../environments/environment';
+import { LogoComponent } from '../../../components/logo/logo.component';
 
 interface HospitalOption {
   hospitalId: number;
@@ -18,7 +19,7 @@ interface HospitalOption {
 @Component({
   selector: 'app-admin-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LogoComponent],
   templateUrl: './admin-register.component.html',
   styleUrl: './admin-register.component.scss'
 })

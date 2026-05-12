@@ -1,12 +1,7 @@
 <div class="layout-wrap" [class.sb-closed]="!layout.sidebarOpen">
   <aside class="sb">
     <div class="sb-logo">
-      <div class="sb-logo-icon">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <path d="M8 2v12M2 8h12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <span class="sb-logo-text">MediConnect</span>
+      <app-logo [light]="true"></app-logo>
     </div>
 
     <nav class="sb-nav">
@@ -67,7 +62,7 @@
           <select [(ngModel)]="currentStatus"
                   (ngModelChange)="onStatusChange()"
                   [disabled]="statusUpdating"
-                  style="font-size:10px;color:#374151;border:none;background:transparent;cursor:pointer;padding:0;outline:none;max-width:90px">
+                  style="font-size:10px;color:rgba(255,255,255,0.7);border:none;background:transparent;cursor:pointer;padding:0;outline:none;max-width:90px">
             <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
           </select>
         </div>

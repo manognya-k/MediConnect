@@ -20,17 +20,18 @@ import { LogoComponent } from '../../components/logo/logo.component';
     .forbidden {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 16px;
-      background: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F0F7FF; font-family: 'Inter', sans-serif;
     }
-    .code  { font-size: 96px; font-weight: 800; color: #E2E8F0; line-height: 1; }
-    .title { font-size: 28px; font-weight: 700; color: #0F172A; }
-    .sub   { font-size: 15px; color: #64748B; }
+    .code  { font-size: 96px; font-weight: 800; color: #BBDEFB; line-height: 1; }
+    .title { font-size: 1.75rem; font-weight: 700; color: #0D47A1; }
+    .sub   { font-size: 0.9375rem; color: #78909C; }
     .btn {
-      margin-top: 8px; padding: 12px 32px; font-size: 14px; font-weight: 600;
-      background: linear-gradient(135deg, #0AAFB8, #1A5FA8);
-      color: white; border: none; border-radius: 8px; cursor: pointer;
+      margin-top: 8px; padding: 12px 32px;
+      font-family: 'Inter', sans-serif; font-size: 0.9375rem; font-weight: 600;
+      background: #1565C0; color: white; border: none; border-radius: 8px; cursor: pointer;
+      transition: filter 0.15s;
     }
-    .btn:hover { opacity: 0.9; }
+    .btn:hover { filter: brightness(0.92); }
   `]
 })
 export class ForbiddenComponent {

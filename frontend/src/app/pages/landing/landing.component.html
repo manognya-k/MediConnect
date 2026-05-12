@@ -1,78 +1,248 @@
-<div class="landing">
+<div class="landing" [class.scrolled]="isScrolled">
 
-  <!-- NAV -->
-  <nav class="nav">
+  <!-- ══ NAVBAR ══ -->
+  <nav class="nav" [class.scrolled]="isScrolled">
     <app-logo></app-logo>
-    <div class="nav-actions">
-      <button class="btn-ghost" (click)="goToAdmin()">Admin</button>
-      <button class="btn-primary" (click)="goToLogin()">Patient / Doctor</button>
+    <div class="nav-actions" [class.open]="mobileNavOpen">
+      <button class="btn-ghost-nav" (click)="goToAdmin()">Admin Portal</button>
+      <button class="btn-pill" (click)="goToLogin()">Get Started</button>
     </div>
+    <button class="hamburger-nav" (click)="mobileNavOpen = !mobileNavOpen" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M3 12h18M3 6h18M3 18h18" stroke="#0D47A1" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
   </nav>
 
-  <!-- HERO -->
+  <!-- ══ HERO ══ -->
   <section class="hero">
-    <div class="hero-badge">Healthcare Platform</div>
-    <h1 class="hero-title">Intelligent Hospital<br>Management System</h1>
-    <p class="hero-sub">
-      Connect patients, doctors, and administrators in one unified platform.
-      Real-time updates, AI-powered insights, and seamless care delivery.
-    </p>
-    <div class="hero-cta">
-      <button class="btn-primary btn-lg" (click)="goToLogin()">Get Started</button>
-      <button class="btn-outline btn-lg" (click)="goToAdmin()">Admin Portal</button>
+    <!-- Floating dots -->
+    <span class="dot dot-1"></span>
+    <span class="dot dot-2"></span>
+    <span class="dot dot-3"></span>
+    <span class="dot dot-4"></span>
+    <span class="dot dot-5"></span>
+    <span class="dot dot-6"></span>
+
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        Trusted Healthcare Platform
+      </div>
+
+      <h1 class="hero-title">
+        <span class="gradient-word">Intelligent</span> Hospital<br>Management System
+      </h1>
+
+      <p class="hero-sub">
+        Connect patients, doctors, and administrators in one unified platform.
+        Real-time updates, AI-powered insights, and seamless care delivery.
+      </p>
+
+      <div class="hero-cta">
+        <button class="btn-hero-primary" (click)="goToLogin()">Get Started Free</button>
+        <button class="btn-hero-outline" (click)="goToAdmin()">Admin Portal</button>
+      </div>
+
+      <!-- Floating stats bar -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-num">50,000+</div>
+          <div class="stat-lbl">Patients Managed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">1,200+</div>
+          <div class="stat-lbl">Doctors Connected</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">99.9%</div>
+          <div class="stat-lbl">Uptime</div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- FEATURE CARDS -->
-  <section class="features">
-    <div class="feat-card">
-      <div class="feat-icon feat-teal">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="5" r="3" stroke="white" stroke-width="1.5"/>
-          <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="feat-title">Patient Portal</div>
-      <div class="feat-desc">View vitals, book appointments, track prescriptions, and chat with an AI health assistant.</div>
-    </div>
+  <!-- ══ HOW IT WORKS ══ -->
+  <section class="how-section">
+    <div class="section-label">HOW IT WORKS</div>
+    <h2 class="section-heading">Three Portals. One Platform.</h2>
+    <p class="section-sub">Everything you need for modern hospital management, built into a single unified system.</p>
 
-    <div class="feat-card">
-      <div class="feat-icon feat-blue">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
-          <rect x="3" y="2" width="10" height="13" rx="1.5" stroke="white" stroke-width="1.5"/>
-          <path d="M5 6h6M5 9h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+    <div class="portals-grid">
+      <div class="portal-card">
+        <div class="step-badge">1</div>
+        <div class="portal-icon patient-icon">
+          <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="5" r="3" stroke="white" stroke-width="1.5"/>
+            <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="portal-name">Patient Portal</h3>
+        <p class="portal-desc">View vitals, book appointments, access medical records, track prescriptions, and chat with an AI health assistant.</p>
+        <span class="portal-link">Learn more →</span>
       </div>
-      <div class="feat-title">Doctor Dashboard</div>
-      <div class="feat-desc">Manage patients, write prescriptions, conduct telemedicine, and access clinical AI support.</div>
-    </div>
 
-    <div class="feat-card">
-      <div class="feat-icon feat-purple">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
-          <path d="M2 12V8l3-3 3 3 3-4 3 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <div class="portal-card">
+        <div class="step-badge">2</div>
+        <div class="portal-icon doctor-icon">
+          <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
+            <rect x="3" y="2" width="10" height="13" rx="1.5" stroke="white" stroke-width="1.5"/>
+            <path d="M5 6h6M5 9h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="portal-name">Doctor Dashboard</h3>
+        <p class="portal-desc">Manage patients, write prescriptions, conduct telemedicine sessions, and access clinical AI support in real time.</p>
+        <span class="portal-link">Learn more →</span>
       </div>
-      <div class="feat-title">Admin Analytics</div>
-      <div class="feat-desc">Monitor bed occupancy, appointments, inventory, and hospital performance in real-time.</div>
-    </div>
 
-    <div class="feat-card">
-      <div class="feat-icon feat-green">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
-          <rect x="1" y="4" width="10" height="8" rx="1.5" stroke="white" stroke-width="1.5"/>
-          <path d="M11 7l3-2v6l-3-2" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
+      <div class="portal-card">
+        <div class="step-badge">3</div>
+        <div class="portal-icon admin-icon">
+          <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
+            <path d="M2 12V8l3-3 3 3 3-4 3 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="portal-name">Admin Control Panel</h3>
+        <p class="portal-desc">Monitor bed occupancy, manage hospitals, track revenue, control supply chain, and oversee the entire network.</p>
+        <span class="portal-link">Learn more →</span>
       </div>
-      <div class="feat-title">Telemedicine</div>
-      <div class="feat-desc">Secure video consultations with automatic medical record creation after each session.</div>
     </div>
   </section>
 
-  <!-- FOOTER -->
+  <!-- ══ FEATURES ══ -->
+  <section class="features-section">
+    <div class="section-label">FEATURES</div>
+    <h2 class="section-heading">Everything you need to run a modern hospital</h2>
+    <p class="section-sub">Purpose-built tools for every role — patients, clinicians, and administrators alike.</p>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon fi-patient">
+          <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="5" r="3" stroke="white" stroke-width="1.5"/>
+            <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4 class="feat-title">Patient Management</h4>
+        <p class="feat-desc">Unified health records, appointment booking, lab results, and prescription tracking in one place.</p>
+        <span class="feat-tag">Patient Portal</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-doctor">
+          <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+            <rect x="3" y="2" width="10" height="13" rx="1.5" stroke="white" stroke-width="1.5"/>
+            <path d="M5 6h6M5 9h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4 class="feat-title">Clinical Workflows</h4>
+        <p class="feat-desc">Streamlined patient rounds, notes, lab orders, and medical record management for clinicians.</p>
+        <span class="feat-tag">Doctor Portal</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-analytics">
+          <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+            <path d="M2 12V8l3-3 3 3 3-4 3 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h4 class="feat-title">Real-Time Analytics</h4>
+        <p class="feat-desc">Live dashboards for bed occupancy, appointment flow, revenue, and operational performance.</p>
+        <span class="feat-tag">Admin Portal</span>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-tele">
+          <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+            <rect x="1" y="4" width="10" height="8" rx="1.5" stroke="white" stroke-width="1.5"/>
+            <path d="M11 7l3-2v6l-3-2" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h4 class="feat-title">Telemedicine</h4>
+        <p class="feat-desc">Secure video consultations with automatic medical record creation and prescription generation.</p>
+        <span class="feat-tag">All Portals</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ TRUST BANNER ══ -->
+  <section class="trust-section">
+    <div class="trust-inner">
+      <div class="trust-stat">
+        <div class="trust-num">10,000+</div>
+        <div class="trust-lbl">Daily Consultations</div>
+      </div>
+      <div class="trust-stat">
+        <div class="trust-num">200+</div>
+        <div class="trust-lbl">Hospitals</div>
+      </div>
+      <div class="trust-stat">
+        <div class="trust-num">4.9★</div>
+        <div class="trust-lbl">Average Rating</div>
+      </div>
+      <div class="trust-stat">
+        <div class="trust-num">24/7</div>
+        <div class="trust-lbl">Support</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CTA ══ -->
+  <section class="cta-section">
+    <svg class="cta-icon" width="60" height="60" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="#1565C0" opacity="0.15" stroke="#1565C0" stroke-width="1.5"/>
+      <path d="M9 12l2 2 4-4" stroke="#1565C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h2 class="cta-heading">Ready to transform your hospital?</h2>
+    <p class="cta-sub">Join thousands of healthcare professionals already using MediConnect.</p>
+    <div class="cta-btns">
+      <button class="btn-cta-primary" (click)="goToLogin()">Get Started</button>
+      <button class="btn-cta-secondary">Contact Us</button>
+    </div>
+  </section>
+
+  <!-- ══ FOOTER ══ -->
   <footer class="footer">
-    <app-logo></app-logo>
-    <div class="footer-copy">&copy; 2026 MediConnect. All rights reserved.</div>
+    <div class="footer-top">
+      <div class="footer-col footer-brand-col">
+        <app-logo [light]="true"></app-logo>
+        <p class="footer-tagline">Connecting care.<br>Improving lives.</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-heading">Platform</div>
+        <a class="footer-link">Patient Portal</a>
+        <a class="footer-link">Doctor Portal</a>
+        <a class="footer-link">Admin Portal</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-heading">Company</div>
+        <a class="footer-link">About</a>
+        <a class="footer-link">Contact</a>
+        <a class="footer-link">Privacy Policy</a>
+        <a class="footer-link">Terms of Service</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-heading">Contact</div>
+        <div class="footer-contact-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="4" width="20" height="16" rx="2" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+            <path d="M2 8l10 6 10-6" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+          </svg>
+          <span>support&#64;mediconnect.com</span>
+        </div>
+        <div class="footer-contact-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 10.8 2 2 0 012 8.7V5.7a2 2 0 012-2 19.5 19.5 0 013 .25 2 2 0 011.45 2.11l-.45 2.11a2 2 0 00.45 2.11L9.72 11.4a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45l2.11.45A2 2 0 0122 17.92z" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+          </svg>
+          <span>+1 (800) MEDI-CON</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 MediConnect. All rights reserved.</span>
+      <span>Built with ❤️ for better healthcare</span>
+    </div>
   </footer>
 
 </div>

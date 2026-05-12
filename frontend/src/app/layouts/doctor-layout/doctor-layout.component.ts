@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
 import { ToastComponent } from '../../components/toast/toast.component';
+import { LogoComponent } from '../../components/logo/logo.component';
 import { WebSocketService } from '../../services/websocket.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { environment } from '../../../environments/environment';
@@ -13,7 +14,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-doctor-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, ToastComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, ToastComponent, LogoComponent],
   templateUrl: './doctor-layout.component.html',
   styleUrl: './doctor-layout.component.scss'
 })
