@@ -4,10 +4,11 @@ import { BehaviorSubject, Subject, forkJoin, timer } from 'rxjs';
 import { switchMap, takeUntil, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { AdminAuthService } from './admin-auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AdminNotificationService implements OnDestroy {
-  private base = 'http://localhost:8081/api';
+  private base = environment.apiBase;
   private destroy$ = new Subject<void>();
 
   /** Whether the notification panel is open */

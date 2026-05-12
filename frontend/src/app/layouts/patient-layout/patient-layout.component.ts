@@ -11,8 +11,9 @@ import { PatientUser, PatientDashboardStats } from '../../patient/models/patient
 import { ToastComponent } from '../../components/toast/toast.component';
 import { LogoComponent } from '../../components/logo/logo.component';
 import { WebSocketService } from '../../services/websocket.service';
+import { environment } from '../../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 @Component({
   selector: 'app-patient-layout',

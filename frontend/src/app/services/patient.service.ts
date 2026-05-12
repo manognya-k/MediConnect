@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of, throwError, forkJoin } from 'rxjs';
 import { BackendPatient, Patient, PatientStats, PatientFilter, mapBackendPatient } from '../models/patient.model';
+import { environment } from '../../environments/environment';
 
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 export interface PagedResult<T> {
   data: T[];

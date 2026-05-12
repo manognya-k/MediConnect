@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AdminHospitalsService {
-  private base = 'http://localhost:8081/api';
+  private base = environment.apiBase;
 
   constructor(private http: HttpClient) {}
 

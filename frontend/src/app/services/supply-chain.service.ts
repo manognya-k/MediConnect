@@ -6,12 +6,10 @@ import {
   BackendInventory, InventoryItem, InventoryStats, LowStockAlert,
   InventoryFilter, InventoryListResponse, ItemCategory, StockStatus
 } from '../models/inventory.model';
+import { environment } from '../../environments/environment';
 
 // TODO: No /api/supply-chain endpoints — using /api/inventory.
-// No pagination, stats, reorder, or export endpoints on backend.
-// All filtering/pagination/stats computed client-side.
-
-const BASE = 'http://localhost:8081/api';
+const BASE = environment.apiBase;
 
 function deriveStatus(quantity: number, reorderLevel: number): StockStatus {
   if (quantity <= reorderLevel * 0.5) return 'Critical';
