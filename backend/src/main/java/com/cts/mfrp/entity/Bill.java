@@ -32,13 +32,24 @@ public class Bill {
     @Column(length = 50, nullable = false)
     private String type;
 
-    /** PENDING, PAID, WAIVED */
+    /** PENDING, PAID, WAIVED, OVERDUE */
     @Column(length = 20, nullable = false)
     private String status;
 
     @Column(nullable = false)
     private LocalDate billDate;
 
+    /** Payment due date — auto-set to billDate + 30 days if not provided. */
+    @Column
+    private LocalDate dueDate;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @PrePersist
+    private void setDefaults() {
+        if (dueDate == null && billDate != null) {
+            dueDate = billDate.plusDays(7);
+        }
+    }
 }

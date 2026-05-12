@@ -28,4 +28,17 @@ export class AdminRevenueService {
       bills: this.getBills()
     });
   }
+
+  processOverdueBills(): Observable<{ overdueCount: number; bills: any[] }> {
+    return this.http
+      .post<{ overdueCount: number; bills: any[] }>(`${this.base}/admin/bills/process-overdue`, {})
+      .pipe(catchError(() => of({ overdueCount: 0, bills: [] })));
+  }
+
+  updateBillStatus(billId: number, status: string): Observable<{ id: number; status: string }> {
+    return this.http.patch<{ id: number; status: string }>(
+      `${this.base}/admin/bills/${billId}/status`,
+      { status }
+    );
+  }
 }

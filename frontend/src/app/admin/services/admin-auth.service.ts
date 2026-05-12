@@ -47,7 +47,6 @@ export class AdminAuthService {
           token: res.token,
           admin: { id: res.userId, uniqueId: res.uniqueId, name: res.name, email: res.email, role: res.role }
         };
-        this.persist(loginRes);
         return loginRes;
       }),
       catchError(err => {

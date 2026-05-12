@@ -342,6 +342,39 @@
   &:hover td { background: var(--surf2); }
 }
 
+// ── Status dropdown (admin inline edit) ──────────────────────────────────────
+.status-select {
+  border: none;
+  border-radius: 20px;
+  padding: 3px 22px 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='currentColor' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  transition: opacity 0.15s;
+
+  &.status-pending { background-color: var(--amber-lt); color: var(--amber); }
+  &.status-paid    { background-color: var(--green-lt); color: var(--green); }
+  &.status-overdue { background-color: var(--red-lt);   color: var(--red);   }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  option {
+    background: #fff;
+    color: var(--text);
+    font-weight: 500;
+  }
+}
+
 // ── Badges ───────────────────────────────────────────────────────────────────
 .badge {
   display: inline-block;

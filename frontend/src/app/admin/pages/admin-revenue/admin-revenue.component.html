@@ -122,79 +122,57 @@
     </div>
   </div>
 
-  <!-- Tables row -->
-  <div class="g2">
-
-    <!-- Recent Bills -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Recent Bills</div>
-          <div class="card-sub">{{ bills.length }} records</div>
-        </div>
+  <!-- Recent Bills — full width -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Recent Bills</div>
+        <div class="card-sub">{{ bills.length }} records</div>
       </div>
-      <div class="card-body p0">
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>Bill ID</th>
-              <th>Patient</th>
-              <th>Dept</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let bill of bills; trackBy: trackByIndex">
-              <td class="mono">{{ bill.id }}</td>
-              <td>{{ bill.patient }}</td>
-              <td>{{ bill.department }}</td>
-              <td class="mono">{{ bill.amount }}</td>
-              <td class="date-cell">{{ bill.date }}</td>
-              <td>
+    </div>
+    <div class="card-body p0">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Bill ID</th>
+            <th>Patient</th>
+            <th>Dept</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Due Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bill of bills; trackBy: trackByIndex">
+            <td class="mono">{{ bill.id }}</td>
+            <td>{{ bill.patient }}</td>
+            <td>{{ bill.department }}</td>
+            <td class="mono">{{ bill.amount }}</td>
+            <td class="date-cell">{{ bill.date }}</td>
+            <td class="date-cell">{{ bill.dueDate || '—' }}</td>
+            <td>
+              <ng-container *ngIf="isAdmin && bill.rawId; else staticBadge">
+                <select
+                  [class]="'status-select status-' + bill.status"
+                  [(ngModel)]="bill.status"
+                  [disabled]="updatingIds.has(bill.rawId)"
+                  (ngModelChange)="onStatusChange(bill, $event)">
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </ng-container>
+              <ng-template #staticBadge>
                 <span [class]="'badge ' + getBillBadge(bill.status)">
                   {{ bill.status | titlecase }}
                 </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-
-    <!-- Appointment Summary -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Appointment Summary</div>
-          <div class="card-sub">Status breakdown</div>
-        </div>
-      </div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:14px;padding:18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(16,185,129,0.07);border-radius:8px;border:1px solid rgba(16,185,129,0.18)">
-          <span style="font-size:13px;color:#374151;font-weight:500">Confirmed</span>
-          <span style="font-size:18px;font-weight:700;color:#10B981;font-family:'IBM Plex Mono',monospace">{{ stats.confirmed || 0 }}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(245,158,11,0.07);border-radius:8px;border:1px solid rgba(245,158,11,0.18)">
-          <span style="font-size:13px;color:#374151;font-weight:500">Pending</span>
-          <span style="font-size:18px;font-weight:700;color:#F59E0B;font-family:'IBM Plex Mono',monospace">{{ stats.pending || 0 }}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(239,68,68,0.07);border-radius:8px;border:1px solid rgba(239,68,68,0.18)">
-          <span style="font-size:13px;color:#374151;font-weight:500">Cancelled</span>
-          <span style="font-size:18px;font-weight:700;color:#EF4444;font-family:'IBM Plex Mono',monospace">{{ stats.cancelled || 0 }}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(10,175,184,0.07);border-radius:8px;border:1px solid rgba(10,175,184,0.18)">
-          <span style="font-size:13px;color:#374151;font-weight:500">Video Consultations</span>
-          <span style="font-size:18px;font-weight:700;color:#0AAFB8;font-family:'IBM Plex Mono',monospace">{{ stats.video || 0 }}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(59,130,246,0.07);border-radius:8px;border:1px solid rgba(59,130,246,0.18)">
-          <span style="font-size:13px;color:#374151;font-weight:500">Total All Time</span>
-          <span style="font-size:18px;font-weight:700;color:#3B82F6;font-family:'IBM Plex Mono',monospace">{{ stats.total || 0 }}</span>
-        </div>
-      </div>
-    </div>
-
   </div>
 
 </div>
@@ -209,9 +187,6 @@
       <div class="skel skel-chart"></div>
     </div>
     <div class="skel skel-ai mb20"></div>
-    <div class="g2">
-      <div class="skel" style="height:280px;border-radius:var(--radius)"></div>
-      <div class="skel" style="height:280px;border-radius:var(--radius)"></div>
-    </div>
+    <div class="skel" style="height:280px;border-radius:var(--radius)"></div>
   </div>
 </ng-template>

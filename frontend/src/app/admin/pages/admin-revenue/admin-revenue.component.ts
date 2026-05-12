@@ -6,8 +6,9 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { ensureChartRegistered } from '../../../shared/chart-setup';
 
 import { Subject, timer } from 'rxjs';
-import { switchMap, takeUntil } from 'rxjs/operators';
+import { switchMap, takeUntil, take } from 'rxjs/operators';
 import { AdminRevenueService } from '../../services/admin-revenue.service';
+import { AdminAuthService } from '../../services/admin-auth.service';
 import { ToastService } from '../../../services/toast.service';
 
 ensureChartRegistered();
@@ -75,12 +76,31 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
   };
 
   bills: any[] = [];
+  updatingIds = new Set<number>();
 
   aiInsights: { dot: string; html: string }[] = [];
 
-  constructor(private service: AdminRevenueService, private toast: ToastService) {}
+  get isAdmin(): boolean {
+    return this.adminAuth.isLoggedIn();
+  }
+
+  constructor(
+    private service: AdminRevenueService,
+    private adminAuth: AdminAuthService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
+    // On first load: run the overdue check + send patient notifications
+    this.service.processOverdueBills().pipe(take(1), takeUntil(this.destroy$)).subscribe({
+      next: ({ overdueCount }) => {
+        if (overdueCount > 0) {
+          this.toast.show(`${overdueCount} bill${overdueCount > 1 ? 's' : ''} automatically marked Overdue.`, 'info');
+        }
+      }
+    });
+
+    // Polling loop for stats + full refresh every 30 s
     timer(0, 30000).pipe(
       switchMap(() => this.service.getAllData()),
       takeUntil(this.destroy$)
@@ -89,12 +109,41 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
         this.stats = stats;
         this.allAppointments = appointments;
         this.loading = false;
-        this.buildBills(bills.length > 0 ? bills : appointments);
+        // Skip rebuilding the bill list while a status update is in flight
+        // so we don't overwrite an optimistic change with stale backend data.
+        if (this.updatingIds.size === 0) {
+          this.applyBillData(bills.length > 0 ? bills : appointments);
+        }
         this.buildDoughnut(stats);
         this.buildLineChart(appointments);
         this.buildInsights(stats, appointments);
       },
       error: () => { this.loading = false; }
+    });
+  }
+
+  private applyBillData(items: any[]): void {
+    this.buildBills(items);
+    this.showPendingToasts(items);
+  }
+
+  private showPendingToasts(items: any[]): void {
+    const isBill = (x: any) => x.billDate !== undefined;
+    if (!isBill(items[0] ?? {})) return;
+
+    const pending = items.filter(b => b.status === 'PENDING');
+    if (pending.length === 0) return;
+
+    pending.forEach(b => {
+      const billD = b.billDate ? new Date(b.billDate) : null;
+      const dueD  = b.dueDate  ? new Date(b.dueDate)
+                  : billD ? new Date(billD.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+      const due = dueD ? dueD.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const amount = `₹${Number(b.amount ?? 0).toLocaleString('en-IN')}`;
+      this.toast.show(
+        `Bill #${b.id} pending — ${amount} due on ${due}`,
+        'info'
+      );
     });
   }
 
@@ -116,17 +165,26 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
       this.bills = items.slice(0, 6).map(b => {
         const date = b.billDate ? new Date(b.billDate) : null;
         const dateStr = date ? date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—';
+        const dueDateRaw = b.dueDate ? new Date(b.dueDate)
+                         : date ? new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+        const dueDateStr = dueDateRaw ? dueDateRaw.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—';
         const amountNum = Number(b.amount ?? 0);
-        const status = b.status === 'PAID'   ? 'paid'
-                     : b.status === 'WAIVED' ? 'paid'
+        const status = b.status === 'PAID'    ? 'paid'
+                     : b.status === 'WAIVED'  ? 'paid'
+                     : b.status === 'OVERDUE' ? 'overdue'
                      : b.status === 'PENDING' ? 'pending' : 'overdue';
         return {
           id: `BILL-${b.id}`,
+          rawId: b.id as number,
           patient: b.patientName ?? '—',
           department: b.department ?? 'General',
           amount: `₹${amountNum.toLocaleString('en-IN')}`,
           date: dateStr,
-          status
+          dueDate: dueDateStr,
+          status,
+          _savedStatus: status,
+          rawAmount: amountNum,
+          rawDueDate: b.dueDate ?? null
         };
       });
     } else {
@@ -247,6 +305,30 @@ export class AdminRevenueComponent implements OnInit, OnDestroy {
     if (status === 'pending') return 'b-amber';
     if (status === 'overdue') return 'b-red';
     return 'b-blue';
+  }
+
+  onStatusChange(bill: any, newStatus: string): void {
+    // [(ngModel)] has already written newStatus into bill.status by the time this fires.
+    // Use _savedStatus (last confirmed value) for rollback if the API fails.
+    const prevStatus: string = bill._savedStatus;
+    if (newStatus === prevStatus) return;
+
+    this.updatingIds.add(bill.rawId);
+
+    this.service.updateBillStatus(bill.rawId, newStatus.toUpperCase())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          bill._savedStatus = newStatus; // commit
+          this.updatingIds.delete(bill.rawId);
+          this.toast.show('Bill status updated successfully.', 'success');
+        },
+        error: () => {
+          bill.status = prevStatus; // revert view back to last confirmed value
+          this.updatingIds.delete(bill.rawId);
+          this.toast.show('Failed to update bill status. Please try again.', 'error');
+        }
+      });
   }
 
   trackByIndex(index: number): number { return index; }

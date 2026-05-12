@@ -116,11 +116,9 @@ export class AdminRegisterComponent implements OnInit, OnDestroy {
     this.adminAuth.register(payload).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         this.isLoading  = false;
-        this.successMsg = 'Account created successfully! Redirecting…';
+        this.successMsg = 'Account created successfully! Please log in.';
         setTimeout(() => {
-          const adminId = res.admin?.id;
-          if (adminId) this.router.navigate(['/admin', adminId, 'overview']);
-          else this.router.navigate(['/admin/login']);
+          this.router.navigate(['/admin/login']);
         }, 1200);
       },
       error: (err: Error) => {

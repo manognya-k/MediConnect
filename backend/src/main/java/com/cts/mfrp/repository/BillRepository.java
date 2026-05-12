@@ -12,6 +12,10 @@ import java.util.List;
 public interface BillRepository extends JpaRepository<Bill, Long> {
     List<Bill> findByPatientPatientId(Integer patientId);
 
+    List<Bill> findByStatus(String status);
+
+    List<Bill> findByStatusAndDueDateIsNotNullAndDueDateBefore(String status, LocalDate date);
+
     @Query("SELECT COALESCE(SUM(b.amount), 0) FROM Bill b WHERE b.status IN ('PAID','PENDING') AND b.billDate BETWEEN :from AND :to")
     BigDecimal sumRevenueBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 

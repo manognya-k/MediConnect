@@ -417,7 +417,8 @@
 // ── AI Panel ──────────────────────────────────────────────────────────────────
 
 .ai-panel {
-  background: linear-gradient(135deg, #0A1628, #0D2040);
+//   background: linear-gradient(135deg, #0A1628, #0D2040);
+  background: #000000;
   border: 1px solid rgba(10,175,184,.25);
   border-radius: var(--radius);
   padding: 16px 18px;
@@ -484,7 +485,7 @@
   color: var(--mid);
   line-height: 1.5;
 
-  ::ng-deep strong { color: var(--text); }
+  ::ng-deep strong { color: #ffffff; }
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────────────

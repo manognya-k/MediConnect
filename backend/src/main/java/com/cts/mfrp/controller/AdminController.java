@@ -2,10 +2,13 @@ package com.cts.mfrp.controller;
 
 import com.cts.mfrp.entity.*;
 import com.cts.mfrp.repository.*;
+import com.cts.mfrp.service.BillingService;
 import com.cts.mfrp.service.DashboardDataService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +30,7 @@ public class AdminController {
     private final LabReportRepository labReportRepository;
     private final BillRepository billRepository;
     private final DashboardDataService dashboardDataService;
+    private final BillingService billingService;
 
     @GetMapping("/{id}/dashboard-stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats(@PathVariable Integer id) {
@@ -143,6 +147,9 @@ public class AdminController {
                     row.put("type", b.getType());
                     row.put("status", b.getStatus());
                     row.put("billDate", b.getBillDate().toString());
+                    LocalDate due = b.getDueDate() != null ? b.getDueDate()
+                            : b.getBillDate().plusDays(7);
+                    row.put("dueDate", due.toString());
                     String patientName = (b.getPatient() != null && b.getPatient().getUser() != null)
                             ? b.getPatient().getUser().getName() : "—";
                     row.put("patientName", patientName);
@@ -153,6 +160,71 @@ public class AdminController {
                     return row;
                 })
                 .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Triggers the overdue check + pending-bill notifications on demand.
+     * Called by the billing page on load so the UI always reflects current state.
+     * Returns { overdueCount, bills } so the frontend can refresh in one round-trip.
+     */
+    @PostMapping("/bills/process-overdue")
+    public ResponseEntity<Map<String, Object>> processOverdue() {
+        int overdueCount = billingService.processAll();
+
+        // Re-fetch fresh bill list after status updates
+        List<Bill> bills = billRepository.findAll();
+        List<Map<String, Object>> billList = bills.stream()
+                .filter(b -> b.getBillDate() != null)
+                .sorted((a, b) -> b.getBillDate().compareTo(a.getBillDate()))
+                .limit(20)
+                .map(b -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", b.getId());
+                    row.put("amount", b.getAmount());
+                    row.put("type", b.getType());
+                    row.put("status", b.getStatus());
+                    row.put("billDate", b.getBillDate().toString());
+                    LocalDate due = b.getDueDate() != null ? b.getDueDate()
+                            : b.getBillDate().plusDays(7);
+                    row.put("dueDate", due.toString());
+                    String patientName = (b.getPatient() != null && b.getPatient().getUser() != null)
+                            ? b.getPatient().getUser().getName() : "—";
+                    row.put("patientName", patientName);
+                    String dept = (b.getAppointment() != null && b.getAppointment().getDoctor() != null)
+                            ? b.getAppointment().getDoctor().getSpecialization() : "General";
+                    row.put("department", dept);
+                    row.put("appointmentId", b.getAppointment() != null ? b.getAppointment().getAppointmentId() : null);
+                    return row;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("overdueCount", overdueCount);
+        result.put("bills", billList);
+        return ResponseEntity.ok(result);
+    }
+
+    /** Admin manually updates a bill's status (Pending / Paid / Overdue). */
+    @PatchMapping("/bills/{id}/status")
+    public ResponseEntity<Map<String, Object>> updateBillStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        Bill bill = billRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bill not found"));
+
+        String newStatus = body.getOrDefault("status", "").toUpperCase();
+        if (!List.of("PENDING", "PAID", "OVERDUE").contains(newStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status value");
+        }
+
+        bill.setStatus(newStatus);
+        billRepository.save(bill);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("id", bill.getId());
+        result.put("status", bill.getStatus());
         return ResponseEntity.ok(result);
     }
 
